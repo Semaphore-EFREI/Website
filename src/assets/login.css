@@ -1,0 +1,135 @@
+/* login.css */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+#app {
+  height: 100%;
+}
+.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  position: relative;
+}
+
+.login-background img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+}
+
+.login-card {
+    display: flex;
+    width: 338px;
+    padding: 32px 14px 14px 14px;
+    flex-direction: column;
+    align-items: center;
+    gap: 36px;
+    border-radius: 38px;
+    border: 1px solid var(--Bordure-Web, rgba(255, 255, 255, 0.64));
+    border: 1px solid var(--Bordure-Web, color(display-p3 1 1 1 / 0.64));
+    background: var(--Fond-Transparent, rgba(249, 249, 249, 0.64));
+    background: var(--Fond-Transparent, color(display-p3 0.9765 0.9765 0.9765 / 0.64));
+    box-shadow: 0 0 24px 0 rgba(0, 0, 0, 0.12);
+    box-shadow: 0 0 24px 0 color(display-p3 0 0 0 / 0.12);
+    backdrop-filter: blur(20px);
+}
+
+.login-title {
+    color: #000;
+    color: color(display-p3 0 0 0);
+    text-align: center;
+
+    /* Titre Page */
+    font-family: Montserrat;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+    align-self: stretch;
+}
+
+.form-subgroup {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    align-self: stretch;
+}
+
+.form-group input {
+    height: 44px;
+    padding: 15px;
+    align-items: center;
+    gap: 6px;
+    align-self: stretch;
+    border-radius: 1000px;
+    border: 1px solid rgba(255, 255, 255, 0.64);
+    border: 1px solid color(display-p3 1 1 1 / 0.64);
+    background: rgba(249, 249, 249, 0.64);
+    background: color(display-p3 0.9765 0.9765 0.9765 / 0.64);
+}
+
+
+input::placeholder {
+    flex: 1 0 0;
+    color: var(--Texte-Quaternaire, #C1B4A0);
+    color: var(--Texte-Quaternaire, color(display-p3 0.7412 0.7059 0.6431));
+
+    font-family: Montserrat;
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+}
+
+
+.form-group label {
+    color: var(--Texte-Transparent, rgba(127, 127, 127, 0.50));
+    color: var(--Texte-Transparent, color(display-p3 0.498 0.498 0.498 / 0.50));
+
+    /* Description */
+    font-family: Montserrat;
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+}
+
+.login-button {
+    display: flex;
+    min-height: 48px;
+    padding: 12px 20px;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    align-self: stretch;
+    border-radius: 50px;
+    background: var(--Bleu, #007999);
+    background: var(--Bleu, color(display-p3 0.1799 0.4609 0.576));
+    color: var(--Fond-Primaire, #FAF9F6);
+    color: var(--Fond-Primaire, color(display-p3 0.9804 0.9765 0.9647));
+
+    /* Bouton */
+    font-family: Montserrat;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+}
