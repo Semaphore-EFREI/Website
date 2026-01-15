@@ -1,7 +1,7 @@
 <template>
   <div class="login-page">
     <div class="login-background">
-      <img src="../assets/login_background.svg" alt="background" />
+      <img src="../assets/images/login_background.svg" alt="background" />
     </div>
 
     <div class="login-card">
@@ -15,7 +15,7 @@
 
         <div class="form-subgroup">
           <label for="password">Mot de passe</label>
-          <input id="password" v-model="password" type="password" placeholder="****************" required />
+          <input id="password" v-model="password" type="password" placeholder="••••••••••••••••" required />
         </div>
 
         <button type="submit" class="login-button">Se Connecter</button>
@@ -36,11 +36,11 @@ export default {
     handleLogin() {
       console.log('Login attempt', this.username, this.password)
       // Pour l'instant, juste une redirection fake vers le calendrier
-      this.$router.push('/calendar')
+      this.$router.push('/calendrier')
     }
   }
 }
 </script>
 
 
-<style scoped src="../assets/login.css"></style>
+<style scoped src="../assets/connexion.css"></style>

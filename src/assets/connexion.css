@@ -36,11 +36,8 @@ html, body {
     gap: 36px;
     border-radius: 38px;
     border: 1px solid var(--Bordure-Web, rgba(255, 255, 255, 0.64));
-    border: 1px solid var(--Bordure-Web, color(display-p3 1 1 1 / 0.64));
     background: var(--Fond-Transparent, rgba(249, 249, 249, 0.64));
-    background: var(--Fond-Transparent, color(display-p3 0.9765 0.9765 0.9765 / 0.64));
     box-shadow: 0 0 24px 0 rgba(0, 0, 0, 0.12);
-    box-shadow: 0 0 24px 0 color(display-p3 0 0 0 / 0.12);
     backdrop-filter: blur(20px);
 }
 
@@ -81,16 +78,13 @@ html, body {
     align-self: stretch;
     border-radius: 1000px;
     border: 1px solid rgba(255, 255, 255, 0.64);
-    border: 1px solid color(display-p3 1 1 1 / 0.64);
     background: rgba(249, 249, 249, 0.64);
-    background: color(display-p3 0.9765 0.9765 0.9765 / 0.64);
 }
 
 
 input::placeholder {
     flex: 1 0 0;
     color: var(--Texte-Quaternaire, #C1B4A0);
-    color: var(--Texte-Quaternaire, color(display-p3 0.7412 0.7059 0.6431));
 
     font-family: Montserrat;
     font-size: 15px;
@@ -101,8 +95,7 @@ input::placeholder {
 
 
 .form-group label {
-    color: var(--Texte-Transparent, rgba(127, 127, 127, 0.50));
-    color: var(--Texte-Transparent, color(display-p3 0.498 0.498 0.498 / 0.50));
+    color: var(--Texte-Transparent, rgba(100, 100, 100, 0.90));
 
     /* Description */
     font-family: Montserrat;
@@ -122,9 +115,7 @@ input::placeholder {
     align-self: stretch;
     border-radius: 50px;
     background: var(--Bleu, #007999);
-    background: var(--Bleu, color(display-p3 0.1799 0.4609 0.576));
     color: var(--Fond-Primaire, #FAF9F6);
-    color: var(--Fond-Primaire, color(display-p3 0.9804 0.9765 0.9647));
 
     /* Bouton */
     font-family: Montserrat;

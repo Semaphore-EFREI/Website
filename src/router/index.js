@@ -1,11 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import Login from '../views/Login.vue'
-import Calendar from '../views/Calendar.vue'
+import Login from '../views/Connexion.vue'
+import Calendar from '../views/Calendrier.vue'
 
 const routes = [
-  { path: '/', name: 'Login', component: Login },
-  { path: '/calendar', name: 'Calendar', component: Calendar }
+  { path: '/', name: 'Connexion', component: Login },
+  { path: '/calendrier', name: 'Calendrier', component: Calendar }
 ]
 
 const router = createRouter({
