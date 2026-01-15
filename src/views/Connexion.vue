@@ -1,13 +1,13 @@
 <template>
-  <div class="login-page">
-    <div class="login-background">
-      <img src="../assets/images/login_background.svg" alt="background" />
+  <div class="connexion-page">
+    <div class="connexion-background">
+      <img src="../assets/images/connexion_background.svg" alt="background" />
     </div>
 
-    <div class="login-card">
-      <h1 class="login-title">Sémaphore</h1>
+    <div class="connexion-card">
+      <h1 class="connexion-title">Sémaphore</h1>
       
-      <form @submit.prevent="handleLogin" class="form-group">
+      <form @submit.prevent="handleconnexion" class="form-group">
         <div class="form-subgroup">
           <label for="username">Identifiant</label>
           <input id="username" v-model="username" type="text" placeholder="etudiant@semaphore.com" required />
@@ -18,7 +18,7 @@
           <input id="password" v-model="password" type="password" placeholder="••••••••••••••••" required />
         </div>
 
-        <button type="submit" class="login-button">Se Connecter</button>
+        <button type="submit" class="connexion-button">Se Connecter</button>
       </form>
     </div>
   </div>
@@ -33,8 +33,8 @@ export default {
     }
   },
   methods: {
-    handleLogin() {
-      console.log('Login attempt', this.username, this.password)
+    handleconnexion() {
+      console.log('Tentative de connexion', this.username, this.password)
       // Pour l'instant, juste une redirection fake vers le calendrier
       this.$router.push('/calendrier')
     }
