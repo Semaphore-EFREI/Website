@@ -42,7 +42,13 @@
           <div v-for="hour in hours" :key="hour" class="hour-section">
             <div class="hour-label">{{ hour }}</div>
             <div class="blocks-row">
-              <div v-for="(block, index) in getBlocksForHour(hour)" :key="index" class="class-block" :class="block.status">
+              <div
+                v-for="block in getBlocksForHour(hour)"
+                :key="block.id"
+                class="class-block"
+                :class="block.status"
+                @click="openCourse(block.id)"
+              >
                 <div class="block-title">{{ block.subject }}</div>
                 <div class="time-room">
                   <div class="block-time">{{ block.startTime }}-{{ block.endTime }}</div>
@@ -54,6 +60,29 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-color finished"></div>
+            <span>Le cours est terminé</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color finished-absent"></div>
+            <span>Le cours est terminé, mais l'enseignant n'a pas validé sa présence</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color started"></div>
+            <span>Le cours a débuté</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color started-absent"></div>
+            <span>Le cours a débuté, mais l'enseignant n'a pas encore validé sa présence</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color planned"></div>
+            <span>Le cours n'a pas encore eu lieu</span>
           </div>
         </div>
       </div>
@@ -117,6 +146,9 @@ export default {
     },
     getBlocksForHour(hour) {
       return this.filteredClasses.filter(c => c.startTime === hour);
+    },
+    openCourse(id) {
+      this.$router.push({ name: 'CalendrierDetail', params: { id } });
     },
     dateKey(date) {
       const day = `${date.getDate()}`.padStart(2, '0');

@@ -54,4 +54,17 @@ export default {
   margin-left: 88px;
   transition: margin-left 0.2s ease;
 }
+
+/* Same push for calendrier detail page; also reduce available width to prevent overflow */
+.app-main.with-sidebar :deep(.detail-page) {
+  margin-left: clamp(88px, 18vw, 348px);
+  max-width: calc(100% - clamp(88px, 18vw, 348px));
+  transition: margin-left 0.2s ease, max-width 0.2s ease;
+}
+
+.app-main.sidebar-collapsed :deep(.detail-page) {
+  margin-left: clamp(48px, 10vw, 88px);
+  max-width: calc(100% - clamp(48px, 10vw, 88px));
+  transition: margin-left 0.2s ease, max-width 0.2s ease;
+}
 </style>

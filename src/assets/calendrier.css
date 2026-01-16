@@ -276,6 +276,7 @@ html, body {
     gap: 8px;
     flex: 1 0 0;
     border-radius: 24px;
+    cursor: pointer;
 }
 
 .class-block:hover {
@@ -375,4 +376,60 @@ html, body {
     font-style: normal;
     font-weight: 500;
     line-height: normal;
+}
+
+.legend {
+    display: flex;
+    padding: 24px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    align-self: stretch;
+    border-radius: 24px;
+    background: var(--Fond-Secondaire, #EFEDE3);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    align-self: stretch;
+}
+
+.legend-item span {
+    color: var(--Texte-Secondaire, #866738);
+    font-family: Montserrat;
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+}
+
+.legend-color {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.legend-color.finished {
+    background: rgba(154, 154, 154, 0.32);
+}
+
+.legend-color.finished-absent {
+    background: rgba(219, 40, 36, 0.32);
+}
+
+.legend-color.started {
+    background: rgba(230, 100, 0, 0.32);
+
+}
+
+.legend-color.started-absent {
+    background: rgba(0, 119, 150, 0.32);
+
+}
+
+.legend-color.planned {
+    background: var(--Fond-Tertiaire, #FFF);
 }

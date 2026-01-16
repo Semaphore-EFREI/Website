@@ -1,0 +1,18 @@
+[
+  { "courseId": 1, "teacher": "Jessica LEE", "status": "present", "signature": "src/assets/images/signature.svg" },
+  { "courseId": 2, "teacher": "Pierre DUPONT", "status": "present", "signature": "src/assets/images/signature.svg" },
+  { "courseId": 3, "teacher": "Marie MARTIN", "status": "signed", "signature": "src/assets/images/signature.svg" },
+  { "courseId": 5, "teacher": "Sophie THOMAS", "status": "signed", "signature": "src/assets/images/signature.svg" },
+  { "courseId": 9, "teacher": "Sophie LAMAR", "status": "signed", "signature": "src/assets/images/signature.svg" },
+  { "courseId": 10, "teacher": "Thomas MOREL", "status": "absent", "signature": "src/assets/images/signature.svg" },
+  { "courseId": 11, "teacher": "Élodie FONTAINE", "status": "signed", "signature": "src/assets/images/signature.svg" },
+  { "courseId": 12, "teacher": "Marc LECLERC", "status": "signed", "signature": "src/assets/images/signature.svg" },
+  { "courseId": 13, "teacher": "Laura BERNARD", "status": "signed", "signature": "src/assets/images/signature.svg" },
+  { "courseId": 14, "teacher": "Miguel FERNANDEZ", "status": "signed", "signature": "src/assets/images/signature.svg" },
+  { "courseId": 18, "teacher": "Pierre DUPONT", "status": "signed", "signature": "src/assets/images/signature.svg" },
+  { "courseId": 19, "teacher": "Nathalie GIRARD", "status": "present", "signature": "src/assets/images/signature.svg" },
+  { "courseId": 20, "teacher": "Paul RENAUD", "status": "signed", "signature": "src/assets/images/signature.svg" },
+  { "courseId": 23, "teacher": "Jessica LEE", "status": "signed", "signature": "src/assets/images/signature.svg" },
+  { "courseId": 24, "teacher": "Marie MARTIN", "status": "signed", "signature": "src/assets/images/signature.svg" },
+  { "courseId": 25, "teacher": "Laura BERNARD", "status": "signed", "signature": "src/assets/images/signature.svg" }
+]
