@@ -125,7 +125,9 @@ export default {
       return this.expandedGroups.includes(label)
     },
     isActive(item) {
-      return item.routeName && this.$route.name === item.routeName
+      if (!item.routeName) return false
+      if (item.routeName === 'Calendrier' && this.$route.name === 'CalendrierDetail') return true
+      return this.$route.name === item.routeName
     },
     handleNav(item) {
       if (!item.routeName) return
