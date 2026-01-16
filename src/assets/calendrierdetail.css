@@ -78,7 +78,7 @@
     align-self: stretch;
 }
 
-.info-section h2 {
+h2 {
     color: var(--Gris, #9A9A9A);
     color: var(--Gris, color(display-p3 0.6039 0.6039 0.6039));
     font-family: Montserrat;

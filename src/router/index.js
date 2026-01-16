@@ -3,11 +3,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Connexion.vue'
 import Calendar from '../views/Calendrier.vue'
 import CalendarDetail from '../views/CalendrierDetail.vue'
+import Users from '../views/Utilisateurs.vue'
 
 const routes = [
   { path: '/', name: 'Connexion', component: Login },
   { path: '/calendrier', name: 'Calendrier', component: Calendar },
-  { path: '/calendrier/:id', name: 'CalendrierDetail', component: CalendarDetail, props: true }
+  { path: '/calendrier/:id', name: 'CalendrierDetail', component: CalendarDetail, props: true },
+  { path: '/utilisateurs', name: 'Utilisateurs', component: Users }
 ]
 
 const router = createRouter({

@@ -67,4 +67,17 @@ export default {
   max-width: calc(100% - clamp(48px, 10vw, 88px));
   transition: margin-left 0.2s ease, max-width 0.2s ease;
 }
+
+/* Push only the users content area; keep header full width under the sidebar */
+.app-main.with-sidebar :deep(.users-content) {
+  margin-left: clamp(88px, 18vw, 348px);
+  max-width: calc(100% - clamp(88px, 18vw, 348px));
+  transition: margin-left 0.2s ease, max-width 0.2s ease;
+}
+
+.app-main.sidebar-collapsed :deep(.users-content) {
+  margin-left: clamp(48px, 10vw, 88px);
+  max-width: calc(100% - clamp(48px, 10vw, 88px));
+  transition: margin-left 0.2s ease, max-width 0.2s ease;
+}
 </style>

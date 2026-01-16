@@ -29,12 +29,12 @@ html, body {
 }
 
 .header-buttons {
-    position: absolute;
-    top: 24px;
-    right: 24px;
     display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
     gap: 16px;
-    z-index: 3;
+    align-self: stretch;
+    z-index : 2;
 }
 
 .btn-new-course {
