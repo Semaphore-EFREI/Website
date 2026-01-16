@@ -6,6 +6,7 @@
     flex-direction: column;
     align-items: center;
     background: var(--Fond-Primaire, #FAF9F6);
+    background: var(--Fond-Primaire, color(display-p3 0.9804 0.9765 0.9647));
     padding-left: 50px; /* Adjust based on sidebar width */
 }
 
@@ -16,6 +17,7 @@
     align-items: center;
     align-self: stretch;
     background: rgba(250, 249, 246, 0.64);
+    background: color(display-p3 0.9804 0.9765 0.9647 / 0.64);
     backdrop-filter: blur(10px);
 }
 
@@ -35,6 +37,7 @@
 
 .course-title {
     color: #000;
+    color: color(display-p3 0 0 0);
     font-family: Montserrat;
     font-size: 28px;
     font-style: normal;
@@ -44,6 +47,7 @@
 
 .course-meta {
     color: #000;
+    color: color(display-p3 0 0 0);
     font-family: Montserrat;
     font-size: 13px;
     font-style: normal;
@@ -92,6 +96,7 @@
     align-self: stretch;
     border-radius: 24px;
     background: var(--Fond-Secondaire, #EFEDE3);
+    background: var(--Fond-Secondaire, color(display-p3 0.9373 0.9294 0.898));
 }
 
 .info-1 {
@@ -112,6 +117,7 @@
 
 .info-item1 {
     color: #000;
+    color: color(display-p3 0 0 0);
     font-family: Montserrat;
     font-size: 15px;
     font-style: normal;
@@ -131,7 +137,9 @@
     gap: 10px;
     border-radius: 1000px;
     background: var(--Fond-Tertiaire, #FFF);
+    background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
     color: var(--Texte-Secondaire, #866738);
+    color: var(--Texte-Secondaire, color(display-p3 0.4902 0.4118 0.2706));
     font-family: Montserrat;
     font-size: 13px;
     font-style: normal;
@@ -148,6 +156,7 @@
     align-self: stretch;
     border-radius: 24px;
     background: rgba(154, 154, 154, 0.32);
+    background: color(display-p3 0.6039 0.6039 0.6039 / 0.32);
 }
 
 .started, .started-absent {
@@ -159,6 +168,7 @@
     align-self: stretch;
     border-radius: 24px;
     background: rgba(0, 119, 150, 0.32);
+    background: color(display-p3 0.1799 0.4609 0.576 / 0.32);
 }
 
 .status-chip {
@@ -166,6 +176,7 @@
     align-items: center;
     gap: 8px;
     color: #000;
+    color: color(display-p3 0 0 0);
     font-family: Montserrat;
     font-size: 15px;
     font-style: normal;
@@ -219,18 +230,23 @@
 
 .person-card.signed {
     background: linear-gradient(0deg, rgba(19, 135, 48, 0.16) 0%, rgba(19, 135, 48, 0.16) 100%), var(--Fond-Tertiaire, #FFF);
+    background: linear-gradient(0deg, color(display-p3 0.2433 0.5216 0.2347 / 0.16) 0%, color(display-p3 0.2433 0.5216 0.2347 / 0.16) 100%), var(--Fond-Tertiaire, color(display-p3 1 1 1));
 }
 
 .person-card.present {
+    border-radius: 24px;
     background: linear-gradient(0deg, rgba(0, 153, 150, 0.16) 0%, rgba(0, 153, 150, 0.16) 100%), var(--Fond-Tertiaire, #FFF);
+    background: linear-gradient(0deg, color(display-p3 0.1765 0.5882 0.5843 / 0.16) 0%, color(display-p3 0.1765 0.5882 0.5843 / 0.16) 100%), var(--Fond-Tertiaire, color(display-p3 1 1 1));
 }
 
 .person-card.absent {
     background: linear-gradient(0deg, rgba(219, 40, 36, 0.16) 0%, rgba(219, 40, 36, 0.16) 100%), var(--Fond-Tertiaire, #FFF);
+    background: linear-gradient(0deg, color(display-p3 0.7882 0.2314 0.1882 / 0.16) 0%, color(display-p3 0.7882 0.2314 0.1882 / 0.16) 100%), var(--Fond-Tertiaire, color(display-p3 1 1 1));
 }
 
 .person-card.none {
     background: var(--Fond-Tertiaire, #FFF);
+    background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
 }
 
 .person-header {
@@ -261,15 +277,21 @@
 
 .signature-status.signed {
     background: rgba(255, 255, 255, 0.48);
+    background: color(display-p3 1 1 1 / 0.48);
     color: var(--Vert, #008A1E);
+    color: var(--Vert, color(display-p3 0.2433 0.5216 0.2347));
 }
 .signature-status.present {
     background: rgba(255, 255, 255, 0.48);
+    background: color(display-p3 1 1 1 / 0.48);
     color: var(--Cyan, #009C97);
+    color: var(--Cyan, color(display-p3 0.1765 0.5882 0.5843));
 }
 .signature-status.absent {
     background: rgba(255, 255, 255, 0.48);
+    background: color(display-p3 1 1 1 / 0.48);
     color: var(--Rouge, #EF000C);
+    color: var(--Rouge, color(display-p3 0.7882 0.2314 0.1882));
 }
 
 .status-icon {
@@ -304,6 +326,7 @@
 
 .signature-none {
     color: var(--Gris, #9A9A9A);
+    color: var(--Gris, color(display-p3 0.6039 0.6039 0.6039));
     text-align: center;
     font-family: Montserrat;
     font-size: 11px;
@@ -325,6 +348,7 @@
     aspect-ratio: 1/1;
     border-radius: 1000px;
     background: var(--Fond-Tertiaire, #FFF);
+    background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
     transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
@@ -343,7 +367,9 @@
     gap: 8px;
     border-radius: 50px;
     background: var(--Fond-Tertiaire, #FFF);
+    background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
     color: var(--Bleu, #007999);
+    color: var(--Bleu, color(display-p3 0.1799 0.4609 0.576));
     font-family: Montserrat;
     font-size: 14px;
     font-style: normal;
@@ -367,7 +393,9 @@
     gap: 8px;
     border-radius: 50px;
     background: var(--Cyan, #009C97);
+    background: var(--Cyan, color(display-p3 0.1765 0.5882 0.5843));
     color: var(--Fond-Primaire, #FAF9F6);
+    color: var(--Fond-Primaire, color(display-p3 0.9804 0.9765 0.9647));
     font-family: Montserrat;
     font-size: 14px;
     font-style: normal;
@@ -392,7 +420,9 @@
     gap: 8px;
     border-radius: 50px;
     background: var(--Rouge, #EF000C);
+    background: var(--Rouge, color(display-p3 0.7882 0.2314 0.1882));
     color: var(--Fond-Primaire, #FAF9F6);
+    color: var(--Fond-Primaire, color(display-p3 0.9804 0.9765 0.9647));
     font-family: Montserrat;
     font-size: 14px;
     font-style: normal;
@@ -438,7 +468,9 @@
     flex: 1 0 0;
     border-radius: 50px;
     background: var(--Fond-Tertiaire, #FFF);
+    background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
     color: var(--Cyan, #009C97);
+    color: var(--Cyan, color(display-p3 0.1765 0.5882 0.5843));
     text-align: center;
     font-feature-settings: 'liga' off, 'clig' off;
     font-family: "SF Pro";
@@ -453,11 +485,14 @@
 .btn-present.signed, .btn-present.present, .btn-absent.absent {
     opacity: 0.56;
     background: var(--Fond-Primaire, #FAF9F6);
+    background: var(--Fond-Primaire, color(display-p3 0.9804 0.9765 0.9647));
     color: var(--Gris, #9A9A9A);
+    color: var(--Gris, color(display-p3 0.6039 0.6039 0.6039));
 }
 
 .btn-present.none, .btn-absent.none {
     background: var(--Fond-Secondaire, #EFEDE3);
+    background: var(--Fond-Secondaire, color(display-p3 0.9373 0.9294 0.898));
 }
 
 .btn-present:hover:not(.signed):not(.present):not(.absent) {
@@ -482,7 +517,9 @@
     flex: 1 0 0;
     border-radius: 50px;
     background: var(--Fond-Tertiaire, #FFF);
+    background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
     color: var(--Rouge, #EF000C);
+    color: var(--Rouge, color(display-p3 0.7882 0.2314 0.1882));
     text-align: center;
     font-feature-settings: 'liga' off, 'clig' off;
     font-family: "SF Pro";

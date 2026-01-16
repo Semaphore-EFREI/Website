@@ -13,6 +13,7 @@ html, body {
     width: 100%;
     min-height: 100vh;
     background: var(--Fond-Primaire, #FAF9F6);
+    background: var(--Fond-Primaire, color(display-p3 0.9804 0.9765 0.9647));
 }
 
 .calendrier-header {
@@ -45,6 +46,7 @@ html, body {
     gap: 6px;
     border-radius: 50px;
     background: var(--Fond-Tertiaire, #FFF);
+    background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
     color: var(--Bleu, #007999);
     font-family: Montserrat;
     font-size: 14px;
@@ -61,6 +63,7 @@ html, body {
 
 .plus-icon {
     color: var(--Bleu, #007999);
+    color: var(--Bleu, color(display-p3 0.1799 0.4609 0.576));
     text-align: center;
     font-feature-settings: 'liga' off, 'clig' off;
     font-family: "SF Pro";
@@ -82,6 +85,7 @@ html, body {
     aspect-ratio: 1/1;
     border-radius: 1000px;
     background: var(--Fond-Tertiaire, #FFF);
+    background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
 }
 
 .btn-calendar:hover {
@@ -92,6 +96,7 @@ html, body {
 
 .btn-calendar img {
     color: var(--Texte-Primaire, #2A2A2A);
+    color: var(--Texte-Primaire, color(display-p3 0.1647 0.1647 0.1647));
     text-align: center;
     font-feature-settings: 'liga' off, 'clig' off;
     font-family: "SF Pro";
@@ -133,6 +138,7 @@ html, body {
 
 .calendar-icon {
     color: var(--Texte-Blanc, #FFF);
+    color: var(--Texte-Blanc, color(display-p3 1 1 1));
     font-family: "SF Pro";
     font-size: 36px;
     font-style: normal;
@@ -142,6 +148,7 @@ html, body {
 
 .header-title {
     color: var(--Texte-Blanc, #FFF);
+    color: var(--Texte-Blanc, color(display-p3 1 1 1));
     font-family: Montserrat;
     font-size: 28px;
     font-style: normal;
@@ -178,6 +185,7 @@ html, body {
     align-self: stretch;
     border-radius: 24px;
     background: var(--Fond-Secondaire, #EFEDE3);
+    background: var(--Fond-Secondaire, color(display-p3 0.9373 0.9294 0.898));
     z-index: 1;
 }
 
@@ -198,10 +206,12 @@ html, body {
     gap: 6px;
     border-radius: 1000px;
     background: var(--Fond-Tertiaire, #FFF);
+    background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
 }
 
 .arrow {
     color: var(--Texte-Primaire, #2A2A2A);
+    color: var(--Texte-Primaire, color(display-p3 0.1647 0.1647 0.1647));
     text-align: center;
     font-feature-settings: 'liga' off, 'clig' off;
     font-family: "SF Pro";
@@ -220,8 +230,7 @@ html, body {
 
 .current-day {
     color: #000;
-
-    /* Sous Titre Page */
+    color: color(display-p3 0 0 0);
     font-family: Montserrat;
     font-size: 18px;
     font-style: normal;
@@ -242,6 +251,7 @@ html, body {
 
 .hour-label {
     color: var(--Texte-Tertiaire, #9A9A9A);
+    color: var(--Texte-Tertiaire, color(display-p3 0.6039 0.6039 0.6039));
     /* Corps Important */
     font-family: Montserrat;
     font-size: 15px;
@@ -286,23 +296,28 @@ html, body {
 
 /* status-specific colors */
 .finished {
-  background: linear-gradient(0deg, rgba(154, 154, 154, 0.16) 0%, rgba(154, 154, 154, 0.16) 100%), #FFF; 
+    background: linear-gradient(0deg, rgba(154, 154, 154, 0.16) 0%, rgba(154, 154, 154, 0.16) 100%), #FFF; 
+    background: linear-gradient(0deg, color(display-p3 0.6039 0.6039 0.6039 / 0.16) 0%, color(display-p3 0.6039 0.6039 0.6039 / 0.16) 100%), color(display-p3 1 1 1);
 }
 
 .finished-absent {
     background: linear-gradient(0deg, rgba(219, 40, 36, 0.16) 0%, rgba(219, 40, 36, 0.16) 100%), #FFF;
+    background: linear-gradient(0deg, color(display-p3 0.7882 0.2314 0.1882 / 0.16) 0%, color(display-p3 0.7882 0.2314 0.1882 / 0.16) 100%), color(display-p3 1 1 1);
 }
 
 .started {
     background: linear-gradient(0deg, rgba(230, 100, 0, 0.16) 0%, rgba(230, 100, 0, 0.16) 100%), #FFF;
+    background: linear-gradient(0deg, color(display-p3 0.84 0.4238 0.1613 / 0.16) 0%, color(display-p3 0.84 0.4238 0.1613 / 0.16) 100%), color(display-p3 1 1 1);
 }
 
 .started-absent {
     background: linear-gradient(0deg, rgba(0, 119, 150, 0.16) 0%, rgba(0, 119, 150, 0.16) 100%), #FFF;
+    background: linear-gradient(0deg, color(display-p3 0.1799 0.4609 0.576 / 0.16) 0%, color(display-p3 0.1799 0.4609 0.576 / 0.16) 100%), color(display-p3 1 1 1);
 }
 
 .planned {
     background: #FFF;
+    background: color(display-p3 1 1 1);
 }
 
 /* Block content */
@@ -310,6 +325,7 @@ html, body {
 .block-title {
     align-self: stretch;
     color: var(--Texte-Primaire, #2A2A2A);
+    color: var(--Texte-Primaire, color(display-p3 0.1647 0.1647 0.1647));
     /* Corps Important */
     font-family: Montserrat;
     font-size: 15px;
@@ -320,6 +336,7 @@ html, body {
 
 .block-time {
     color: var(--Texte-Secondaire, #866738);
+    color: var(--Texte-Secondaire, color(display-p3 0.5294 0.4078 0.2196));
     /* Description */
     font-family: Montserrat;
     font-size: 13px;
@@ -330,6 +347,7 @@ html, body {
 
 .block-room {
     color: var(--Texte-Secondaire, #866738);
+    color: var(--Texte-Secondaire, color(display-p3 0.5294 0.4078 0.2196));
     /* Description */
     font-family: Montserrat;
     font-size: 13px;
@@ -350,6 +368,7 @@ html, body {
 .block-teacher {
     align-self: stretch;
     color: var(--Texte-Tertiaire, #9A9A9A);
+    color: var(--Texte-Tertiaire, color(display-p3 0.6039 0.6039 0.6039));
     /* Description */
     font-family: Montserrat;
     font-size: 13px;
@@ -366,10 +385,13 @@ html, body {
     gap: 10px;
     border-radius: 1000px;
     background: var(--Fond-Secondaire, #EFEDE3);
+    background: var(--Fond-Secondaire, color(display-p3 0.9373 0.9294 0.898));
+    background: var
 }
 
 .block-group {
     color: var(--Texte-Secondaire, #866738);
+    color: var(--Texte-Secondaire, color(display-p3 0.5294 0.4078 0.2196));
     /* Description */
     font-family: Montserrat;
     font-size: 13px;
@@ -387,6 +409,7 @@ html, body {
     align-self: stretch;
     border-radius: 24px;
     background: var(--Fond-Secondaire, #EFEDE3);
+    background: var(--Fond-Secondaire, color(display-p3 0.9373 0.9294 0.898));
 }
 
 .legend-item {
@@ -398,6 +421,7 @@ html, body {
 
 .legend-item span {
     color: var(--Texte-Secondaire, #866738);
+    color: var(--Texte-Secondaire, color(display-p3 0.5294 0.4078 0.2196));
     font-family: Montserrat;
     font-size: 13px;
     font-style: normal;
@@ -414,22 +438,25 @@ html, body {
 
 .legend-color.finished {
     background: rgba(154, 154, 154, 0.32);
+    background: color(display-p3 0.6039 0.6039 0.6039 / 0.32);
 }
 
 .legend-color.finished-absent {
     background: rgba(219, 40, 36, 0.32);
+    background: color(display-p3 0.7882 0.2314 0.1882 / 0.32);
 }
 
 .legend-color.started {
     background: rgba(230, 100, 0, 0.32);
-
+    background: color(display-p3 0.84 0.4238 0.1613 / 0.32);
 }
 
 .legend-color.started-absent {
     background: rgba(0, 119, 150, 0.32);
-
+    background: color(display-p3 0.1799 0.4609 0.576 / 0.32);
 }
 
 .legend-color.planned {
     background: var(--Fond-Tertiaire, #FFF);
+    background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
 }

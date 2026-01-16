@@ -15,8 +15,11 @@
     align-items: flex-start;
     border-radius: 28px;
     border: 1px solid var(--Bordure-Web, rgba(255, 255, 255, 0.64));
+    border: 1px solid var(--Bordure-Web, color(display-p3 1 1 1 / 0.64));
     background: var(--Fond-Transparent, rgba(249, 249, 249, 0.64));
+    background: var(--Fond-Transparent, color(display-p3 0.9765 0.9765 0.9765 / 0.64));
     box-shadow: 0 0 24px 0 rgba(0, 0, 0, 0.12);
+    box-shadow: 0 0 24px 0 color(display-p3 0 0 0 / 0.12);
     backdrop-filter: blur(20px);
     z-index: 100;
 }
@@ -99,6 +102,7 @@
     border: none;
     cursor: pointer;
     color: var(--Texte-Primaire, #2a2a2a);
+    color: var(--Texte-Primaire, color(display-p3 0.1647 0.1647 0.1647));
     font-family: Montserrat;
     font-size: 14px;
     font-weight: 600;
@@ -112,7 +116,9 @@
 
 .nav-link.active {
     background: var(--Fond-Secondaire, #EFEDE3);
+    background: var(--Fond-Secondaire, color(display-p3 0.9373 0.9294 0.898));
     color: var(--Bleu, #007999);
+    color: var(--Bleu, color(display-p3 0.1799 0.4609 0.576));
     font-family: Montserrat;
     font-size: 15px;
     font-style: normal;
@@ -144,6 +150,7 @@
     border: none;
     cursor: pointer;
     color: var(--Texte-Tertiaire, #9A9A9A);
+    color: var(--Texte-Tertiaire, color(display-p3 0.6039 0.6039 0.6039));
     font-size: 12px;
     transition: all 0.2s ease;
 }
@@ -185,6 +192,7 @@
 
 .sub-link:hover {
     color: #0066a3 !important;
+    color: var(--Bleu, color(display-p3 0.1799 0.4609 0.576)) !important;
 }
 
 .sidebar-btn {
@@ -203,6 +211,7 @@
     align-self: stretch;
     border-radius: 16px;
     background: var(--Fond-Tertiaire, #FFF);
+    background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
 }
 
 .user-avatar {
@@ -219,7 +228,9 @@
     gap: 10px;
     border-radius: 1000px;
     background: var(--Violet, #8F49B6);
+    background: var(--Violet, color(display-p3 0.4941 0.3137 0.6706));
     color: var(--Texte-Inverse, #F7F7F7);
+    color: var(--Texte-Inverse, color(display-p3 0.9686 0.9686 0.9686));
     /* Corps Important */
     font-family: Montserrat;
     font-size: 15px;
@@ -238,6 +249,7 @@
 
 .user-name {
     color: var(--Texte-Primaire, #2A2A2A);
+    color: var(--Texte-Primaire, color(display-p3 0.1647 0.1647 0.1647));
     /* Corps */
     font-family: Montserrat;
     font-size: 15px;
@@ -248,6 +260,7 @@
 
 .logout-link {
     color: var(--Bleu, #007999);
+    color: var(--Bleu, color(display-p3 0.1799 0.4609 0.576));
     /* Bouton */
     font-family: Montserrat;
     font-size: 14px;
@@ -256,6 +269,7 @@
     line-height: normal;
     cursor: pointer;
     background: var(--Fond-Tertiaire, #FFF);
+    background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
     padding: 0px;
 }
 
