@@ -56,8 +56,8 @@
       <section class="all-users">
         <label class="section-title">Tous les utilisateurs</label>
         <div class="user-cards">
-          <div class="user-card" v-for="user in filteredUsers" :key="user.key">
-            <img src="../assets/images/user-grey.svg" alt="user" class="user-icon" />
+          <div class="user-card" v-for="user in filteredUsers" :key="user.key" @click="openUser(user)">
+              <img :src="user.profilePicture || defaultProfile" alt="Photo de profil" class="user-avatar" />
             <div class="name">{{ user.name }}</div>
             <div class="role" :class="roleClass(user.role)">
               <img :src="roleIcon(user.role)" :alt="user.role" class="role-icon" />
@@ -68,42 +68,100 @@
       </section>
     </div>
   </main>
+
+  <div v-if="selectedUser" class="user-modal-overlay" @click.self="closeUser">
+    <div class="user-modal">
+      <header class="user-modal__header">
+        <div class="user-modal__header-content">
+          <div class="modal-back">
+            <button class="modal-btn ghost" @click="closeUser">
+              <img src="../assets/images/arrow-left.svg" alt="arrow" class="btn-icon" />
+            </button>
+          </div>
+          <div class="modal-actions">
+            <button class="modal-btn secondary"><img src="../assets/images/modify-black.svg" alt="modify" class="btn-icon" /></button>
+            <button class="modal-btn danger" disabled><img src="../assets/images/delete.svg" alt="delete" class="btn-icon" /></button>
+          </div>
+        </div>
+      </header>
+      <div class="user-modal__body">
+        <div class="user-modal__avatar">
+          <img :src="selectedUser.profilePicture || defaultProfile" alt="Photo de profil" />
+        </div>
+        <div class="user-modal__infos">
+          <h3 class="user-modal__name">{{ selectedUser.name }}</h3>
+          <div class="user-modal__email">{{ selectedUser.email || 'Non renseigné' }}</div>
+        </div>
+        <div class="user-modal__role" :class="roleClass(selectedUser.role)">
+          <img :src="roleIcon(selectedUser.role)" :alt="selectedUser.role" class="role-icon" />
+          <span>{{ selectedUser.role }}</span>
+        </div>
+        <div class="user-modal__groups">
+          <div class="group-chips" v-if="selectedUser.groups && selectedUser.groups.length">
+            <span v-for="(group, index) in selectedUser.groups" :key="`${selectedUser.key}-group-${index}`" class="chip">{{ group }}</span>
+          </div>
+          <div v-else class="group-empty">Aucun groupe</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
-import groupsData from '../assets/json/groupes.json'
+import studentsData from '../assets/json/etudiants.json'
 import attendanceTeachers from '../assets/json/attendance-teachers.json'
 import adminsData from '../assets/json/admins.json'
+import classesData from '../assets/json/classes.json'
+import defaultProfile from '../assets/images/user-invert.svg'
+
+const teacherGroupsByName = classesData.reduce((acc, course) => {
+  if (!acc[course.teacher]) acc[course.teacher] = new Set()
+  acc[course.teacher].add(course.group)
+  return acc
+}, {})
 
 export default {
   name: 'Utilisateurs',
   data() {
     return {
-      searchQuery: ''
+      searchQuery: '',
+      selectedUser: null,
+      defaultProfile
     }
   },
   computed: {
     users() {
-      const students = Object.values(groupsData)
-        .flat()
-        .map(student => ({
-          key: `student-${student.id}`,
-          name: `${student.firstName} ${student.lastName}`,
-          role: 'Étudiant'
-        }))
+      const students = studentsData.map(student => ({
+        key: `student-${student.id}`,
+        name: `${student.firstName} ${student.lastName}`,
+        role: 'Étudiant',
+        email: student.email || null,
+        groups: Array.isArray(student.group)
+          ? student.group
+          : student.group
+            ? [student.group]
+            : [],
+        profilePicture: student.profilePicture || null
+      }))
 
       const teachers = Array.from(
         new Set(attendanceTeachers.map(t => t.teacher))
       ).map((teacher, index) => ({
         key: `teacher-${index}`,
         name: teacher,
-        role: 'Enseignant'
+        role: 'Enseignant',
+        email: null,
+        groups: teacherGroupsByName[teacher] ? Array.from(teacherGroupsByName[teacher]) : [],
+        profilePicture: null
       }))
 
       const admins = (adminsData?.administrators || []).map((admin, index) => ({
         key: `admin-${index}`,
         name: admin,
-        role: 'Admin'
+        role: 'Admin',
+        email: null,
+        groups: [],
+        profilePicture: null
       }))
 
       return [...students, ...teachers, ...admins]
@@ -115,6 +173,14 @@ export default {
     }
   },
   methods: {
+    openUser(user) {
+      this.selectedUser = user
+      document.body.style.overflow = 'hidden'
+    },
+    closeUser() {
+      this.selectedUser = null
+      document.body.style.overflow = ''
+    },
     roleIcon(role) {
       const map = {
         Étudiant: new URL('../assets/images/student-blue.svg', import.meta.url).href,
@@ -129,6 +195,9 @@ export default {
       if (role === 'Admin') return 'role-admin'
       return ''
     }
+  },
+  beforeUnmount() {
+    document.body.style.overflow = ''
   }
 }
 </script>

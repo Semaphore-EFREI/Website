@@ -1,0 +1,302 @@
+[
+  {
+    "id": 1,
+    "firstName": "Lucas",
+    "lastName": "Martin",
+    "email": "lucas.martin@univ-fictive.fr",
+    "group": "Groupe 1",
+    "profilePicture": "https://randomuser.me/api/portraits/men/71.jpg",
+    "age": 23,
+    "gender": "male"
+  },
+  {
+    "id": 2,
+    "firstName": "Emma",
+    "lastName": "Durand",
+    "email": "emma.durand@univ-fictive.fr",
+    "group": "Groupe 1",
+    "profilePicture": "https://randomuser.me/api/portraits/women/63.jpg",
+    "age": 24,
+    "gender": "female"
+  },
+  {
+    "id": 3,
+    "firstName": "Hugo",
+    "lastName": "Petit",
+    "email": "hugo.petit@univ-fictive.fr",
+    "group": "Groupe 1",
+    "profilePicture": "https://randomuser.me/api/portraits/men/37.jpg",
+    "age": 24,
+    "gender": "male"
+  },
+  {
+    "id": 4,
+    "firstName": "Chloé",
+    "lastName": "Moreau",
+    "email": "chloe.moreau@univ-fictive.fr",
+    "group": "Groupe 1",
+    "profilePicture": "https://randomuser.me/api/portraits/women/50.jpg",
+    "age": 25,
+    "gender": "female"
+  },
+  {
+    "id": 5,
+    "firstName": "Nathan",
+    "lastName": "Lefevre",
+    "email": "nathan.lefevre@univ-fictive.fr",
+    "group": "Groupe 1",
+    "profilePicture": "https://randomuser.me/api/portraits/men/51.jpg",
+    "age": 22,
+    "gender": "male"
+  },
+  {
+    "id": 6,
+    "firstName": "Manon",
+    "lastName": "Garcia",
+    "email": "manon.garcia@univ-fictive.fr",
+    "group": "Groupe 1",
+    "profilePicture": "https://randomuser.me/api/portraits/women/40.jpg",
+    "age": 26,
+    "gender": "female"
+  },
+  {
+    "id": 7,
+    "firstName": "Louis",
+    "lastName": "Roux",
+    "email": "louis.roux@univ-fictive.fr",
+    "group": "Groupe 1",
+    "profilePicture": "https://randomuser.me/api/portraits/men/1.jpg",
+    "age": 20,
+    "gender": "male"
+  },
+  {
+    "id": 8,
+    "firstName": "Camille",
+    "lastName": "Fournier",
+    "email": "camille.fournier@univ-fictive.fr",
+    "group": "Groupe 1",
+    "profilePicture": "https://randomuser.me/api/portraits/men/10.jpg",
+    "age": 21,
+    "gender": "female"
+  },
+  {
+    "id": 9,
+    "firstName": "Tom",
+    "lastName": "Girard",
+    "email": "tom.girard@univ-fictive.fr",
+    "group": "Groupe 1",
+    "profilePicture": "https://randomuser.me/api/portraits/men/69.jpg",
+    "age": 24,
+    "gender": "male"
+  },
+  {
+    "id": 10,
+    "firstName": "Sarah",
+    "lastName": "Andre",
+    "email": "sarah.andre@univ-fictive.fr",
+    "group": "Groupe 1",
+    "profilePicture": "https://randomuser.me/api/portraits/women/90.jpg",
+    "age": 21,
+    "gender": "male"
+  },
+  {
+    "id": 11,
+    "firstName": "Enzo",
+    "lastName": "Mercier",
+    "email": "enzo.mercier@univ-fictive.fr",
+    "group": "Groupe 2",
+    "profilePicture": "https://randomuser.me/api/portraits/men/64.jpg",
+    "age": 23,
+    "gender": "male"
+  },
+  {
+    "id": 12,
+    "firstName": "Léa",
+    "lastName": "Blanc",
+    "email": "lea.blanc@univ-fictive.fr",
+    "group": "Groupe 2",
+    "profilePicture": "https://randomuser.me/api/portraits/women/27.jpg",
+    "age": 24,
+    "gender": "female"
+  },
+  {
+    "id": 13,
+    "firstName": "Mathis",
+    "lastName": "Faure",
+    "email": "mathis.faure@univ-fictive.fr",
+    "group": "Groupe 2",
+    "profilePicture": "https://randomuser.me/api/portraits/men/77.jpg",
+    "age": 24,
+    "gender": "male"
+  },
+  {
+    "id": 14,
+    "firstName": "Inès",
+    "lastName": "Garnier",
+    "email": "ines.garnier@univ-fictive.fr",
+    "group": "Groupe 2",
+    "profilePicture": "https://randomuser.me/api/portraits/women/79.jpg",
+    "age": 19,
+    "gender": "female"
+  },
+  {
+    "id": 15,
+    "firstName": "Noah",
+    "lastName": "Chevalier",
+    "email": "noah.chevalier@univ-fictive.fr",
+    "group": "Groupe 2",
+    "profilePicture": "https://randomuser.me/api/portraits/men/85.jpg",
+    "age": 24,
+    "gender": "male"
+  },
+  {
+    "id": 16,
+    "firstName": "Clara",
+    "lastName": "Perrin",
+    "email": "clara.perrin@univ-fictive.fr",
+    "group": "Groupe 2",
+    "profilePicture": "https://randomuser.me/api/portraits/women/73.jpg",
+    "age": 25,
+    "gender": "female"
+  },
+  {
+    "id": 17,
+    "firstName": "Jules",
+    "lastName": "Morin",
+    "email": "jules.morin@univ-fictive.fr",
+    "group": "Groupe 2",
+    "profilePicture": "https://randomuser.me/api/portraits/men/4.jpg",
+    "age": 25,
+    "gender": "male"
+  },
+  {
+    "id": 18,
+    "firstName": "Anaïs",
+    "lastName": "Robin",
+    "email": "anais.robin@univ-fictive.fr",
+    "group": "Groupe 2",
+    "profilePicture": "https://randomuser.me/api/portraits/women/66.jpg",
+    "age": 18,
+    "gender": "female"
+  },
+  {
+    "id": 19,
+    "firstName": "Maxime",
+    "lastName": "Clement",
+    "email": "maxime.clement@univ-fictive.fr",
+    "group": "Groupe 2",
+    "profilePicture": "https://randomuser.me/api/portraits/men/28.jpg",
+    "age": 24,
+    "gender": "male"
+  },
+  {
+    "id": 20,
+    "firstName": "Julie",
+    "lastName": "Lopez",
+    "email": "julie.lopez@univ-fictive.fr",
+    "group": "Groupe 2",
+    "profilePicture": "https://randomuser.me/api/portraits/women/67.jpg",
+    "age": 21,
+    "gender": "female"
+  },
+  {
+    "id": 21,
+    "firstName": "Paul",
+    "lastName": "Muller",
+    "email": "paul.muller@univ-fictive.fr",
+    "group": "Groupe 3",
+    "profilePicture": "https://randomuser.me/api/portraits/men/73.jpg",
+    "age": 22,
+    "gender": "male"
+  },
+  {
+    "id": 22,
+    "firstName": "Lina",
+    "lastName": "Nguyen",
+    "email": "lina.nguyen@univ-fictive.fr",
+    "group": "Groupe 3",
+    "profilePicture": "https://randomuser.me/api/portraits/women/74.jpg",
+    "age": 24,
+    "gender": "female"
+  },
+  {
+    "id": 23,
+    "firstName": "Antoine",
+    "lastName": "Henry",
+    "email": "antoine.henry@univ-fictive.fr",
+    "group": "Groupe 3",
+    "profilePicture": "https://randomuser.me/api/portraits/men/95.jpg",
+    "age": 24,
+    "gender": "male"
+  },
+  {
+    "id": 24,
+    "firstName": "Mila",
+    "lastName": "Renaud",
+    "email": "mila.renaud@univ-fictive.fr",
+    "group": "Groupe 3",
+    "profilePicture": "https://randomuser.me/api/portraits/women/97.jpg",
+    "age": 18,
+    "gender": "female"
+  },
+  {
+    "id": 25,
+    "firstName": "Alexis",
+    "lastName": "Boyer",
+    "email": "alexis.boyer@univ-fictive.fr",
+    "group": "Groupe 3",
+    "profilePicture": "https://randomuser.me/api/portraits/women/59.jpg",
+    "age": 21,
+    "gender": "female"
+  },
+  {
+    "id": 26,
+    "firstName": "Zoé",
+    "lastName": "Lemoine",
+    "email": "zoe.lemoine@univ-fictive.fr",
+    "group": "Groupe 3",
+    "profilePicture": "https://randomuser.me/api/portraits/women/68.jpg",
+    "age": 22,
+    "gender": "female"
+  },
+  {
+    "id": 27,
+    "firstName": "Victor",
+    "lastName": "Marchand",
+    "email": "victor.marchand@univ-fictive.fr",
+    "group": "Groupe 3",
+    "profilePicture": "https://randomuser.me/api/portraits/men/14.jpg",
+    "age": 23,
+    "gender": "male"
+  },
+  {
+    "id": 28,
+    "firstName": "Eva",
+    "lastName": "Colin",
+    "email": "eva.colin@univ-fictive.fr",
+    "group": "Groupe 3",
+    "profilePicture": "https://randomuser.me/api/portraits/women/87.jpg",
+    "age": 20,
+    "gender": "female"
+  },
+  {
+    "id": 29,
+    "firstName": "Romain",
+    "lastName": "Barbier",
+    "email": "romain.barbier@univ-fictive.fr",
+    "group": "Groupe 3",
+    "profilePicture": "https://randomuser.me/api/portraits/men/16.jpg",
+    "age": 20,
+    "gender": "male"
+  },
+  {
+    "id": 30,
+    "firstName": "Maëlle",
+    "lastName": "Dubois",
+    "email": "maelle.dubois@univ-fictive.fr",
+    "group": "Groupe 3",
+    "profilePicture": "https://randomuser.me/api/portraits/women/71.jpg",
+    "age": 21,
+    "gender": "female"
+  }
+]

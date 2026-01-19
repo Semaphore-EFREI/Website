@@ -122,7 +122,7 @@
 
 <script>
 import classesData from '../assets/json/classes.json'
-import groupsData from '../assets/json/groupes.json'
+import studentsData from '../assets/json/etudiants.json'
 import attendanceData from '../assets/json/attendance.json'
 import attendanceTeachersData from '../assets/json/attendance-teachers.json'
 import clockIcon from '../assets/images/clock.svg'
@@ -175,7 +175,7 @@ export default {
       const courseId = Number(this.id)
       this.course = classesData.find(c => Number(c.id) === courseId) || null
       if (!this.course) return
-      const roster = groupsData[this.course.group] || []
+      const roster = studentsData.filter(student => student.group === this.course.group)
       const attendance = attendanceData.filter(a => Number(a.courseId) === courseId)
       const teacherAttendance = attendanceTeachersData.find(
         a => Number(a.courseId) === courseId && a.teacher === this.course.teacher
