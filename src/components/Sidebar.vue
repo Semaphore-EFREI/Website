@@ -65,7 +65,12 @@ export default {
       expandedGroups: ['Utilisateurs', "L'école"],
       navItems: [
         { label: 'Calendrier', routeName: 'Calendrier', icon: 'calendrier_black' },
-        { label: 'Utilisateurs', routeName: 'Utilisateurs', icon: 'user' },
+        { label: 'Utilisateurs', routeName: 'Utilisateurs', icon: 'user' ,
+          children: [
+            { label: 'Étudiants' },
+            { label: 'Enseignants' },
+            { label: 'Administrateurs' }
+          ]},
         { label: 'Groupes et Classes', icon: 'group' },
         {
           label: "L'école",
