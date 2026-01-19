@@ -79,7 +79,7 @@
             </button>
           </div>
           <div class="modal-actions">
-            <button class="modal-btn secondary"><img src="../assets/images/modify-black.svg" alt="modify" class="btn-icon" /></button>
+            <button class="modal-btn secondary" @click="editUser(selectedUser)"><img src="../assets/images/modify-black.svg" alt="modify" class="btn-icon" /></button>
             <button class="modal-btn danger" disabled><img src="../assets/images/delete.svg" alt="delete" class="btn-icon" /></button>
           </div>
         </div>
@@ -108,17 +108,9 @@
 </template>
 
 <script>
-import studentsData from '../assets/json/etudiants.json'
-import attendanceTeachers from '../assets/json/attendance-teachers.json'
-import adminsData from '../assets/json/admins.json'
-import classesData from '../assets/json/classes.json'
-import defaultProfile from '../assets/images/user-invert.svg'
 
-const teacherGroupsByName = classesData.reduce((acc, course) => {
-  if (!acc[course.teacher]) acc[course.teacher] = new Set()
-  acc[course.teacher].add(course.group)
-  return acc
-}, {})
+import defaultProfile from '../assets/images/user-invert.svg'
+import { getUsers } from '../utils/user-data'
 
 export default {
   name: 'Utilisateurs',
@@ -131,40 +123,7 @@ export default {
   },
   computed: {
     users() {
-      const students = studentsData.map(student => ({
-        key: `student-${student.id}`,
-        name: `${student.firstName} ${student.lastName}`,
-        role: 'Étudiant',
-        email: student.email || null,
-        groups: Array.isArray(student.group)
-          ? student.group
-          : student.group
-            ? [student.group]
-            : [],
-        profilePicture: student.profilePicture || null
-      }))
-
-      const teachers = Array.from(
-        new Set(attendanceTeachers.map(t => t.teacher))
-      ).map((teacher, index) => ({
-        key: `teacher-${index}`,
-        name: teacher,
-        role: 'Enseignant',
-        email: null,
-        groups: teacherGroupsByName[teacher] ? Array.from(teacherGroupsByName[teacher]) : [],
-        profilePicture: null
-      }))
-
-      const admins = (adminsData?.administrators || []).map((admin, index) => ({
-        key: `admin-${index}`,
-        name: admin,
-        role: 'Admin',
-        email: null,
-        groups: [],
-        profilePicture: null
-      }))
-
-      return [...students, ...teachers, ...admins]
+      return getUsers()
     },
     filteredUsers() {
       const query = this.searchQuery.trim().toLowerCase()
@@ -180,6 +139,13 @@ export default {
     closeUser() {
       this.selectedUser = null
       document.body.style.overflow = ''
+    },
+    editUser(user) {
+      if (!user) return
+      this.$router.push({
+        name: 'UtilisateurEdit',
+        query: { userKey: user.key }
+      })
     },
     roleIcon(role) {
       const map = {

@@ -124,6 +124,7 @@ export default {
     isActive(item) {
       if (!item.routeName) return false
       if (item.routeName === 'Calendrier' && this.$route.name === 'CalendrierDetail') return true
+      if (item.routeName === 'Utilisateurs' && this.$route.name === 'UtilisateurEdit') return true
       return this.$route.name === item.routeName
     },
     handleNav(item) {

@@ -1,0 +1,260 @@
+.edit-user-page {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    background: var(--Fond-Primaire, #FAF9F6);
+    background: var(--Fond-Primaire, color(display-p3 0.9804 0.9765 0.9647));
+    padding-left: 50px; /* Adjust based on sidebar width */
+}
+
+.edit-user-header {
+    display: flex;
+    padding: 48px 24px 12px 24px;
+    justify-content: space-between;
+    align-items: center;
+    align-self: stretch;
+    background: rgba(250, 249, 246, 0.64);
+    background: color(display-p3 0.9804 0.9765 0.9647 / 0.64);
+    backdrop-filter: blur(10px);
+}
+
+.edit-user-header-left {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+}
+
+.edit-back-btn {
+    display: flex;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    aspect-ratio: 1/1;
+    border-radius: 1000px;
+    background: var(--Fond-Tertiaire, #FFF);
+    background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
+}
+
+.edit-title {
+    color: #000;
+    color: color(display-p3 0 0 0);
+    font-family: Montserrat;
+    font-size: 28px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+}
+
+.edit-save-btn {
+    display: flex;
+    min-height: 44px;
+    padding: 10px 20px;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    border-radius: 50px;
+    background: var(--Bleu, #007999);
+    background: var(--Bleu, color(display-p3 0.1799 0.4609 0.576));
+    color: var(--Fond-Primaire, #FAF9F6);
+    color: var(--Fond-Primaire, color(display-p3 0.9804 0.9765 0.9647));
+    font-family: Montserrat;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+}
+.edit-save-btn:hover {
+  background: #006480;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.edit-user-form {
+    display: flex;
+    padding: 24px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    align-self: stretch;
+}
+
+.edit-user-info {
+    display: flex;
+    padding-bottom: 24px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+}
+
+.edit-user-avatar-block {
+    color: var(--Gris, #9A9A9A);
+    color: var(--Gris, color(display-p3 0.6039 0.6039 0.6039));
+    font-family: "SF Pro";
+    font-size: 96px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+}
+
+.edit-user-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 2px solid #e0e0e0;
+  background: #f2f2f2;
+  object-fit: cover;
+}
+
+.edit-user-names {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 16px;
+    width: 100%;
+}
+
+.edit-user-names .edit-input {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+}
+
+.edit-user-names .first-name {
+    text-align: right;
+}
+
+.edit-user-names .last-name {
+    text-align: left;
+}
+
+.edit-input {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    color: var(--Texte-Primaire, #2A2A2A);
+    color: var(--Texte-Primaire, color(display-p3 0.1647 0.1647 0.1647));
+    font-family: Montserrat;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+    background: transparent;
+    border: none;
+}
+
+.edit-input:active {
+    border: 1.5px solid var(--Gris, #9A9A9A);
+}
+
+.edit-user-roles {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.role-btn {
+    display: flex;
+    padding: 6px 12px;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    border-radius: 1000px;
+    background: rgba(154, 154, 154, 0.16);
+    background: color(display-p3 0.6039 0.6039 0.6039 / 0.16);
+    transition: background 0.15s, border 0.15s, color 0.15s;
+    color: var(--Gris, #9A9A9A);
+    color: var(--Gris, color(display-p3 0.6039 0.6039 0.6039));
+    text-align: center;
+    font-family: Montserrat;
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+}
+
+.role-btn.selected, .role-btn:active {
+    border-radius: 1000px;
+    background: rgba(0, 119, 150, 0.16);
+    background: color(display-p3 0.1799 0.4609 0.576 / 0.16);
+    color: var(--Bleu, #007999);
+    color: var(--Bleu, color(display-p3 0.1799 0.4609 0.576));
+}
+
+.role-btn:hover:not(.selected) {
+  background: #e6f3f7;
+}
+
+.edit-user-contact {
+    display: flex;
+    padding: 24px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+    align-self: stretch;
+    border-radius: 38px;
+    background: var(--Fond-Secondaire, #EFEDE3);
+    background: var(--Fond-Secondaire, color(display-p3 0.9373 0.9294 0.898));
+}
+
+.edit-user-contact h2 {
+    display: flex;
+    padding-left: 10px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    color: var(--Texte-Secondaire, #866738);
+    color: var(--Texte-Secondaire, color(display-p3 0.4902 0.4118 0.2706));
+    font-family: Montserrat;
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+}
+
+.edit-user-contact-divider {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    align-self: stretch;
+}
+
+.edit-input-label {
+    color: var(--Texte-Secondaire, #866738);
+    color: var(--Texte-Secondaire, color(display-p3 0.4902 0.4118 0.2706));
+    font-family: Montserrat;
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+}
+
+.edit-user-contact-divider .edit-input {
+    display: flex;
+    height: 44px;
+    padding: 15px;
+    align-items: center;
+    gap: 6px;
+    align-self: stretch;
+    border-radius: 1000px;
+    background: var(--Fond-Tertiaire, #FFF);
+    background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
+    color: var(--Texte-Primaire, #2A2A2A);
+    color: var(--Texte-Primaire, color(display-p3 0.1647 0.1647 0.1647));
+    font-family: Montserrat;
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+}
