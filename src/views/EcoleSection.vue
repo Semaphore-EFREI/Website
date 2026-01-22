@@ -17,7 +17,7 @@
 
     <section class="role-school-grid">
       <div class="user-cards">
-        <article v-for="item in displayItems" :key="item.key" class="user-card school-card">
+        <article v-for="item in displayItems" :key="item.key" class="user-card school-card" @click="openItem(item)">
           <div class="name">{{ item.displayName }}</div>
           <div class="role" :class="itemClass(item.type)">
                     <img src="../assets/images/balise.svg" alt="balise" class="role-icon" />
@@ -116,6 +116,39 @@
       </fieldset>
     </form>
   </main>
+
+  <div v-if="selectedItem && section !== 'parametres'" class="user-modal-overlay" @click.self="closeItem">
+    <div class="user-modal">
+      <header class="user-modal__header">
+        <div class="user-modal__header-content">
+          <div class="modal-back">
+            <button class="modal-btn ghost" type="button" @click="closeItem">
+              <img src="../assets/images/arrow-left.svg" alt="arrow" class="btn-icon" />
+            </button>
+          </div>
+          <div class="modal-actions">
+            <button class="modal-btn danger" type="button" @click="deleteItem(selectedItem)">
+              <img src="../assets/images/delete.svg" alt="delete" class="btn-icon" />
+            </button>
+          </div>
+        </div>
+      </header>
+      <div class="user-modal__body">
+        <div class="modal-edit-form">
+          <input 
+            id="item-name" 
+            v-model="editingName" 
+            type="text" 
+            class="edit-input"
+            placeholder="Nom"
+          />
+          <button class="btn-save" type="button" @click="saveItem">
+            <span>Enregistrer</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -147,6 +180,8 @@ export default {
   data() {
     return {
       selectedItem: null,
+      editingName: '',
+      isNewItem: false,
       defaultProfile,
       salles: sallesData,
       checkboxEmpty,
@@ -197,14 +232,59 @@ export default {
     goBack() {
       this.$router.push({ name: 'Ecole' }).catch(() => {})
     },
+    openItem(item) {
+      this.selectedItem = item
+      this.editingName = item.displayName
+      document.body.style.overflow = 'hidden'
+    },
+    closeItem() {
+      this.selectedItem = null
+      this.editingName = ''
+      document.body.style.overflow = ''
+    },
+    saveItem() {
+      if (!this.selectedItem || !this.editingName.trim()) return
+      this.selectedItem.displayName = this.editingName
+      this.selectedItem.name = this.editingName
+      if (this.isNewItem) {
+        alert('Nouvel élément ajouté')
+      } else {
+        alert('Changements enregistrés')
+      }
+      this.closeItem()
+    },
+    deleteItem(item) {
+      if (!item) return
+      alert(`Suppression de "${item.displayName}" à venir`)
+      this.closeItem()
+    },
     handleAction() {
       if (this.section === 'salles') {
-        alert('Ajout d\'une salle à venir')
+        this.openNewItem('salle')
       } else if (this.section === 'balises') {
-        alert('Ajout d\'une balise à venir')
+        this.openNewItem('balise')
       } else if (this.section === 'parametres') {
         alert('Enregistrement à venir')
       }
+    },
+    openNewItem(type) {
+      const newItem = {
+        key: `new-${type}-${Date.now()}`,
+        name: '',
+        displayName: '',
+        type: type === 'salle' ? '0 balise' : 'Balise',
+        profilePicture: null
+      }
+      this.selectedItem = newItem
+      this.editingName = ''
+      this.isNewItem = true
+      document.body.style.overflow = 'hidden'
+    },
+    closeItem() {
+      this.selectedItem = null
+      this.editingName = ''
+      this.isNewItem = false
+      document.body.style.overflow = ''
     },
     itemIcon(type) {
       return new URL('../assets/images/user.svg', import.meta.url).href
@@ -212,8 +292,11 @@ export default {
     itemClass(type) {
       return ''
     }
+  },
+  beforeUnmount() {
+    document.body.style.overflow = ''
   }
 }
 </script>
 
-<style scoped src="../assets/groupes-classes-detail.css"></style>
+<style scoped src="../assets/ecole-section.css"></style>

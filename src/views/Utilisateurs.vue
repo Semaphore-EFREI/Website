@@ -80,7 +80,7 @@
           </div>
           <div class="modal-actions">
             <button class="modal-btn secondary" @click="editUser(selectedUser)"><img src="../assets/images/modify-black.svg" alt="modify" class="btn-icon" /></button>
-            <button class="modal-btn danger" disabled><img src="../assets/images/delete.svg" alt="delete" class="btn-icon" /></button>
+            <button class="modal-btn danger" @click="deleteUser(selectedUser)"><img src="../assets/images/delete.svg" alt="delete" class="btn-icon" /></button>
           </div>
         </div>
       </header>
@@ -160,6 +160,10 @@ export default {
     },
     createUser() {
       this.$router.push({ name: 'UtilisateurEdit' })
+    },
+    deleteUser(user) {
+      if (!user) return
+      alert(`Suppression de ${user.name} à venir`)
     },
     roleIcon(role) {
       const map = {

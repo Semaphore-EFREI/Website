@@ -15,11 +15,11 @@
           <img class="btn-icon" src="../assets/images/modify.svg" alt="Modifier" />
           <span>Modifier</span>
         </button>
-        <button v-if="!isPlanned" class="btn-allpresent">
+        <button v-if="!isPlanned" class="btn-allpresent" :class="allPresentStatus" @click="setAllPresent">
           <img class="btn-icon" src="../assets/images/check-white.svg" alt="Tout présent" />
           <span>Tout le monde présent</span>
         </button>
-        <button v-if="!isPlanned" class="btn-allabsent">
+        <button v-if="!isPlanned" class="btn-allabsent" :class="allAbsentStatus" @click="setAllAbsent">
           <img class="btn-icon" src="../assets/images/croix.svg" alt="Tout absent" />
           <span>Tout le monde absent</span>
         </button>
@@ -73,8 +73,8 @@
                 <div v-else class="signature-none">Aucune signature</div>
               </div>
                 <div class="actions" v-if="!isPlanned">
-                  <button class="btn-present" :class="teacher?.meta?.class || 'none'">✔</button>
-                  <button class="btn-absent" :class="teacher?.meta?.class || 'none'">✖</button>
+                  <button class="btn-present" :class="teacher?.meta?.class || 'none'" @click="setTeacherStatus('present')">✔</button>
+                  <button class="btn-absent" :class="teacher?.meta?.class || 'none'" @click="setTeacherStatus('absent')">✖</button>
                 </div>
             </div>
         </div>
@@ -105,8 +105,8 @@
                 <div v-else class="signature-none">Aucune signature</div>
             </div>
             <div class="actions" v-if="!isPlanned">
-              <button class="btn-present" :class="student.meta?.class || 'none'">✔</button>
-              <button class="btn-absent" :class="student.meta?.class || 'none'">✖</button>
+              <button class="btn-present" :class="student.meta?.class || 'none'" @click="setStudentStatus(student.id, 'present')">✔</button>
+              <button class="btn-absent" :class="student.meta?.class || 'none'" @click="setStudentStatus(student.id, 'absent')">✖</button>
             </div>
             </div>
         </div>
@@ -165,6 +165,18 @@ export default {
         planned: { text: "Ce cours n'a pas encore débuté", icon: null }
       }
       return statusMap[this.course.status] || { text: '', icon: null }
+    },
+    allPresentStatus() {
+      if (this.students.length === 0) return ''
+      const allPresent = this.students.every(s => s.meta?.class === 'present') && 
+                        this.teacher?.meta?.class === 'present'
+      return allPresent ? 'present' : ''
+    },
+    allAbsentStatus() {
+      if (this.students.length === 0) return ''
+      const allAbsent = this.students.every(s => s.meta?.class === 'absent') && 
+                       this.teacher?.meta?.class === 'absent'
+      return allAbsent ? 'absent' : ''
     }
   },
   created() {
@@ -233,8 +245,48 @@ export default {
       }
       return map[status] || null
     },
+    setTeacherStatus(status) {
+      if (!this.teacher) return
+      this.teacher.signatureStatus = status
+      this.teacher.meta = this.signatureMeta(status)
+      // Update display based on status
+      if (status === 'absent') {
+        this.teacher.signatureUrl = null
+      } else if (status === 'present') {
+        this.teacher.signatureUrl = null
+      }
+    },
+    setStudentStatus(studentId, status) {
+      const student = this.students.find(s => s.id === studentId)
+      if (!student) return
+      student.signatureStatus = status
+      student.meta = this.signatureMeta(status)
+      // Update display based on status
+      if (status === 'absent') {
+        student.signatureUrl = null
+      } else if (status === 'present') {
+        student.signatureUrl = null
+      }
+    },
+    setAllPresent() {
+      // Set all students to present
+      this.students.forEach(student => {
+        if (student.signatureStatus !== 'signed') {
+          this.setStudentStatus(student.id, 'present')
+        }
+      })
+    },
+    setAllAbsent() {
+      // Set all students to absent
+      this.students.forEach(student => {
+          this.setStudentStatus(student.id, 'absent')
+      })
+    },
     goBack() {
-      this.$router.push({ name: 'Calendrier' })
+      this.$router.push({ 
+        name: 'Calendrier', 
+        query: { date: this.course?.day }
+      })
     }
   }
 }

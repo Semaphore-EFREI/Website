@@ -103,6 +103,20 @@ export default {
 
     }
   },
+  mounted() {
+    // Si une date est passée en query parameter, utiliser cette date
+    if (this.$route.query.date) {
+      const dateStr = this.$route.query.date;
+      // Parse date string in format DD/MM/YYYY
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parseInt(parts[2], 10);
+        this.selectedDate = new Date(year, month, day);
+      }
+    }
+  },
   computed: {
     formattedDate() {
       const day = this.selectedDate.getDate();
