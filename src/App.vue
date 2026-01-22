@@ -51,7 +51,7 @@ export default {
 }
 
 .app-main.sidebar-collapsed :deep(.calendrier-all) {
-  margin-left: 88px;
+  margin-left: 20px;
   transition: margin-left 0.2s ease;
 }
 
@@ -63,7 +63,7 @@ export default {
 }
 
 .app-main.sidebar-collapsed :deep(.detail-page) {
-  margin-left: clamp(48px, 10vw, 88px);
+  margin-left: 50px;
   max-width: calc(100% - clamp(48px, 10vw, 88px));
   transition: margin-left 0.2s ease, max-width 0.2s ease;
 }
@@ -76,7 +76,7 @@ export default {
 }
 
 .app-main.sidebar-collapsed :deep(.users-content) {
-  margin-left: clamp(48px, 10vw, 88px);
+  margin-left: 30px;
   max-width: calc(100% - clamp(48px, 10vw, 88px));
   transition: margin-left 0.2s ease, max-width 0.2s ease;
 }
@@ -88,7 +88,7 @@ export default {
 }
 
 .app-main.sidebar-collapsed :deep(.edit-user-page) {
-  margin-left: clamp(48px, 10vw, 88px);
+  margin-left: 50px;
   max-width: calc(100% - clamp(48px, 10vw, 88px));
   transition: margin 0.2s ease;
 }

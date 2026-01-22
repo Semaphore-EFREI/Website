@@ -35,9 +35,10 @@
               v-for="child in item.children"
               :key="child.label"
               class="nav-link sub-link"
+              :class="{ active: isActive(child) }"
               type="button"
+              @click="handleNav(child)"
             >
-              <img v-if="child.icon" :src="getIcon(child.icon)" class="nav-icon" :alt="child.label" />
               <span class="link-label">{{ child.label }}</span>
             </button>
           </div>
@@ -65,20 +66,25 @@ export default {
       expandedGroups: ['Utilisateurs', "L'école"],
       navItems: [
         { label: 'Calendrier', routeName: 'Calendrier', icon: 'calendrier_black' },
-        { label: 'Utilisateurs', routeName: 'Utilisateurs', icon: 'user' ,
+        {
+          label: 'Utilisateurs',
+          routeName: 'Utilisateurs',
+          icon: 'user',
           children: [
-            { label: 'Étudiants' },
-            { label: 'Enseignants' },
-            { label: 'Administrateurs' }
-          ]},
-        { label: 'Groupes et Classes', icon: 'group' },
+            { label: 'Étudiants', routeName: 'Etudiants', icon: 'student-blue' },
+            { label: 'Enseignants', routeName: 'Enseignants', icon: 'teacher-green' },
+            { label: 'Admins', routeName: 'Admins', icon: 'admin-purple' }
+          ]
+        },
+        { label: 'Groupes et Classes', routeName: 'GroupesClasses', icon: 'group' },
         {
           label: "L'école",
+          routeName: 'Ecole',
           icon: 'school',
           children: [
-            { label: 'Salles' },
-            { label: 'Balises' },
-            { label: 'Paramètres' }
+            { label: 'Salles', routeName: 'EcoleSection', params: { section: 'salles' } },
+            { label: 'Balises', routeName: 'EcoleSection', params: { section: 'balises' } },
+            { label: 'Paramètres', routeName: 'EcoleSection', params: { section: 'parametres' } }
           ]
         }
       ],
@@ -98,6 +104,17 @@ export default {
         .toUpperCase()
     }
   },
+  watch: {
+    collapsed(value) {
+      this.syncBodyClass(value)
+    }
+  },
+  mounted() {
+    this.syncBodyClass(this.collapsed)
+  },
+  beforeUnmount() {
+    document.body.classList.remove('sidebar-expanded', 'sidebar-collapsed')
+  },
   methods: {
     getIcon(name) {
       try {
@@ -105,6 +122,10 @@ export default {
       } catch (e) {
         return ''
       }
+    },
+    syncBodyClass(collapsed) {
+      document.body.classList.toggle('sidebar-expanded', !collapsed)
+      document.body.classList.toggle('sidebar-collapsed', collapsed)
     },
     toggleSidebar() {
       this.collapsed = !this.collapsed
@@ -122,15 +143,28 @@ export default {
       return this.expandedGroups.includes(label)
     },
     isActive(item) {
-      if (!item.routeName) return false
+      if (!item?.routeName) return false
       if (item.routeName === 'Calendrier' && this.$route.name === 'CalendrierDetail') return true
       if (item.routeName === 'Utilisateurs' && this.$route.name === 'UtilisateurEdit') return true
+      if (item.routeName === 'GroupesClasses' && this.$route.name === 'GroupesClassesDetail') return true
+      if (item.routeName === 'EcoleSection' && this.$route.name === 'EcoleSection') {
+        if (!item.params) return true
+        return Object.entries(item.params).every(([key, value]) => this.$route.params[key] === value)
+      }
       return this.$route.name === item.routeName
     },
     handleNav(item) {
       if (!item.routeName) return
-      if (this.$route.name === item.routeName) return
-      this.$router.push({ name: item.routeName }).catch(() => {})
+      if (this.$route.name === item.routeName) {
+        if (!item.params) return
+        const matches = Object.entries(item.params).every(([key, value]) => this.$route.params[key] === value)
+        if (matches) return
+      }
+      const route = { name: item.routeName }
+      if (item.params) {
+        route.params = { ...item.params }
+      }
+      this.$router.push(route).catch(() => {})
     },
     logout() {
       this.$router.push({ name: 'Connexion' })

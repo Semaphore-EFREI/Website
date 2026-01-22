@@ -1,0 +1,82 @@
+@import './utilisateurs.css';
+
+.all-groups {
+    display: flex;
+    padding: 24px;
+    align-items: center;
+    gap: 24px;
+    align-self: stretch;
+}
+
+
+.group-cards {
+    display: flex;
+    align-items: flex-start;
+    align-content: flex-start;
+    gap: 24px;
+    flex: 1 0 0;
+    flex-wrap: wrap;
+}
+
+.group-card {
+    display: flex;
+    min-width: 160px;
+    max-width: 180px;
+    height: 220px;
+    padding: 24px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    flex: 1 0 0;
+    border-radius: 24px;
+    background: var(--Fond-Tertiaire, #FFF);
+    background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.group-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 32px rgba(16, 38, 148, 0.12);
+}
+
+.group-img {
+    color: var(--Texte-Tertiaire, #9A9A9A);
+    color: var(--Texte-Tertiaire, color(display-p3 0.6039 0.6039 0.6039));
+    text-align: center;
+    font-family: "SF Pro";
+    font-size: 56px;
+    font-style: normal;
+    font-weight: 510;
+    line-height: normal;
+}
+
+.group-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.group-name {
+    color: var(--Texte-Primaire, #2A2A2A);
+    color: var(--Texte-Primaire, color(display-p3 0.1647 0.1647 0.1647));
+    text-align: center;
+    font-family: Montserrat;
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+}
+
+.group-count {
+    color: var(--Texte-Secondaire, #866738);
+    color: var(--Texte-Secondaire, color(display-p3 0.4902 0.4118 0.2706));
+    text-align: center;
+    font-family: Montserrat;
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+}
+

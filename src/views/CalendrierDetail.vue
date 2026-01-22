@@ -175,7 +175,12 @@ export default {
       const courseId = Number(this.id)
       this.course = classesData.find(c => Number(c.id) === courseId) || null
       if (!this.course) return
-      const roster = studentsData.filter(student => student.group === this.course.group)
+      const roster = studentsData.filter(student => {
+        if (Array.isArray(student.group)) {
+          return student.group.includes(this.course.group)
+        }
+        return student.group === this.course.group
+      })
       const attendance = attendanceData.filter(a => Number(a.courseId) === courseId)
       const teacherAttendance = attendanceTeachersData.find(
         a => Number(a.courseId) === courseId && a.teacher === this.course.teacher
@@ -184,8 +189,11 @@ export default {
       if (teacherAttendance) {
         const status = teacherAttendance.status || 'none'
         const meta = this.signatureMeta(status)
-        const signatureFile = teacherAttendance.signature ? teacherAttendance.signature.split('/').pop() : null
-        const signatureUrl = signatureFile && signatureByName[signatureFile] ? signatureByName[signatureFile] : null
+        let signatureUrl = null
+        if (status === 'signed' && teacherAttendance.signature) {
+          const signatureFile = teacherAttendance.signature.split('/').pop()
+          signatureUrl = signatureFile && signatureByName[signatureFile] ? signatureByName[signatureFile] : null
+        }
         this.teacher = {
           signatureStatus: status,
           signatureUrl,
@@ -203,8 +211,11 @@ export default {
         const entry = attendance.find(a => Number(a.studentId) === Number(student.id))
         const status = entry && entry.status ? entry.status : 'none'
         const meta = this.signatureMeta(status)
-        const signatureFile = entry && entry.signature ? entry.signature.split('/').pop() : null
-        const signatureUrl = signatureFile && signatureByName[signatureFile] ? signatureByName[signatureFile] : null
+        let signatureUrl = null
+        if (status === 'signed' && entry && entry.signature) {
+          const signatureFile = entry.signature.split('/').pop()
+          signatureUrl = signatureFile && signatureByName[signatureFile] ? signatureByName[signatureFile] : null
+        }
         return {
           id: student.id,
           name: `${student.firstName} ${student.lastName}`,

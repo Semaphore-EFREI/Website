@@ -6,7 +6,7 @@
     gap: 24px;
     background: var(--Fond-Primaire, #FAF9F6);
     background: var(--Fond-Primaire, color(display-p3 0.9804 0.9765 0.9647));
-    padding-left: 50px; /* Adjust based on sidebar width */
+    padding: 1%; /* Adjust based on sidebar width */
 }
 
 .edit-user-header {
@@ -24,7 +24,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 16px;
+    gap: 24px;
 }
 
 .edit-back-btn {
@@ -75,6 +75,14 @@
   transform: translateY(-2px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
+.edit-save-btn:disabled {
+        background: rgba(201, 210, 214, 0.9);
+        color: #fff;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+        opacity: 0.7;
+}
 
 .edit-user-form {
     display: flex;
@@ -112,13 +120,14 @@
   border: 2px solid #e0e0e0;
   background: #f2f2f2;
   object-fit: cover;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .edit-user-names {
     display: flex;
     justify-content: space-between;
     align-items: stretch;
-    gap: 16px;
+    gap: 12px;
     width: 100%;
 }
 
@@ -152,9 +161,12 @@
     border: none;
 }
 
-.edit-input:active {
-    border: 1.5px solid var(--Gris, #9A9A9A);
+.edit-input:focus,
+.edit-input:focus-visible {
+    outline: none;
+    box-shadow: none;
 }
+
 
 .edit-user-roles {
     display: flex;
@@ -163,39 +175,76 @@
 }
 
 .role-btn {
-    display: flex;
-    padding: 6px 12px;
+    --role-color: var(--Bleu, #007999);
+    --role-shadow: rgba(0, 119, 150, 0.35);
+    --role-focus: rgba(0, 119, 150, 0.25);
+    display: inline-flex;
+    padding: 8px 16px;
     justify-content: center;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     border-radius: 1000px;
-    background: rgba(154, 154, 154, 0.16);
-    background: color(display-p3 0.6039 0.6039 0.6039 / 0.16);
-    transition: background 0.15s, border 0.15s, color 0.15s;
+    border: 1px solid transparent;
+    background: rgba(42, 42, 42, 0.08);
     color: var(--Gris, #9A9A9A);
-    color: var(--Gris, color(display-p3 0.6039 0.6039 0.6039));
     text-align: center;
     font-family: Montserrat;
     font-size: 13px;
     font-style: normal;
     font-weight: 500;
     line-height: normal;
+    transition: background 0.2s, border 0.2s, color 0.2s, box-shadow 0.2s, transform 0.15s;
 }
 
-.role-btn.selected, .role-btn:active {
-    border-radius: 1000px;
+.role-btn.selected.role-student {
     background: rgba(0, 119, 150, 0.16);
     background: color(display-p3 0.1799 0.4609 0.576 / 0.16);
     color: var(--Bleu, #007999);
     color: var(--Bleu, color(display-p3 0.1799 0.4609 0.576));
 }
 
-.role-btn:hover:not(.selected) {
-  background: #e6f3f7;
+.role-btn.selected.role-teacher {
+    background: rgba(0, 153, 150, 0.16);
+    background: color(display-p3 0.1765 0.5882 0.5843 / 0.16);
+    color: var(--Cyan, #009C97);
+    color: var(--Cyan, color(display-p3 0.1765 0.5882 0.5843));
+}
+
+.role-btn.selected.role-admin {
+    background: rgba(134, 77, 176, 0.16);
+    background: color(display-p3 0.4941 0.3137 0.6706 / 0.16);
+    color: var(--Violet, #8F49B6);
+    color: var(--Violet, color(display-p3 0.4941 0.3137 0.6706));
+}
+
+.role-btn img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    filter: grayscale(1);
+    transition: filter 0.2s, transform 0.2s;
+}
+
+.role-btn.selected img {
+    filter: none;
+}
+
+.role-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--role-focus);
+}
+
+.role-btn:active:not(.selected) {
+    transform: translateY(1px);
+}
+
+.role-btn:not(.selected):hover {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .edit-user-contact {
     display: flex;
+    border:none;
     padding: 24px;
     flex-direction: column;
     align-items: flex-start;
@@ -208,7 +257,6 @@
 
 .edit-user-contact h2 {
     display: flex;
-    padding-left: 10px;
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -252,6 +300,16 @@
     background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
     color: var(--Texte-Primaire, #2A2A2A);
     color: var(--Texte-Primaire, color(display-p3 0.1647 0.1647 0.1647));
+    font-family: Montserrat;
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+}
+
+.edit-user-contact-divider .edit-input::placeholder {
+    color: var(--Texte-Quaternaire, #C1B4A0);
+    color: var(--Texte-Quaternaire, color(display-p3 0.7412 0.7059 0.6431));
     font-family: Montserrat;
     font-size: 15px;
     font-style: normal;

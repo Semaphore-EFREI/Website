@@ -5,13 +5,25 @@ import Calendar from '../views/Calendrier.vue'
 import CalendarDetail from '../views/CalendrierDetail.vue'
 import Users from '../views/Utilisateurs.vue'
 import UtilisateurEdit from '../views/UtilisateurEdit.vue'
+import RoleUsers from '../views/RoleUsers.vue'
+import GroupesClasses from '../views/GroupesClasses.vue'
+import GroupesClassesDetail from '../views/GroupesClassesDetail.vue'
+import Ecole from '../views/Ecole.vue'
+import EcoleSection from '../views/EcoleSection.vue'
 
 const routes = [
   { path: '/', name: 'Connexion', component: Login },
   { path: '/calendrier', name: 'Calendrier', component: Calendar },
   { path: '/calendrier/:id', name: 'CalendrierDetail', component: CalendarDetail, props: true },
   { path: '/utilisateurs', name: 'Utilisateurs', component: Users },
-  { path: '/utilisateurs/modifier', name: 'UtilisateurEdit', component: UtilisateurEdit }
+  { path: '/utilisateurs/modifier', name: 'UtilisateurEdit', component: UtilisateurEdit },
+  { path: '/etudiants', name: 'Etudiants', component: RoleUsers, props: { role: 'Étudiant', title: 'Étudiants' } },
+  { path: '/enseignants', name: 'Enseignants', component: RoleUsers, props: { role: 'Enseignant', title: 'Enseignants' } },
+  { path: '/admins', name: 'Admins', component: RoleUsers, props: { role: 'Admin', title: 'Admins' } },
+  { path: '/groupes-classes', name: 'GroupesClasses', component: GroupesClasses },
+  { path: '/groupes-classes/:groupName', name: 'GroupesClassesDetail', component: GroupesClassesDetail, props: true },
+  { path: '/ecole', name: 'Ecole', component: Ecole },
+  { path: '/ecole/:section', name: 'EcoleSection', component: EcoleSection, props: true }
 ]
 
 const router = createRouter({

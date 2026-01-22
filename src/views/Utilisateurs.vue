@@ -3,7 +3,7 @@
     <div class="users-header">
       <img src="../assets/images/user-background.svg" alt="background" class="header-bg" />
       <div class="header-buttons">
-        <button class="btn-new-course">
+        <button class="btn-new-course" type="button" @click="createUser">
           <img src="../assets/images/plus-sign.svg" alt="plus" class="plus-icon" />Nouvel utilisateur
         </button>
       </div>
@@ -16,21 +16,21 @@
 
     <div class="users-content">
       <section class="role-cta">
-        <button class="card">
+        <button class="card" type="button" @click="openRole('Étudiant')">
           <img src="../assets/images/student.svg" alt="student" class="student-icon" />
           <div class="card-text">
             <div class="label">Étudiants</div>
             <img src="../assets/images/arrow-right.svg" alt="arrow" class="arrow-icon" />
           </div>
         </button>
-        <button class="card">
+        <button class="card" type="button" @click="openRole('Enseignant')">
           <img src="../assets/images/teacher.svg" alt="teacher" class="teacher-icon" />
           <div class="card-text">
             <div class="label">Enseignants</div>
             <img src="../assets/images/arrow-right.svg" alt="arrow" class="arrow-icon" />
           </div>
         </button>
-        <button class="card">
+        <button class="card" type="button" @click="openRole('Admin')">
           <img src="../assets/images/admin.svg" alt="admin" class="admin-icon" />
           <div class="card-text">
             <div class="label">Admins</div>
@@ -140,12 +140,26 @@ export default {
       this.selectedUser = null
       document.body.style.overflow = ''
     },
+    openRole(role) {
+      const map = {
+        Étudiant: 'Etudiants',
+        Enseignant: 'Enseignants',
+        Admin: 'Admins'
+      }
+      const name = map[role]
+      if (name) {
+        this.$router.push({ name })
+      }
+    },
     editUser(user) {
       if (!user) return
       this.$router.push({
         name: 'UtilisateurEdit',
         query: { userKey: user.key }
       })
+    },
+    createUser() {
+      this.$router.push({ name: 'UtilisateurEdit' })
     },
     roleIcon(role) {
       const map = {

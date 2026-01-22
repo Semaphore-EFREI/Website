@@ -14,6 +14,12 @@ html, body {
     min-height: 100vh;
     background: var(--Fond-Primaire, #FAF9F6);
     background: var(--Fond-Primaire, color(display-p3 0.9804 0.9765 0.9647));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    flex: 1 0 0;
+    align-self: stretch;
 }
 
 .calendrier-header {
@@ -134,7 +140,13 @@ html, body {
     gap: 8px;
     flex: 1 0 0;
     z-index: 2;
-    }
+    transition: margin-left 0.2s ease;
+}
+
+body.sidebar-expanded .header-content {
+    margin-left: 348px;
+    transition: margin-left 0.2s ease;
+}
 
 .calendar-icon {
     color: var(--Texte-Blanc, #FFF);
@@ -244,12 +256,17 @@ html, body {
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
-    gap: 16px;
+    gap: 32px;
     align-self: stretch;
 }
 
 
 .hour-label {
+    display: flex;
+    padding-left: 12px;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
     color: var(--Texte-Tertiaire, #9A9A9A);
     color: var(--Texte-Tertiaire, color(display-p3 0.6039 0.6039 0.6039));
     /* Corps Important */

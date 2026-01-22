@@ -7,7 +7,7 @@
     align-items: center;
     background: var(--Fond-Primaire, #FAF9F6);
     background: var(--Fond-Primaire, color(display-p3 0.9804 0.9765 0.9647));
-    padding-left: 50px; /* Adjust based on sidebar width */
+    padding: 1%; /* Adjust based on sidebar width */
 }
 
 .detail-header {

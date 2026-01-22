@@ -7,7 +7,14 @@
         </button>
         <h1 class="edit-title">Nouvel utilisateur</h1>
       </div>
-      <button class="edit-save-btn" @click="saveUser">Enregistrer</button>
+      <button
+        type="button"
+        class="edit-save-btn"
+        :disabled="!isFormValid"
+        @click="saveUser"
+      >
+        Enregistrer
+      </button>
     </header>
     <form class="edit-user-form" @submit.prevent="saveUser">
       <div class="edit-user-info">
@@ -19,9 +26,33 @@
           <input v-model="user.lastName" placeholder="Nom" class="edit-input last-name" id="lastName" required />
         </div>
         <div class="edit-user-roles">
-            <button type="button" :class="['role-btn', { selected: user.role === 'Étudiant' }]" @click="user.role = 'Étudiant'">Étudiant</button>
-            <button type="button" :class="['role-btn', { selected: user.role === 'Enseignant' }]" @click="user.role = 'Enseignant'">Enseignant</button>
-            <button type="button" :class="['role-btn', { selected: user.role === 'Admin' }]" @click="user.role = 'Admin'">Admin</button>
+            <button
+              type="button"
+              class="role-btn role-student"
+              :class="{ selected: user.role === 'Étudiant' }"
+              @click="user.role = 'Étudiant'"
+            >
+              <img :src="roleIcons.student" alt="Étudiant" />
+              Étudiant
+            </button>
+            <button
+              type="button"
+              class="role-btn role-teacher"
+              :class="{ selected: user.role === 'Enseignant' }"
+              @click="user.role = 'Enseignant'"
+            >
+              <img :src="roleIcons.teacher" alt="Enseignant" />
+              Enseignant
+            </button>
+            <button
+              type="button"
+              class="role-btn role-admin"
+              :class="{ selected: user.role === 'Admin' }"
+              @click="user.role = 'Admin'"
+            >
+              <img :src="roleIcons.admin" alt="Admin" />
+              Admin
+            </button>
         </div>
       </div>
       <fieldset class="edit-user-contact">
@@ -32,7 +63,7 @@
         </div>
         <div class="edit-user-contact-divider">
         <label for="password" class="edit-input-label">Mot de passe</label>
-        <input id="password" v-model="user.password" placeholder="Mot de passe" class="edit-input" type="password" required />
+        <input id="password" v-model="user.password" placeholder="••••••••••••••••" class="edit-input" type="password" required />
         </div>
       </fieldset>
     </form>
@@ -41,6 +72,9 @@
 
 <script>
 import defaultProfile from '../assets/images/user-invert.svg'
+import studentIcon from '../assets/images/student-blue.svg'
+import teacherIcon from '../assets/images/teacher-green.svg'
+import adminIcon from '../assets/images/admin-purple.svg'
 import { findUserByKey } from '../utils/user-data'
 
 export default {
@@ -55,11 +89,22 @@ export default {
         email: '',
         password: ''
       },
-      defaultProfile
+      defaultProfile,
+      roleIcons: {
+        student: studentIcon,
+        teacher: teacherIcon,
+        admin: adminIcon
+      }
     }
   },
   created() {
     this.loadUser()
+  },
+  computed: {
+    isFormValid() {
+      const { firstName, lastName, email, password } = this.user
+      return [firstName, lastName, email, password].every(Boolean)
+    }
   },
   watch: {
     '$route.query.userKey': 'loadUser'
@@ -93,6 +138,9 @@ export default {
       this.$router.push({ name: 'Utilisateurs' })
     },
     saveUser() {
+      if (!this.isFormValid) {
+        return
+      }
       // À implémenter : sauvegarde
       alert('Utilisateur enregistré (simulation)')
       this.goBack()

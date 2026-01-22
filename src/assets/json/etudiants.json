@@ -4,7 +4,7 @@
     "firstName": "Lucas",
     "lastName": "Martin",
     "email": "lucas.martin@univ-fictive.fr",
-    "group": "Groupe 1",
+    "group": ["Groupe 1"],
     "profilePicture": "https://randomuser.me/api/portraits/men/71.jpg",
     "age": 23,
     "gender": "male"
@@ -14,7 +14,7 @@
     "firstName": "Emma",
     "lastName": "Durand",
     "email": "emma.durand@univ-fictive.fr",
-    "group": "Groupe 1",
+    "group": ["Groupe 1"],
     "profilePicture": "https://randomuser.me/api/portraits/women/63.jpg",
     "age": 24,
     "gender": "female"
@@ -24,7 +24,7 @@
     "firstName": "Hugo",
     "lastName": "Petit",
     "email": "hugo.petit@univ-fictive.fr",
-    "group": "Groupe 1",
+    "group": ["Groupe 1"],
     "profilePicture": "https://randomuser.me/api/portraits/men/37.jpg",
     "age": 24,
     "gender": "male"
@@ -34,7 +34,7 @@
     "firstName": "Chloé",
     "lastName": "Moreau",
     "email": "chloe.moreau@univ-fictive.fr",
-    "group": "Groupe 1",
+    "group": ["Groupe 1"],
     "profilePicture": "https://randomuser.me/api/portraits/women/50.jpg",
     "age": 25,
     "gender": "female"
@@ -44,7 +44,7 @@
     "firstName": "Nathan",
     "lastName": "Lefevre",
     "email": "nathan.lefevre@univ-fictive.fr",
-    "group": "Groupe 1",
+    "group": ["Groupe 1"],
     "profilePicture": "https://randomuser.me/api/portraits/men/51.jpg",
     "age": 22,
     "gender": "male"
@@ -54,7 +54,7 @@
     "firstName": "Manon",
     "lastName": "Garcia",
     "email": "manon.garcia@univ-fictive.fr",
-    "group": "Groupe 1",
+    "group": ["Groupe 1", "Groupe 2"],
     "profilePicture": "https://randomuser.me/api/portraits/women/40.jpg",
     "age": 26,
     "gender": "female"
@@ -64,7 +64,7 @@
     "firstName": "Louis",
     "lastName": "Roux",
     "email": "louis.roux@univ-fictive.fr",
-    "group": "Groupe 1",
+    "group": ["Groupe 1"],
     "profilePicture": "https://randomuser.me/api/portraits/men/1.jpg",
     "age": 20,
     "gender": "male"
@@ -74,8 +74,8 @@
     "firstName": "Camille",
     "lastName": "Fournier",
     "email": "camille.fournier@univ-fictive.fr",
-    "group": "Groupe 1",
-    "profilePicture": "https://randomuser.me/api/portraits/men/10.jpg",
+    "group": ["Groupe 1"],
+    "profilePicture": "https://randomuser.me/api/portraits/women/10.jpg",
     "age": 21,
     "gender": "female"
   },
@@ -84,7 +84,7 @@
     "firstName": "Tom",
     "lastName": "Girard",
     "email": "tom.girard@univ-fictive.fr",
-    "group": "Groupe 1",
+    "group": ["Groupe 5"],
     "profilePicture": "https://randomuser.me/api/portraits/men/69.jpg",
     "age": 24,
     "gender": "male"
@@ -94,17 +94,17 @@
     "firstName": "Sarah",
     "lastName": "Andre",
     "email": "sarah.andre@univ-fictive.fr",
-    "group": "Groupe 1",
+    "group": ["Groupe 1"],
     "profilePicture": "https://randomuser.me/api/portraits/women/90.jpg",
     "age": 21,
-    "gender": "male"
+    "gender": "female"
   },
   {
     "id": 11,
     "firstName": "Enzo",
     "lastName": "Mercier",
     "email": "enzo.mercier@univ-fictive.fr",
-    "group": "Groupe 2",
+    "group": ["Groupe 2"],
     "profilePicture": "https://randomuser.me/api/portraits/men/64.jpg",
     "age": 23,
     "gender": "male"
@@ -114,7 +114,7 @@
     "firstName": "Léa",
     "lastName": "Blanc",
     "email": "lea.blanc@univ-fictive.fr",
-    "group": "Groupe 2",
+    "group": ["Groupe 2", "Groupe 4"],
     "profilePicture": "https://randomuser.me/api/portraits/women/27.jpg",
     "age": 24,
     "gender": "female"
@@ -124,7 +124,7 @@
     "firstName": "Mathis",
     "lastName": "Faure",
     "email": "mathis.faure@univ-fictive.fr",
-    "group": "Groupe 2",
+    "group": ["Groupe 4"],
     "profilePicture": "https://randomuser.me/api/portraits/men/77.jpg",
     "age": 24,
     "gender": "male"
@@ -134,7 +134,7 @@
     "firstName": "Inès",
     "lastName": "Garnier",
     "email": "ines.garnier@univ-fictive.fr",
-    "group": "Groupe 2",
+    "group": ["Groupe 2", "Groupe 4"],
     "profilePicture": "https://randomuser.me/api/portraits/women/79.jpg",
     "age": 19,
     "gender": "female"
@@ -144,7 +144,7 @@
     "firstName": "Noah",
     "lastName": "Chevalier",
     "email": "noah.chevalier@univ-fictive.fr",
-    "group": "Groupe 2",
+    "group": ["Groupe 2"],
     "profilePicture": "https://randomuser.me/api/portraits/men/85.jpg",
     "age": 24,
     "gender": "male"
@@ -154,7 +154,7 @@
     "firstName": "Clara",
     "lastName": "Perrin",
     "email": "clara.perrin@univ-fictive.fr",
-    "group": "Groupe 2",
+    "group": ["Groupe 2"],
     "profilePicture": "https://randomuser.me/api/portraits/women/73.jpg",
     "age": 25,
     "gender": "female"
@@ -164,7 +164,7 @@
     "firstName": "Jules",
     "lastName": "Morin",
     "email": "jules.morin@univ-fictive.fr",
-    "group": "Groupe 2",
+    "group": ["Groupe 2"],
     "profilePicture": "https://randomuser.me/api/portraits/men/4.jpg",
     "age": 25,
     "gender": "male"
@@ -174,7 +174,7 @@
     "firstName": "Anaïs",
     "lastName": "Robin",
     "email": "anais.robin@univ-fictive.fr",
-    "group": "Groupe 2",
+    "group": ["Groupe 2", "Groupe 5", "Groupe 8"],
     "profilePicture": "https://randomuser.me/api/portraits/women/66.jpg",
     "age": 18,
     "gender": "female"
@@ -184,7 +184,7 @@
     "firstName": "Maxime",
     "lastName": "Clement",
     "email": "maxime.clement@univ-fictive.fr",
-    "group": "Groupe 2",
+    "group": ["Groupe 2", "Groupe 7"],
     "profilePicture": "https://randomuser.me/api/portraits/men/28.jpg",
     "age": 24,
     "gender": "male"
@@ -194,7 +194,7 @@
     "firstName": "Julie",
     "lastName": "Lopez",
     "email": "julie.lopez@univ-fictive.fr",
-    "group": "Groupe 2",
+    "group": ["Groupe 2"],
     "profilePicture": "https://randomuser.me/api/portraits/women/67.jpg",
     "age": 21,
     "gender": "female"
@@ -204,7 +204,7 @@
     "firstName": "Paul",
     "lastName": "Muller",
     "email": "paul.muller@univ-fictive.fr",
-    "group": "Groupe 3",
+    "group": ["Groupe 3", "Groupe 6"],
     "profilePicture": "https://randomuser.me/api/portraits/men/73.jpg",
     "age": 22,
     "gender": "male"
@@ -214,7 +214,7 @@
     "firstName": "Lina",
     "lastName": "Nguyen",
     "email": "lina.nguyen@univ-fictive.fr",
-    "group": "Groupe 3",
+    "group": ["Groupe 3", "Groupe 9", "Groupe 10"],
     "profilePicture": "https://randomuser.me/api/portraits/women/74.jpg",
     "age": 24,
     "gender": "female"
@@ -224,7 +224,7 @@
     "firstName": "Antoine",
     "lastName": "Henry",
     "email": "antoine.henry@univ-fictive.fr",
-    "group": "Groupe 3",
+    "group": ["Groupe 3", "Groupe 9", "Groupe 10"],
     "profilePicture": "https://randomuser.me/api/portraits/men/95.jpg",
     "age": 24,
     "gender": "male"
@@ -234,7 +234,7 @@
     "firstName": "Mila",
     "lastName": "Renaud",
     "email": "mila.renaud@univ-fictive.fr",
-    "group": "Groupe 3",
+    "group": ["Groupe 3", "Groupe 11", "Groupe 12", "Groupe 13"],
     "profilePicture": "https://randomuser.me/api/portraits/women/97.jpg",
     "age": 18,
     "gender": "female"
@@ -244,7 +244,7 @@
     "firstName": "Alexis",
     "lastName": "Boyer",
     "email": "alexis.boyer@univ-fictive.fr",
-    "group": "Groupe 3",
+    "group": ["Groupe 3"],
     "profilePicture": "https://randomuser.me/api/portraits/women/59.jpg",
     "age": 21,
     "gender": "female"
@@ -254,7 +254,7 @@
     "firstName": "Zoé",
     "lastName": "Lemoine",
     "email": "zoe.lemoine@univ-fictive.fr",
-    "group": "Groupe 3",
+    "group": ["Groupe 3"],
     "profilePicture": "https://randomuser.me/api/portraits/women/68.jpg",
     "age": 22,
     "gender": "female"
@@ -264,7 +264,7 @@
     "firstName": "Victor",
     "lastName": "Marchand",
     "email": "victor.marchand@univ-fictive.fr",
-    "group": "Groupe 3",
+    "group": ["Groupe 3"],
     "profilePicture": "https://randomuser.me/api/portraits/men/14.jpg",
     "age": 23,
     "gender": "male"
@@ -274,7 +274,7 @@
     "firstName": "Eva",
     "lastName": "Colin",
     "email": "eva.colin@univ-fictive.fr",
-    "group": "Groupe 3",
+    "group": ["Groupe 3"],
     "profilePicture": "https://randomuser.me/api/portraits/women/87.jpg",
     "age": 20,
     "gender": "female"
@@ -284,7 +284,7 @@
     "firstName": "Romain",
     "lastName": "Barbier",
     "email": "romain.barbier@univ-fictive.fr",
-    "group": "Groupe 3",
+    "group": ["Groupe 3"],
     "profilePicture": "https://randomuser.me/api/portraits/men/16.jpg",
     "age": 20,
     "gender": "male"
@@ -294,7 +294,7 @@
     "firstName": "Maëlle",
     "lastName": "Dubois",
     "email": "maelle.dubois@univ-fictive.fr",
-    "group": "Groupe 3",
+    "group": ["Groupe 3"],
     "profilePicture": "https://randomuser.me/api/portraits/women/71.jpg",
     "age": 21,
     "gender": "female"
