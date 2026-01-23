@@ -6,7 +6,7 @@
           <img src="../assets/images/arrow-left.svg" alt="Retour" />
         </button>
         <div>
-          <h1 class="edit-title">Nouveau Cours</h1>
+          <h1 class="edit-title">{{ getTitle() }}</h1>
         </div>
       </div>
       <button class="save-btn" type="button" @click="createCourse" :disabled="!isFormValid">
@@ -394,6 +394,9 @@ export default {
         return
       }
       this.$router.push({ name: 'Calendrier' })
+    },
+    getTitle() {
+      return this.originCourseId ? 'Modification Cours' : 'Nouveau Cours'
     },
     createCourse() {
       this.saveCourse()
