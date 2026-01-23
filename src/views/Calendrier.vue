@@ -3,7 +3,7 @@
     <div class="calendrier-header">
       <img src="../assets/images/calendrier_background.svg" alt="background" class="header-bg" />
       <div class="header-buttons">
-        <button class="btn-new-course">
+        <button class="btn-new-course" @click="goToNewCourse">
           <img src="../assets/images/plus-sign.svg" alt="plus" class="plus-icon" />Nouveau cours
         </button>
         <button class="btn-calendar" @click.prevent="openCalendar" aria-label="Ouvrir le sélecteur de date">
@@ -163,6 +163,9 @@ export default {
     },
     openCourse(id) {
       this.$router.push({ name: 'CalendrierDetail', params: { id } });
+    },
+    goToNewCourse() {
+      this.$router.push({ name: 'NouveauCours' });
     },
     dateKey(date) {
       const day = `${date.getDate()}`.padStart(2, '0');

@@ -11,7 +11,7 @@
         </div>
       </div>
       <div class="header-actions">
-        <button class="btn-modify">
+        <button class="btn-modify" @click="goEdit">
           <img class="btn-icon" src="../assets/images/modify.svg" alt="Modifier" />
           <span>Modifier</span>
         </button>
@@ -287,6 +287,10 @@ export default {
         name: 'Calendrier', 
         query: { date: this.course?.day }
       })
+    },
+    goEdit() {
+      if (!this.course) return
+      this.$router.push({ name: 'NouveauCours', query: { courseId: this.course.id } })
     }
   }
 }

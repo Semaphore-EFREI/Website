@@ -113,6 +113,20 @@
           />
           <span>Signature par lampe torche activée</span>
         </label>
+
+        <label class="checkbox-item">
+          <input 
+            v-model="settings.disableCourseModification" 
+            type="checkbox"
+            class="checkbox-input"
+          />
+          <img 
+            :src="settings.disableCourseModification ? checkboxFilled : checkboxEmpty" 
+            alt="checkbox" 
+            class="checkbox-icon"
+          />
+          <span>Désactiver la modification de cours depuis l'interface</span>
+        </label>
       </fieldset>
     </form>
   </main>

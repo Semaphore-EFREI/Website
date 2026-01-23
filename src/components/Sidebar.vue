@@ -8,7 +8,7 @@
 
       <nav class="sidebar-nav">
         <div v-for="item in navItems" :key="item.label" class="nav-item-wrapper">
-          <div class="nav-item-row">
+          <div class="nav-item-row" :class="{ active: isActive(item) }">
             <button
               class="nav-link"
               :class="{ active: isActive(item) }"
@@ -93,7 +93,7 @@ export default {
         {
           label: 'Utilisateurs',
           routeName: 'Utilisateurs',
-          icon: 'useralt-black',
+          icon: 'user',
           children: [
             { label: 'Étudiants', routeName: 'Etudiants', icon: 'student-blue' },
             { label: 'Enseignants', routeName: 'Enseignants', icon: 'teacher-green' },

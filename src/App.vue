@@ -53,8 +53,9 @@ export default {
 }
 
 .app-main.sidebar-collapsed :deep(.calendrier-all) {
-  margin-left: 1.25rem;
-  transition: margin-left 0.2s ease;
+  margin-left: 0;
+  max-width: 100%;
+  transition: margin-left 0.2s ease, max-width 0.2s ease;
 }
 
 /* Same push for calendrier detail page; also reduce available width to prevent overflow */
@@ -64,9 +65,10 @@ export default {
   transition: margin-left 0.2s ease, max-width 0.2s ease;
 }
 
-.app-main.sidebar-collapsed :deep(.detail-page) {
-  margin-left: 3.125rem;
-  max-width: calc(100% - clamp(3rem, 10vw, 5.5rem));
+.app-main.sidebar-collapsed :deep(.detail-page),
+.app-main.sidebar-collapsed :deep(.edit-user-page) {
+  margin-left: 10rem;
+  max-width: calc(100% - 10rem);
   transition: margin-left 0.2s ease, max-width 0.2s ease;
 }
 
@@ -78,8 +80,8 @@ export default {
 }
 
 .app-main.sidebar-collapsed :deep(.users-content) {
-  margin-left: 1.875rem;
-  max-width: calc(100% - clamp(3rem, 10vw, 5.5rem));
+  margin-left: 0;
+  max-width: 100%;
   transition: margin-left 0.2s ease, max-width 0.2s ease;
 }
 
@@ -90,8 +92,8 @@ export default {
 }
 
 .app-main.sidebar-collapsed :deep(.edit-user-page) {
-  margin-left: 3.125rem;
-  max-width: calc(100% - clamp(3rem, 10vw, 5.5rem));
+  margin-left: 10rem;
+  max-width: calc(100% - 10rem);
   transition: margin 0.2s ease;
 }
 
@@ -128,14 +130,15 @@ export default {
   }
 
   .app-main.sidebar-collapsed :deep(.calendrier-all) {
-    margin-left: 1.25rem;
+    margin-left: 0;
+    max-width: 100%;
   }
 
   .app-main.sidebar-collapsed :deep(.detail-page),
   .app-main.sidebar-collapsed :deep(.users-content),
   .app-main.sidebar-collapsed :deep(.edit-user-page) {
-    margin-left: 1.25rem;
-    max-width: calc(100% - 1.25rem);
+    margin-left: 5rem;
+    max-width: calc(100% - 5rem);
   }
 }
 
@@ -146,6 +149,13 @@ export default {
   .app-main.with-sidebar :deep(.edit-user-page) {
     margin-left: 21.75rem;
     max-width: calc(100% - 21.75rem);
+  }
+
+  .app-main.sidebar-collapsed :deep(.detail-page),
+  .app-main.sidebar-collapsed :deep(.users-content),
+  .app-main.sidebar-collapsed :deep(.edit-user-page) {
+    margin-left: 5rem;
+    max-width: calc(100% - 5rem);
   }
 }
 </style>

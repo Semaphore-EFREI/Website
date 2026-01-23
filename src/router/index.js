@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Connexion.vue'
 import Calendar from '../views/Calendrier.vue'
 import CalendarDetail from '../views/CalendrierDetail.vue'
+import NouveauCours from '../views/NouveauCours.vue'
 import Users from '../views/Utilisateurs.vue'
 import UtilisateurEdit from '../views/UtilisateurEdit.vue'
 import RoleUsers from '../views/RoleUsers.vue'
@@ -14,6 +15,7 @@ import EcoleSection from '../views/EcoleSection.vue'
 const routes = [
   { path: '/', name: 'Connexion', component: Login },
   { path: '/calendrier', name: 'Calendrier', component: Calendar },
+  { path: '/calendrier/nouveau', name: 'NouveauCours', component: NouveauCours },
   { path: '/calendrier/:id', name: 'CalendrierDetail', component: CalendarDetail, props: true },
   { path: '/utilisateurs', name: 'Utilisateurs', component: Users },
   { path: '/utilisateurs/modifier', name: 'UtilisateurEdit', component: UtilisateurEdit },
