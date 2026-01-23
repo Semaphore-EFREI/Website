@@ -15,7 +15,12 @@
               type="button"
               @click="handleNav(item)"
             >
-              <img v-if="item.icon" :src="getIcon(item.icon)" class="nav-icon" :alt="item.label" />
+              <span
+                v-if="item.icon && processedIcons[item.icon]"
+                class="nav-icon"
+                v-html="processedIcons[item.icon]"
+                :aria-label="item.label"
+              ></span>
               <span class="link-label">{{ item.label }}</span>
             </button>
             <button
@@ -57,6 +62,15 @@
 </template>
 
 <script>
+import calendrierIcon from '../assets/images/calendrier_black.svg?raw'
+import userAltIcon from '../assets/images/useralt-black.svg?raw'
+import groupIcon from '../assets/images/group.svg?raw'
+import schoolIcon from '../assets/images/school.svg?raw'
+import userIcon from '../assets/images/user.svg?raw'
+import studentIcon from '../assets/images/student.svg?raw'
+import teacherIcon from '../assets/images/teacher.svg?raw'
+import adminIcon from '../assets/images/admin.svg?raw'
+
 export default {
   name: 'Sidebar',
   emits: ['collapsed-change'],
@@ -64,12 +78,22 @@ export default {
     return {
       collapsed: false,
       expandedGroups: ['Utilisateurs', "L'école"],
+      rawIcons: {
+        calendrier_black: calendrierIcon,
+        'useralt-black': userAltIcon,
+        group: groupIcon,
+        school: schoolIcon,
+        user: userIcon,
+        'student-blue': studentIcon,
+        'teacher-green': teacherIcon,
+        'admin-purple': adminIcon
+      },
       navItems: [
         { label: 'Calendrier', routeName: 'Calendrier', icon: 'calendrier_black' },
         {
           label: 'Utilisateurs',
           routeName: 'Utilisateurs',
-          icon: 'user',
+          icon: 'useralt-black',
           children: [
             { label: 'Étudiants', routeName: 'Etudiants', icon: 'student-blue' },
             { label: 'Enseignants', routeName: 'Enseignants', icon: 'teacher-green' },
@@ -102,6 +126,16 @@ export default {
         .join('')
         .slice(0, 2)
         .toUpperCase()
+    },
+    processedIcons() {
+      const sanitize = (svg) =>
+        svg
+          .replace(/fill="[^"]*"/gi, 'fill="currentColor"')
+          .replace(/stroke="[^"]*"/gi, 'stroke="currentColor"')
+          .replace(/style="[^"]*"/gi, '')
+      return Object.fromEntries(
+        Object.entries(this.rawIcons).map(([key, value]) => [key, sanitize(value)])
+      )
     }
   },
   watch: {
@@ -116,13 +150,6 @@ export default {
     document.body.classList.remove('sidebar-expanded', 'sidebar-collapsed')
   },
   methods: {
-    getIcon(name) {
-      try {
-        return new URL(`../assets/images/${name}.svg`, import.meta.url).href
-      } catch (e) {
-        return ''
-      }
-    },
     syncBodyClass(collapsed) {
       document.body.classList.toggle('sidebar-expanded', !collapsed)
       document.body.classList.toggle('sidebar-collapsed', collapsed)

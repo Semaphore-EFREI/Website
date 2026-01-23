@@ -10,7 +10,11 @@
         @click="handleNav(item)"
         :title="item.label"
       >
-        <img v-if="item.icon" :src="getIcon(item.icon)" class="nav-icon" :alt="item.label" />
+        <span
+          v-if="item.icon && processedIcons[item.icon]"
+          class="nav-icon"
+          v-html="processedIcons[item.icon]"
+        ></span>
         <span class="nav-label">{{ item.label }}</span>
       </button>
     </div>
@@ -18,27 +22,45 @@
 </template>
 
 <script>
+import calendrierIcon from '../assets/images/calendrier_black.svg?raw'
+import userAltIcon from '../assets/images/useralt-black.svg?raw'
+import groupIcon from '../assets/images/group.svg?raw'
+import schoolIcon from '../assets/images/school.svg?raw'
+import userIcon from '../assets/images/user.svg?raw'
+
 export default {
   name: 'BottomNav',
   data() {
     return {
+      rawIcons: {
+        calendrier_black: calendrierIcon,
+        'useralt-black': userAltIcon,
+        group: groupIcon,
+        school: schoolIcon,
+        user: userIcon
+      },
       mobileNavItems: [
         { label: 'Calendrier', routeName: 'Calendrier', icon: 'calendrier_black' },
-        { label: 'Utilisateurs', routeName: 'Utilisateurs', icon: 'user' },
+        { label: 'Utilisateurs', routeName: 'Utilisateurs', icon: 'useralt-black' },
         { label: 'Groupes', routeName: 'GroupesClasses', icon: 'group' },
         { label: 'École', routeName: 'Ecole', icon: 'school' },
         { label: 'Mon Compte', routeName: 'UtilisateurEdit', icon: 'user' }
       ]
     }
   },
+  computed: {
+    processedIcons() {
+      const sanitize = (svg) =>
+        svg
+          .replace(/fill="[^"]*"/gi, 'fill="currentColor"')
+          .replace(/stroke="[^"]*"/gi, 'stroke="currentColor"')
+          .replace(/style="[^"]*"/gi, '')
+      return Object.fromEntries(
+        Object.entries(this.rawIcons).map(([key, value]) => [key, sanitize(value)])
+      )
+    }
+  },
   methods: {
-    getIcon(name) {
-      try {
-        return new URL(`../assets/images/${name}.svg`, import.meta.url).href
-      } catch (e) {
-        return ''
-      }
-    },
     isActive(item) {
       if (!item?.routeName) return false
       if (item.routeName === 'Calendrier' && this.$route.name === 'CalendrierDetail') return true

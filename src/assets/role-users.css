@@ -92,6 +92,8 @@
     font-style: normal;
     font-weight: 500;
     line-height: normal;
+    background: var(--Fond-Tertiaire, #FFF);
+    background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
 }
 
 .user-cards {

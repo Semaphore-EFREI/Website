@@ -48,6 +48,7 @@
     transition: all 0.2s ease;
     flex: 1;
     max-width: 12rem;
+    color: var(--Texte-Primaire, #2A2A2A);
 }
 
 
@@ -55,6 +56,7 @@
     border-radius: 62.5rem;
     background: var(--Fond-Secondaire, #EFEDE3);
     background: var(--Fond-Secondaire, color(display-p3 0.9373 0.9294 0.898));
+    color: var(--Bleu, #007999);
 }
 
 .nav-icon {
@@ -65,8 +67,15 @@
     transition: filter 0.2s ease;
 }
 
-.nav-item.active .nav-icon {
-    filter: brightness(0) saturate(100%) invert(37%) sepia(94%) saturate(1261%) hue-rotate(164deg) brightness(93%) contrast(90%);
+.nav-icon svg,
+.nav-icon svg path,
+.nav-icon svg g,
+.nav-icon svg use {
+    width: 100%;
+    height: 100%;
+    display: block;
+    fill: currentColor !important;
+    stroke: currentColor !important;
 }
 
 .nav-label {
