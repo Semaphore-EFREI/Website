@@ -21,7 +21,7 @@
           type="button"
           @click="openSection(section.section)"
         >
-          <img :src="section.icon" :alt="section.label" class="student-icon" />
+          <img :src="section.icon" :alt="section.label" class="icon student-icon" />
           <div class="card-text">
             <div class="label">{{ section.label }}</div>
             <img src="../assets/images/arrow-right.svg" alt="arrow" class="arrow-icon" />

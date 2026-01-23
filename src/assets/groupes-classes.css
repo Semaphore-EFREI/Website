@@ -2,9 +2,9 @@
 
 .all-groups {
     display: flex;
-    padding: 24px;
+    padding: 1.5rem;
     align-items: center;
-    gap: 24px;
+    gap: 1.5rem;
     align-self: stretch;
 }
 
@@ -13,22 +13,22 @@
     display: flex;
     align-items: flex-start;
     align-content: flex-start;
-    gap: 24px;
+    gap: 1.5rem;
     flex: 1 0 0;
     flex-wrap: wrap;
 }
 
 .group-card {
     display: flex;
-    min-width: 160px;
-    max-width: 180px;
-    height: 220px;
-    padding: 24px;
+    min-width: 8rem;
+    max-width: 11.25rem;
+    height: 13.75rem;
+    padding: 1.5rem;
     flex-direction: column;
     align-items: center;
     justify-content: space-evenly;
     flex: 1 0 0;
-    border-radius: 24px;
+    border-radius: 1.5rem;
     background: var(--Fond-Tertiaire, #FFF);
     background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
     cursor: pointer;
@@ -36,8 +36,8 @@
 }
 
 .group-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 16px 32px rgba(16, 38, 148, 0.12);
+    transform: translateY(-0.125rem);
+    box-shadow: 0 1rem 2rem rgba(16, 38, 148, 0.12);
 }
 
 .group-img {
@@ -45,17 +45,19 @@
     color: var(--Texte-Tertiaire, color(display-p3 0.6039 0.6039 0.6039));
     text-align: center;
     font-family: "SF Pro";
-    font-size: 56px;
+    font-size: 3.5rem;
     font-style: normal;
     font-weight: 510;
     line-height: normal;
+    width: 4.5rem;
+    height: 4.5rem;
 }
 
 .group-info {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 0.25rem;
 }
 
 .group-name {
@@ -63,7 +65,7 @@
     color: var(--Texte-Primaire, color(display-p3 0.1647 0.1647 0.1647));
     text-align: center;
     font-family: Montserrat;
-    font-size: 15px;
+    font-size: 0.9375rem;
     font-style: normal;
     font-weight: 600;
     line-height: normal;
@@ -74,7 +76,7 @@
     color: var(--Texte-Secondaire, color(display-p3 0.4902 0.4118 0.2706));
     text-align: center;
     font-family: Montserrat;
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-style: normal;
     font-weight: 500;
     line-height: normal;

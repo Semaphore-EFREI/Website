@@ -52,3 +52,9 @@ button {
     border: none;
     outline: none;
 }
+
+:root {
+    font-size: clamp(8px, 1.2vw, 14px);
+}
+
+

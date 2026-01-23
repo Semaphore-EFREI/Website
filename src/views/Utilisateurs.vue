@@ -17,21 +17,21 @@
     <div class="users-content">
       <section class="role-cta">
         <button class="card" type="button" @click="openRole('Étudiant')">
-          <img src="../assets/images/student.svg" alt="student" class="student-icon" />
+          <img src="../assets/images/student.svg" alt="student" class="icon student-icon" />
           <div class="card-text">
             <div class="label">Étudiants</div>
             <img src="../assets/images/arrow-right.svg" alt="arrow" class="arrow-icon" />
           </div>
         </button>
         <button class="card" type="button" @click="openRole('Enseignant')">
-          <img src="../assets/images/teacher.svg" alt="teacher" class="teacher-icon" />
+          <img src="../assets/images/teacher.svg" alt="teacher" class="icon teacher-icon" />
           <div class="card-text">
             <div class="label">Enseignants</div>
             <img src="../assets/images/arrow-right.svg" alt="arrow" class="arrow-icon" />
           </div>
         </button>
         <button class="card" type="button" @click="openRole('Admin')">
-          <img src="../assets/images/admin.svg" alt="admin" class="admin-icon" />
+          <img src="../assets/images/admin.svg" alt="admin" class="icon admin-icon" />
           <div class="card-text">
             <div class="label">Admins</div>
             <img src="../assets/images/arrow-right.svg" alt="arrow" class="arrow-icon" />

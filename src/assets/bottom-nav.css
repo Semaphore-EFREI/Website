@@ -1,0 +1,90 @@
+/* Bottom navigation for mobile (screens < 800px) */
+
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: none;
+    z-index: 99;
+    padding: 2rem 1.5rem;
+    justify-content: center;
+    align-items: center;
+}
+
+@media (max-width: 800px) {
+    .bottom-nav {
+        display: flex;
+    }
+}
+
+.nav {
+    display: flex;
+    width: 100%;
+    max-width: 60rem;
+    padding: 0.5rem;
+    justify-content: space-around;
+    align-items: center;
+    border-radius: 62.5rem;
+    border: 1px solid var(--Bordure-Web, rgba(255, 255, 255, 0.64));
+    border: 1px solid var(--Bordure-Web, color(display-p3 1 1 1 / 0.64));
+    background: var(--Fond-Transparent, rgba(249, 249, 249, 0.64));
+    background: var(--Fond-Transparent, color(display-p3 0.9765 0.9765 0.9765 / 0.64));
+    box-shadow: 0 0 24px 0 rgba(0, 0, 0, 0.12);
+    box-shadow: 0 0 24px 0 color(display-p3 0 0 0 / 0.12);
+    backdrop-filter: blur(20px);
+}
+
+.nav-item {
+    display: flex;
+    padding: 0.75rem 1.25rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-radius: 1rem;
+    transition: all 0.2s ease;
+    flex: 1;
+    max-width: 12rem;
+}
+
+
+.nav-item.active {
+    border-radius: 62.5rem;
+    background: var(--Fond-Secondaire, #EFEDE3);
+    background: var(--Fond-Secondaire, color(display-p3 0.9373 0.9294 0.898));
+}
+
+.nav-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    object-fit: contain;
+    filter: none;
+    transition: filter 0.2s ease;
+}
+
+.nav-item.active .nav-icon {
+    filter: brightness(0) saturate(100%) invert(37%) sepia(94%) saturate(1261%) hue-rotate(164deg) brightness(93%) contrast(90%);
+}
+
+.nav-label {
+    color: var(--Texte-Primaire, #2A2A2A);
+    color: var(--Texte-Primaire, color(display-p3 0.1647 0.1647 0.1647));
+    text-align: center;
+    font-family: Montserrat;
+    font-size: 1rem;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nav-item.active .nav-label {
+    color: var(--Bleu, #007999);
+    color: var(--Bleu, color(display-p3 0.1799 0.4609 0.576));
+    font-weight: 500;
+}

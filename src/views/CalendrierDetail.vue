@@ -65,10 +65,10 @@
               </div>
               <div class="signature-line">
                 <div v-if="teacher && teacher.meta && teacher.meta.class === 'absent'">
-                  <img src="../assets/images/absent.svg" alt="Absent" />
+                  <img src="../assets/images/absent.svg" alt="Absent" class="signature-image" />
                 </div>
-                <div v-else-if="teacher && teacher.signatureUrl" class="signature">
-                  <img :src="teacher.signatureUrl" :alt="`Signature de ${course.teacher}`" />
+                <div v-else-if="teacher && teacher.signatureUrl">
+                  <img :src="teacher.signatureUrl" :alt="`Signature de ${course.teacher}`" class="signature-image" />
                 </div>
                 <div v-else class="signature-none">Aucune signature</div>
               </div>
@@ -97,10 +97,10 @@
             <div class="signature-line">
                 <div
                 v-if="student.meta && student.meta.class === 'absent'">
-                    <img src="../assets/images/absent.svg" alt="Absent" />
+                    <img src="../assets/images/absent.svg" alt="Absent" class="signature-image" />
                 </div>
                 <div v-else-if="student.signatureUrl">
-                <img :src="student.signatureUrl" :alt="`Signature de ${student.name}`" />
+                <img :src="student.signatureUrl" :alt="`Signature de ${student.name}`" class="signature-image" />
                 </div>
                 <div v-else class="signature-none">Aucune signature</div>
             </div>
