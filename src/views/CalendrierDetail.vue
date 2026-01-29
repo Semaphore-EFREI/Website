@@ -73,8 +73,8 @@
                 <div v-else class="signature-none">Aucune signature</div>
               </div>
                 <div class="actions" v-if="!isPlanned">
-                  <button class="btn-present" :class="teacher?.meta?.class || 'none'" @click="setTeacherStatus(teacher.name, 'present')">✔</button>
-                  <button class="btn-absent" :class="teacher?.meta?.class || 'none'" @click="setTeacherStatus(teacher.name, 'absent')">✖</button>
+                  <button class="btn-present" :class="teacher?.meta?.class || 'none'" @click="setTeacherStatus(teacher.id, 'present')">✔</button>
+                  <button class="btn-absent" :class="teacher?.meta?.class || 'none'" @click="setTeacherStatus(teacher.id, 'absent')">✖</button>
                 </div>
             </div>
         </div>
@@ -121,22 +121,12 @@
 </template>
 
 <script>
-import classesData from '../assets/json/classes.json'
-import studentsData from '../assets/json/etudiants.json'
-import attendanceData from '../assets/json/attendance.json'
-import attendanceTeachersData from '../assets/json/attendance-teachers.json'
+import { mapActions, mapState } from 'pinia'
 import clockIcon from '../assets/images/clock.svg'
 import clockcheckIcon from '../assets/images/clock-check.svg'
 import checkIcon from '../assets/images/check.svg'
 import absentIcon from '../assets/images/croix-black.svg'
-
-const signatureImages = import.meta.glob('../assets/images/*', {
-  eager: true,
-  import: 'default'
-})
-const signatureByName = Object.fromEntries(
-  Object.entries(signatureImages).map(([path, url]) => [path.split('/').pop(), url])
-)
+import { useCalendarStore, useSignaturesStore, useUsersStore } from '../stores'
 
 export default {
   name: 'CalendrierDetail',
@@ -150,10 +140,13 @@ export default {
     return {
       course: null,
       teachers: [],
-      students: []
+      students: [],
+      loading: true
     }
   },
   computed: {
+    ...mapState(useSignaturesStore, ['signatures']),
+    ...mapState(useUsersStore, ['users']),
     isPlanned() {
       return this.course && this.course.status === 'planned'
     },
@@ -181,59 +174,110 @@ export default {
       const teachersAbsent = this.teachers.length === 0 || this.teachers.every(t => t.meta?.class === 'absent')
       const allAbsent = studentsAbsent && teachersAbsent
       return allAbsent ? 'absent' : ''
+    },
+    signaturesForCourse() {
+      return this.signatures.filter(sig => Number(sig.courseId) === Number(this.id))
     }
   },
   created() {
-    this.loadCourse()
+    this.loadData()
   },
   methods: {
-    loadCourse() {
-      const courseId = Number(this.id)
-      this.course = classesData.find(c => Number(c.id) === courseId) || null
-      if (!this.course) return
-      const roster = studentsData.filter(student => {
-        if (Array.isArray(student.group)) {
-          return student.group.includes(this.course.group)
-        }
-        return student.group === this.course.group
-      })
-      const attendance = attendanceData.filter(a => Number(a.courseId) === courseId)
-      this.teachers = (this.course.teacher || []).map(name => {
-        const teacherAttendance = attendanceTeachersData.find(
-          a => Number(a.courseId) === courseId && a.teacher === name
-        )
-        const status = teacherAttendance && teacherAttendance.status ? teacherAttendance.status : 'none'
-        const meta = this.signatureMeta(status)
-        let signatureUrl = null
-        if (status === 'signed' && teacherAttendance && teacherAttendance.signature) {
-          const signatureFile = teacherAttendance.signature.split('/').pop()
-          signatureUrl = signatureFile && signatureByName[signatureFile] ? signatureByName[signatureFile] : null
-        }
-        return {
-          name,
-          signatureStatus: status,
-          signatureUrl,
-          meta
-        }
-      })
+    ...mapActions(useCalendarStore, { fetchCourseAction: 'fetchCourse' }),
+    ...mapActions(useSignaturesStore, {
+      fetchSignaturesAction: 'fetchSignatures',
+      addSignature: 'addSignature',
+      updateSignature: 'updateSignature'
+    }),
+    ...mapActions(useUsersStore, ['fetchUsers']),
+    async loadData() {
+      this.loading = true
+      try {
+        const course = await this.fetchCourseAction(this.id)
+        this.course = this.normalizeCourse(course)
+        await this.loadRoster()
+      } catch (error) {
+        console.error('Unable to load course', error)
+      } finally {
+        this.loading = false
+      }
+    },
+    async loadRoster() {
+      await Promise.all([this.fetchSignaturesAction(this.id), this.fetchUsers()]).catch(() => {})
+      const signatures = this.signaturesForCourse
 
-      this.students = roster.map(student => {
-        const entry = attendance.find(a => Number(a.studentId) === Number(student.id))
-        const status = entry && entry.status ? entry.status : 'none'
-        const meta = this.signatureMeta(status)
-        let signatureUrl = null
-        if (status === 'signed' && entry && entry.signature) {
-          const signatureFile = entry.signature.split('/').pop()
-          signatureUrl = signatureFile && signatureByName[signatureFile] ? signatureByName[signatureFile] : null
-        }
-        return {
-          id: student.id,
-          name: `${student.firstName} ${student.lastName}`,
+      const teacherSignatures = signatures.filter(sig => sig.teacherId || sig.role === 'teacher')
+      const studentSignatures = signatures.filter(sig => sig.studentId || sig.role === 'student')
+
+      const baseTeachers = Array.isArray(this.course?.teacher)
+        ? this.course.teacher.map(val => (typeof val === 'object' ? val : { teacherId: val }))
+        : this.course?.teacher
+          ? [{ teacherId: this.course.teacher }]
+          : []
+
+      const baseStudents = Array.isArray(this.course?.students)
+        ? this.course.students.map(id => ({ studentId: id }))
+        : []
+
+      const teacherMerged = [...baseTeachers, ...teacherSignatures]
+      const studentMerged = [...baseStudents, ...studentSignatures]
+
+      this.teachers = this.mergePersons(teacherMerged, 'teacher')
+      this.students = this.mergePersons(studentMerged, 'student')
+    },
+    mergePersons(entries, role) {
+      const map = new Map()
+      entries.forEach(entry => {
+        const id = role === 'teacher' ? (entry.teacherId ?? entry.id ?? entry.userId) : (entry.studentId ?? entry.id ?? entry.userId)
+        if (!id) return
+        const status = entry.status || 'none'
+        const existing = map.get(id) || {}
+        map.set(id, {
+          id,
+          name: existing.name || entry.name || this.resolveUserName(id),
           signatureStatus: status,
-          signatureUrl,
-          meta
-        }
+          signatureUrl: entry.signatureUrl || existing.signatureUrl || null,
+          meta: this.signatureMeta(status)
+        })
       })
+      return Array.from(map.values())
+    },
+    resolveUserName(id) {
+      const user = this.users.find(u => Number(u.id) === Number(id))
+      if (!user) return `#${id}`
+      if (user.name) return user.name
+      return `${user.firstName || ''} ${user.lastName || ''}`.trim() || `#${id}`
+    },
+    normalizeCourse(course) {
+      if (!course) return null
+
+      const toDayTime = (value) => {
+        if (!value) return { day: '', time: '' }
+        const d = new Date(value)
+        if (Number.isNaN(d.getTime())) return { day: '', time: '' }
+        const hours = `${d.getHours()}`.padStart(2, '0')
+        const minutes = `${d.getMinutes()}`.padStart(2, '0')
+        return {
+          day: `${`${d.getDate()}`.padStart(2, '0')}/${`${d.getMonth() + 1}`.padStart(2, '0')}/${d.getFullYear()}`,
+          time: `${hours}h${minutes}`
+        }
+      }
+
+      const startInfo = toDayTime(course.start || course.startDate)
+      const endInfo = toDayTime(course.end || course.endDate)
+
+      return {
+        id: course.id,
+        subject: course.subject || course.title || 'Cours',
+        day: course.day || startInfo.day,
+        startTime: course.startTime || startInfo.time,
+        endTime: course.endTime || endInfo.time,
+        room: course.room || course.roomName || '',
+        teacher: course.teacher || [],
+        group: course.group || course.className || '',
+        status: course.status || 'planned',
+        students: course.students || []
+      }
     },
     signatureMeta(status) {
       const map = {
@@ -243,55 +287,39 @@ export default {
       }
       return map[status] || null
     },
-    setTeacherStatus(teacherName, status) {
-      const teacher = this.teachers.find(t => t.name === teacherName)
-      if (!teacher) return
-      teacher.signatureStatus = status
-      teacher.meta = this.signatureMeta(status)
-      // Update display based on status
-      if (status === 'absent') {
-        teacher.signatureUrl = null
-      } else if (status === 'present') {
-        teacher.signatureUrl = null
+    async setTeacherStatus(teacherId, status) {
+      const target = this.signaturesForCourse.find(sig => Number(sig.teacherId) === Number(teacherId))
+      if (target) {
+        await this.updateSignature(target.id, { status }).catch(() => {})
+      } else {
+        await this.addSignature({ courseId: this.course.id, teacherId, status }).catch(() => {})
       }
+      this.loadRoster()
     },
-    setStudentStatus(studentId, status) {
-      const student = this.students.find(s => s.id === studentId)
-      if (!student) return
-      student.signatureStatus = status
-      student.meta = this.signatureMeta(status)
-      // Update display based on status
-      if (status === 'absent') {
-        student.signatureUrl = null
-      } else if (status === 'present') {
-        student.signatureUrl = null
+    async setStudentStatus(studentId, status) {
+      const target = this.signaturesForCourse.find(sig => Number(sig.studentId) === Number(studentId))
+      if (target) {
+        await this.updateSignature(target.id, { status }).catch(() => {})
+      } else {
+        await this.addSignature({ courseId: this.course.id, studentId, status }).catch(() => {})
       }
+      this.loadRoster()
     },
-    setAllPresent() {
-      // Set all students and teachers to present
-      this.students.forEach(student => {
-        if (student.signatureStatus !== 'signed') {
-          this.setStudentStatus(student.id, 'present')
-        }
-      })
-      this.teachers.forEach(teacher => {
-        if (teacher.signatureStatus !== 'signed') {
-          this.setTeacherStatus(teacher.name, 'present')
-        }
-      })
+    async setAllPresent() {
+      await Promise.all([
+        ...this.students.map(student => this.setStudentStatus(student.id, 'present')),
+        ...this.teachers.map(teacher => this.setTeacherStatus(teacher.id, 'present'))
+      ])
     },
-    setAllAbsent() {
-      // Set all students and teachers to absent
-      this.students.forEach(student => {
-          this.setStudentStatus(student.id, 'absent')
-      })
-      this.teachers.forEach(teacher => {
-        this.setTeacherStatus(teacher.name, 'absent')
-      })
+    async setAllAbsent() {
+      await Promise.all([
+        ...this.students.map(student => this.setStudentStatus(student.id, 'absent')),
+        ...this.teachers.map(teacher => this.setTeacherStatus(teacher.id, 'absent'))
+      ])
     },
     goBack() {
-      this.$router.push({ 
-        name: 'Calendrier', 
+      this.$router.push({
+        name: 'Calendrier',
         query: { date: this.course?.day }
       })
     },

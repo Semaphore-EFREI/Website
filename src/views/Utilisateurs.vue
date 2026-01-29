@@ -56,7 +56,7 @@
       <section class="all-users">
         <label class="section-title">Tous les utilisateurs</label>
         <div class="user-cards">
-          <div class="user-card" v-for="user in filteredUsers" :key="user.key" @click="openUser(user)">
+          <div class="user-card" v-for="user in filteredUsers" :key="user.id || user.key" @click="openUser(user)">
               <img :src="user.profilePicture || defaultProfile" alt="Photo de profil" class="user-avatar" />
             <div class="name">{{ user.name }}</div>
             <div class="role" :class="roleClass(user.role)">
@@ -98,7 +98,7 @@
         </div>
         <div class="user-modal__groups">
           <div class="group-chips" v-if="selectedUser.groups && selectedUser.groups.length">
-            <span v-for="(group, index) in selectedUser.groups" :key="`${selectedUser.key}-group-${index}`" class="chip">{{ group }}</span>
+            <span v-for="(group, index) in selectedUser.groups" :key="`${selectedUser.id || selectedUser.key}-group-${index}`" class="chip">{{ group }}</span>
           </div>
           <div v-else class="group-empty">Aucun groupe</div>
         </div>
@@ -108,9 +108,9 @@
 </template>
 
 <script>
-
+import { mapActions, mapState } from 'pinia'
 import defaultProfile from '../assets/images/user-invert.svg'
-import { getUsers } from '../utils/user-data'
+import { useUsersStore } from '../stores'
 
 export default {
   name: 'Utilisateurs',
@@ -122,16 +122,18 @@ export default {
     }
   },
   computed: {
-    users() {
-      return getUsers()
-    },
+    ...mapState(useUsersStore, ['users', 'loading']),
     filteredUsers() {
       const query = this.searchQuery.trim().toLowerCase()
       if (!query) return this.users
-      return this.users.filter(user => user.name.toLowerCase().includes(query))
+      return this.users.filter(user => (user.name || '').toLowerCase().includes(query))
     }
   },
+  created() {
+    this.fetchUsers().catch(() => {})
+  },
   methods: {
+    ...mapActions(useUsersStore, { fetchUsers: 'fetchUsers', removeUser: 'deleteUser' }),
     openUser(user) {
       this.selectedUser = user
     },
@@ -153,7 +155,7 @@ export default {
       if (!user) return
       this.$router.push({
         name: 'UtilisateurEdit',
-        query: { userKey: user.key }
+        query: { id: user.id }
       })
     },
     createUser() {
@@ -161,7 +163,15 @@ export default {
     },
     deleteUser(user) {
       if (!user) return
-      alert(`Suppression de ${user.name} à venir`)
+      this.deleteUserAction(user)
+    },
+    async deleteUserAction(user) {
+      try {
+        await this.removeUser(user.id)
+        this.selectedUser = null
+      } catch (error) {
+        console.error('Unable to delete user', error)
+      }
     },
     roleIcon(role) {
       const map = {

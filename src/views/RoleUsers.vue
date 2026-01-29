@@ -29,7 +29,7 @@
         </div>
       </section>
       <div class="user-cards">
-        <article v-for="user in filteredUsers" :key="user.key" class="user-card" @click="openUser(user)">
+        <article v-for="user in filteredUsers" :key="user.id || user.key" class="user-card" @click="openUser(user)">
           <img :src="user.profilePicture || defaultProfile" alt="Photo de profil" class="user-avatar" />
           <div class="name">{{ user.name }}</div>
           <div class="role" :class="roleClass(user.role)">
@@ -76,7 +76,7 @@
           <div class="group-chips" v-if="selectedUser.groups && selectedUser.groups.length">
             <span
               v-for="(group, index) in selectedUser.groups"
-              :key="`${selectedUser.key}-group-${index}`"
+              :key="`${selectedUser.id || selectedUser.key}-group-${index}`"
               class="chip"
             >
               {{ group }}
@@ -90,8 +90,9 @@
 </template>
 
 <script>
+import { mapActions, mapState } from 'pinia'
 import defaultProfile from '../assets/images/user-invert.svg'
-import { getUsers } from '../utils/user-data'
+import { useUsersStore } from '../stores'
 
 export default {
   name: 'RoleUsers',
@@ -113,14 +114,25 @@ export default {
     }
   },
   computed: {
+    ...mapState(useUsersStore, ['users']),
     filteredUsers() {
       const query = this.searchQuery.trim().toLowerCase()
-      return getUsers()
-        .filter(user => user.role === this.role)
-        .filter(user => !query || user.name.toLowerCase().includes(query))
+      const roleTargets = {
+        Étudiant: ['Étudiant', 'student'],
+        Enseignant: ['Enseignant', 'teacher'],
+        Admin: ['Admin', 'admin']
+      }
+      const acceptedRoles = roleTargets[this.role] || [this.role]
+      return this.users
+        .filter(user => acceptedRoles.includes(user.role))
+        .filter(user => !query || (user.name || '').toLowerCase().includes(query))
     }
   },
+  created() {
+    this.fetchUsers().catch(() => {})
+  },
   methods: {
+    ...mapActions(useUsersStore, ['fetchUsers']),
     goBack() {
       this.$router.push({ name: 'Utilisateurs' })
     },
@@ -137,7 +149,7 @@ export default {
     },
     editUser(user) {
       if (!user) return
-      this.$router.push({ name: 'UtilisateurEdit', query: { userKey: user.key } })
+      this.$router.push({ name: 'UtilisateurEdit', query: { id: user.id } })
     },
     roleIcon(role) {
       const map = {

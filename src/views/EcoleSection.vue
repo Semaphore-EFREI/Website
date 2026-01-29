@@ -116,6 +116,20 @@
 
         <label class="checkbox-item">
           <input 
+            v-model="settings.QRCodeEnabled" 
+            type="checkbox"
+            class="checkbox-input"
+          />
+          <img 
+            :src="settings.QRCodeEnabled ? checkboxFilled : checkboxEmpty" 
+            alt="checkbox" 
+            class="checkbox-icon"
+          />
+          <span>Signature par QR Code activée</span>
+        </label>
+
+        <label class="checkbox-item">
+          <input 
             v-model="settings.disableCourseModification" 
             type="checkbox"
             class="checkbox-input"
@@ -166,10 +180,11 @@
 </template>
 
 <script>
+import { mapActions, mapState } from 'pinia'
 import defaultProfile from '../assets/images/user-invert.svg'
-import sallesData from '../assets/json/salles.json'
 import checkboxEmpty from '../assets/images/checkbox-empty.svg'
 import checkboxFilled from '../assets/images/checkbox-filled.svg'
+import { useRoomsStore, useBeaconsStore, useAuthStore, useSchoolsStore } from '../stores'
 
 const LABELS = {
   salles: 'Salles',
@@ -182,6 +197,8 @@ const BUTTON_LABELS = {
   balises: 'Ajouter une balise',
   parametres: 'Enregistrer'
 }
+
+const SETTINGS_STORAGE_KEY = 'ecole-settings'
 
 export default {
   name: 'EcoleSection',
@@ -197,7 +214,6 @@ export default {
       editingName: '',
       isNewItem: false,
       defaultProfile,
-      salles: sallesData,
       checkboxEmpty,
       checkboxFilled,
       settings: {
@@ -205,11 +221,30 @@ export default {
         teachersCanModifyDelay: false,
         studentsCanSignBefore: false,
         contactSignatureEnabled: false,
-        torchSignatureEnabled: false
+        torchSignatureEnabled: false,
+        QRCodeEnabled: false,
+        disableCourseModification: false
+      }
+    }
+  },
+  created() {
+    this.fetchRooms({ schoolId: this.schoolId }).catch(() => {})
+    this.fetchBeacons({ schoolId: this.schoolId }).catch(() => {})
+    this.loadSettings()
+  },
+  watch: {
+    settings: {
+      deep: true,
+      handler() {
+        this.persistSettings()
       }
     }
   },
   computed: {
+    ...mapState(useRoomsStore, { salles: 'rooms' }),
+    ...mapState(useBeaconsStore, { balisesStore: 'beacons' }),
+    ...mapState(useAuthStore, { currentUser: 'user' }),
+    ...mapState(useSchoolsStore, ['schools']),
     sectionLabel() {
       return LABELS[this.section] || this.section
     },
@@ -222,37 +257,35 @@ export default {
           key: `salle-${index}`,
           name: salle.name,
           displayName: salle.name,
-          type: `${salle.balises.length} balise${salle.balises.length !== 1 ? 's' : ''}`,
+          type: `${(salle.balises || []).length} balise${(salle.balises || []).length !== 1 ? 's' : ''}`,
           profilePicture: null,
-          balises: salle.balises
+          balises: Array.isArray(salle.balises) ? salle.balises : []
         }))
       } else if (this.section === 'balises') {
-        const allBalises = new Set()
-        this.salles.forEach(salle => {
-          salle.balises.forEach(balise => allBalises.add(balise))
-        })
-        return Array.from(allBalises).map((balise, index) => ({
-          key: `balise-${index}`,
-          name: balise,
-          displayName: balise,
+        return (this.balisesStore || []).map((balise, index) => ({
+          key: balise.id || `balise-${index}`,
+          name: balise.label || balise.name || balise.id || `Balise ${index + 1}`,
+          displayName: balise.label || balise.name || balise.id || `Balise ${index + 1}`,
           type: 'Balise',
           profilePicture: null
         }))
       }
       return []
     },
+    schoolId() {
+      return this.currentUser?.schoolId || this.currentUser?.school_id || this.currentUser?.school?.id || null
+    },
   },
   methods: {
+    ...mapActions(useRoomsStore, ['fetchRooms']),
+    ...mapActions(useBeaconsStore, ['fetchBeacons']),
+    ...mapActions(useSchoolsStore, ['updateSchoolPreferences']),
     goBack() {
       this.$router.push({ name: 'Ecole' }).catch(() => {})
     },
     openItem(item) {
       this.selectedItem = item
       this.editingName = item.displayName
-    },
-    closeItem() {
-      this.selectedItem = null
-      this.editingName = ''
     },
     saveItem() {
       if (!this.selectedItem || !this.editingName.trim()) return
@@ -276,7 +309,7 @@ export default {
       } else if (this.section === 'balises') {
         this.openNewItem('balise')
       } else if (this.section === 'parametres') {
-        alert('Enregistrement à venir')
+        this.savePreferences()
       }
     },
     openNewItem(type) {
@@ -303,6 +336,52 @@ export default {
     },
     itemClass(type) {
       return ''
+    },
+    loadSettings() {
+      if (typeof localStorage === 'undefined') return
+      try {
+        const raw = localStorage.getItem(SETTINGS_STORAGE_KEY)
+        if (!raw) return
+        const parsed = JSON.parse(raw)
+        this.settings = {
+          ...this.settings,
+          ...parsed
+        }
+      } catch (error) {
+        console.error('Impossible de charger les paramètres', error)
+      }
+    },
+    persistSettings() {
+      if (typeof localStorage === 'undefined') return
+      try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(this.settings))
+      } catch (error) {
+        console.error('Impossible de sauvegarder les paramètres', error)
+      }
+    },
+    async savePreferences() {
+      this.persistSettings()
+      const schoolId = this.schoolId
+      if (!schoolId) {
+        alert('Aucun établissement associé, préférences non envoyées')
+        return
+      }
+      const payload = {
+        id: schoolId,
+        defaultSignatureClosingDelay: Number(this.settings.closureDelay) ?? 15,
+        teacherCanModifyClosingdelay: Boolean(this.settings.teachersCanModifyDelay),
+        studentsCanSignBeforeTeacher: Boolean(this.settings.studentsCanSignBefore),
+        nfcEnabled: Boolean(this.settings.contactSignatureEnabled),
+        flashlightEnabled: Boolean(this.settings.torchSignatureEnabled),
+        qrCodeEnabled: Boolean(this.settings.QRCodeEnabled)
+      }
+      try {
+        await this.updateSchoolPreferences(schoolId, payload)
+        alert('Paramètres enregistrés')
+      } catch (error) {
+        console.error('Impossible de sauvegarder les préférences établissement', error)
+        alert("Échec de l'enregistrement des paramètres")
+      }
     }
   },
   beforeUnmount() {

@@ -10,7 +10,7 @@
       <form @submit.prevent="handleconnexion" class="form-group">
         <div class="form-subgroup">
           <label for="username">Identifiant</label>
-          <input id="username" v-model="username" type="text" placeholder="etudiant@semaphore.com" required />
+          <input id="username" v-model="username" type="email" placeholder="etudiant@semaphore.com" required />
         </div>
 
         <div class="form-subgroup">
@@ -18,25 +18,45 @@
           <input id="password" v-model="password" type="password" placeholder="••••••••••••••••" required />
         </div>
 
-        <button type="submit" class="connexion-button">Se Connecter</button>
+        <button type="submit" class="connexion-button" :disabled="loading">
+          <span v-if="loading">Connexion...</span>
+          <span v-else>Se Connecter</span>
+        </button>
+
+        <p v-if="errorMessage" class="error-text">{{ errorMessage }}</p>
       </form>
     </div>
   </div>
 </template>
 
 <script>
+import { mapActions, mapState } from 'pinia'
+import { useAuthStore } from '../stores'
+
 export default {
   data() {
     return {
       username: '',
-      password: ''
+      password: '',
+      errorMessage: null
     }
   },
+  computed: {
+    ...mapState(useAuthStore, ['loading'])
+  },
   methods: {
-    handleconnexion() {
-      console.log('Tentative de connexion', this.username, this.password)
-      // Pour l'instant, juste une redirection fake vers le calendrier
-      this.$router.push('/calendrier')
+    ...mapActions(useAuthStore, ['login']),
+    async handleconnexion() {
+      this.errorMessage = null
+      try {
+        await this.login({
+          email: this.username,
+          password: this.password
+        })
+        this.$router.push({ name: 'Calendrier' })
+      } catch (error) {
+        this.errorMessage = error?.message || 'Impossible de se connecter'
+      }
     }
   }
 }

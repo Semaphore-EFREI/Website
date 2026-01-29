@@ -9,7 +9,13 @@
           <h1 class="edit-title">{{ getTitle() }}</h1>
         </div>
       </div>
-      <button class="save-btn" type="button" @click="createCourse" :disabled="!isFormValid">
+      <button
+        class="save-btn"
+        type="button"
+        @click="createCourse"
+        :disabled="isCreateDisabled"
+        :title="courseSettings.disableCourseModification ? 'La modification des cours est désactivée dans les paramètres.' : ''"
+      >
         <img src="../assets/images/plus-sign-white.svg" alt="Ajouter" class="plus-icon" /> Créer
       </button>
     </header>
@@ -90,11 +96,11 @@
             <div class="input-with-icon">
               <input
                 class="text-input select-like"
-                :class="{ 'is-empty': !course.room }"
+                :class="{ 'is-empty': !hasSelectedRooms }"
                 name="course-room"
                 type="text"
-                :value="course.room"
-                placeholder="Choisir une salle"
+                :value="selectedRoomsLabel"
+                placeholder="Choisir des salles"
                 readonly
                 @click="openRoomModal"
               />
@@ -291,13 +297,13 @@
                 <div class="select-modal__pillgrid">
                     <button
                     v-for="room in filteredRoomOptions"
-                    :key="room"
+                    :key="room.id"
                     type="button"
                     class="select-pill"
-                    :class="{ active: roomDraft === room }"
-                    @click="toggleRoomDraft(room)"
+                    :class="{ active: roomDraft.includes(room.id) }"
+                    @click="toggleRoomDraft(room.id)"
                     >
-                    <span>{{ room }}</span>
+                    <span>{{ room.name }}</span>
                     </button>
                 </div>
             </div>
@@ -309,10 +315,10 @@
 </template>
 
 <script>
-import roomsData from '../assets/json/salles.json'
-import studentsData from '../assets/json/etudiants.json'
-import attendanceTeachers from '../assets/json/attendance-teachers.json'
-import classesData from '../assets/json/classes.json'
+import { mapActions, mapState } from 'pinia'
+import { useCalendarStore, useUsersStore, useGroupsStore, useRoomsStore, useAuthStore } from '../stores'
+
+const SETTINGS_STORAGE_KEY = 'ecole-settings'
 
 export default {
   name: 'NouveauCours',
@@ -323,7 +329,7 @@ export default {
         date: '',
         startTime: '',
         endTime: '',
-        room: ''
+        rooms: []
       },
       rooms: [],
       teachers: [],
@@ -333,41 +339,46 @@ export default {
       showRoomModal: false,
       teacherDraft: [],
       studentDraft: [],
-      roomDraft: '',
+      roomDraft: [],
       teacherSearch: '',
       studentSearch: '',
       roomSearch: '',
       originCourseId: null,
-      sequence: 3
+      sequence: 3,
+      courseSettings: {
+        disableCourseModification: false
+      }
     }
   },
   computed: {
+    ...mapState(useUsersStore, ['users']),
+    ...mapState(useGroupsStore, ['groups']),
+    ...mapState(useRoomsStore, { roomOptions: 'rooms' }),
+    ...mapState(useAuthStore, { currentUser: 'user' }),
     teacherOptions() {
-      const names = attendanceTeachers.map(t => t.teacher)
-      return [...new Set(names)].sort()
+      return this.users
+        .filter(user => ['teacher', 'Enseignant'].includes(user.role))
+        .map(user => user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim())
+        .filter(Boolean)
+        .sort()
     },
     filteredTeacherOptions() {
       const q = this.teacherSearch.trim().toLowerCase()
       return this.teacherOptions.filter(name => !q || name.toLowerCase().includes(q))
     },
     groupOptions() {
-      const groups = new Set()
-      studentsData.forEach(s => {
-        if (Array.isArray(s.group)) {
-          s.group.forEach(g => groups.add(g))
-        } else if (s.group) {
-          groups.add(s.group)
-        }
-      })
-      return [...groups].sort()
+      return this.groups.map(g => g.name).filter(Boolean).sort()
     },
     filteredGroupOptions() {
       const q = this.studentSearch.trim().toLowerCase()
       return this.groupOptions.filter(name => !q || name.toLowerCase().includes(q))
     },
     studentOptions() {
-      const names = studentsData.map(s => `${s.firstName} ${s.lastName}`.trim())
-      return [...new Set(names)].sort()
+      return this.users
+        .filter(user => ['student', 'Étudiant'].includes(user.role))
+        .map(user => user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim())
+        .filter(Boolean)
+        .sort()
     },
     filteredStudentOptions() {
       const q = this.studentSearch.trim().toLowerCase()
@@ -375,19 +386,51 @@ export default {
     },
     filteredRoomOptions() {
       const q = this.roomSearch.trim().toLowerCase()
-      return this.rooms.filter(name => !q || name.toLowerCase().includes(q))
+      return (this.roomOptions || [])
+        .map(room => ({ id: room.id ?? room, name: room.name ?? room }))
+        .filter(room => room.name)
+        .filter(room => !q || room.name.toLowerCase().includes(q))
+    },
+    selectedRoomsLabel() {
+      const byId = new Map((this.roomOptions || []).map(r => [r.id ?? r, r.name ?? r]))
+      return this.course.rooms
+        .map(id => byId.get(id) || id)
+        .filter(Boolean)
+        .join(', ')
+    },
+    hasSelectedRooms() {
+      return this.course.rooms.length > 0
+    },
+    schoolId() {
+      return this.currentUser?.schoolId || this.currentUser?.school_id || this.currentUser?.school?.id || null
     },
     isFormValid() {
-      const { name, date, startTime, endTime, room } = this.course
-      return [name, date, startTime, endTime, room].every(val => (val || '').trim().length > 0)
+      const { name, date, startTime, endTime, rooms } = this.course
+      return [name, date, startTime, endTime].every(val => (val || '').trim().length > 0) && rooms.length > 0
+    },
+    isCreateDisabled() {
+      return this.courseSettings.disableCourseModification || !this.isFormValid
     }
   },
-  created() {
+  async created() {
     this.originCourseId = this.$route.query.courseId || null
-    this.rooms = roomsData.map(r => r.name)
-    this.prefillFromRoute()
+    this.loadSettings()
+    await Promise.all([
+      this.fetchUsers().catch(() => {}),
+      this.fetchGroups({ schoolId: this.schoolId }).catch(() => {}),
+      this.fetchRooms().catch(() => {})
+    ])
+    await this.prefillFromRoute()
   },
   methods: {
+    ...mapActions(useCalendarStore, {
+      createCourseAction: 'createCourse',
+      updateCourseAction: 'updateCourse',
+      fetchCourseAction: 'fetchCourse'
+    }),
+    ...mapActions(useUsersStore, ['fetchUsers']),
+    ...mapActions(useGroupsStore, ['fetchGroups']),
+    ...mapActions(useRoomsStore, ['fetchRooms']),
     goBack() {
       if (this.originCourseId) {
         this.$router.push({ name: 'CalendrierDetail', params: { id: this.originCourseId } })
@@ -399,17 +442,37 @@ export default {
       return this.originCourseId ? 'Modification Cours' : 'Nouveau Cours'
     },
     createCourse() {
+      if (this.courseSettings.disableCourseModification) return
       this.saveCourse()
     },
-    saveCourse() {
-      // Placeholder save action; integrate with API or store later
+    async saveCourse() {
+      const { date: startEpoch, endDate: endEpoch } = this.buildEpochDates()
       const payload = {
-        ...this.course,
+        id: this.course.id || this.generateCourseId(),
+        name: this.course.name,
+        date: startEpoch,
+        endDate: endEpoch,
+        startTime: this.course.startTime,
+        endTime: this.course.endTime,
+        rooms: this.course.rooms,
         teachers: this.teachers,
-        students: this.students
+        groups: this.students,
+        isOnline: false,
+        signatureClosingDelay: 15,
+        signatureClosed: false,
+        school: this.schoolId
       }
-      console.log('Nouveau cours enregistré', payload)
-      this.goBack()
+
+      try {
+        if (this.originCourseId) {
+          await this.updateCourseAction(this.originCourseId, payload)
+        } else {
+          await this.createCourseAction(payload)
+        }
+        this.goBack()
+      } catch (error) {
+        console.error('Unable to save course', error)
+      }
     },
     openNativePicker(type) {
       const refMap = {
@@ -487,39 +550,153 @@ export default {
     removeStudent(group) {
       this.students = this.students.filter(g => g !== group)
     },
-    prefillFromRoute() {
+    async prefillFromRoute() {
       const courseId = this.$route.query.courseId
       if (!courseId) return
-      const found = classesData.find(c => `${c.id}` === `${courseId}`)
-      if (!found) return
+      try {
+        const found = await this.fetchCourseAction(courseId)
+        if (!found) return
+        const normalized = this.normalizeCourse(found)
+        this.course.name = normalized.name
+        this.course.date = normalized.date
+        this.course.startTime = normalized.startTime
+        this.course.endTime = normalized.endTime
+        this.course.rooms = normalized.rooms
+        this.teachers = normalized.teachers
+        this.students = normalized.groups
 
-      this.course.name = found.subject || ''
-      this.course.date = found.day || ''
-      this.course.startTime = found.startTime || ''
-      this.course.endTime = found.endTime || ''
-      this.course.room = found.room || ''
-
-      this.teachers = found.teacher ? [found.teacher] : []
-      this.students = found.group ? [found.group] : []
-
-      this.teacherDraft = [...this.teachers]
-      this.studentDraft = [...this.students]
-      this.roomDraft = this.course.room
+        this.teacherDraft = [...this.teachers]
+        this.studentDraft = [...this.students]
+        this.roomDraft = [...this.course.rooms]
+      } catch (error) {
+        console.error('Unable to prefill course', error)
+      }
     },
     openRoomModal() {
-      this.roomDraft = this.course.room || ''
+      this.roomDraft = [...this.course.rooms]
       this.roomSearch = ''
       this.showRoomModal = true
     },
     closeRoomModal() {
       this.showRoomModal = false
     },
-    toggleRoomDraft(room) {
-      this.roomDraft = room === this.roomDraft ? '' : room
+    toggleRoomDraft(roomId) {
+      if (this.roomDraft.includes(roomId)) {
+        this.roomDraft = this.roomDraft.filter(r => r !== roomId)
+      } else {
+        this.roomDraft = [...this.roomDraft, roomId]
+      }
     },
     validateRoomSelection() {
-      this.course.room = this.roomDraft
+      this.course.rooms = [...this.roomDraft]
       this.closeRoomModal()
+    },
+    parseRooms(value) {
+      if (!value) return []
+      if (Array.isArray(value)) {
+        return value.map(v => (typeof v === 'object' ? v.id ?? v.name ?? v : v)).filter(Boolean)
+      }
+      return String(value)
+        .split(',')
+        .map(v => v.trim())
+        .filter(Boolean)
+    },
+    buildEpochDates() {
+      const parseDate = (dStr) => {
+        if (!dStr) return null
+        const [day, month, year] = dStr.split('/').map(part => Number(part))
+        if (!day || !month || !year) return null
+        return { day, month: month - 1, year }
+      }
+
+      const parseTime = (tStr) => {
+        if (!tStr) return { hour: 0, minute: 0 }
+        const clean = tStr.replace('h', ':')
+        const [h, m] = clean.split(':').map(part => Number(part))
+        return { hour: Number.isFinite(h) ? h : 0, minute: Number.isFinite(m) ? m : 0 }
+      }
+
+      const dateParts = parseDate(this.course.date)
+      const startParts = parseTime(this.course.startTime)
+      const endParts = parseTime(this.course.endTime)
+
+      const toEpoch = (parts, time) => {
+        if (!parts) return null
+        const d = new Date(parts.year, parts.month, parts.day, time.hour, time.minute, 0, 0)
+        const ms = d.getTime()
+        return Number.isNaN(ms) ? null : Math.floor(ms / 1000)
+      }
+
+      const date = toEpoch(dateParts, startParts)
+      const endDate = toEpoch(dateParts, endParts)
+      return { date, endDate }
+    },
+    generateCourseId() {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID()
+      }
+      const hex = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1)
+      return `${hex()}${hex()}-${hex()}-${hex()}-${hex()}-${hex()}${hex()}${hex()}`
+    },
+    normalizeCourse(course) {
+      if (!course) return {
+        name: '',
+        date: '',
+        startTime: '',
+        endTime: '',
+        rooms: [],
+        teachers: [],
+        groups: []
+      }
+
+      const toDateString = (value) => {
+        if (!value) return ''
+        const d = new Date(value)
+        if (Number.isNaN(d.getTime())) return value
+        const day = `${d.getDate()}`.padStart(2, '0')
+        const month = `${d.getMonth() + 1}`.padStart(2, '0')
+        const year = d.getFullYear()
+        return `${day}/${month}/${year}`
+      }
+
+      const toTimeString = (value) => {
+        if (!value) return ''
+        if (value.includes('h')) return value
+        const [hour, minute] = value.split(':')
+        if (!hour || !minute) return value
+        return `${hour.padStart(2, '0')}h${minute.padStart(2, '0')}`
+      }
+
+      return {
+        id: course.id,
+        name: course.name || course.subject || '',
+        date: course.date || course.day || toDateString(course.start || course.startDate || ''),
+        startTime: course.startTime || toTimeString(course.start?.split('T')[1]?.slice(0,5) || ''),
+        endTime: course.endTime || toTimeString(course.end?.split('T')[1]?.slice(0,5) || ''),
+        rooms: this.parseRooms(course.rooms || course.room),
+        teachers: Array.isArray(course.teacher) ? course.teacher : course.teacher ? [course.teacher] : [],
+        groups: Array.isArray(course.group) ? course.group : course.group ? [course.group] : []
+      }
+    },
+    loadSettings() {
+      if (typeof localStorage === 'undefined') return
+      try {
+        const raw = localStorage.getItem(SETTINGS_STORAGE_KEY)
+        if (!raw) return
+        const parsed = JSON.parse(raw)
+        // Force booleans to avoid legacy string values keeping the button disabled
+        const disableCourseModification = parsed.disableCourseModification
+        const normalizedDisable = disableCourseModification === true || disableCourseModification === 'true'
+        this.courseSettings = {
+          ...this.courseSettings,
+          ...parsed,
+          disableCourseModification: normalizedDisable
+        }
+        // Persist back normalized values so future reads stay clean
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(this.courseSettings))
+      } catch (error) {
+        console.error('Impossible de charger les paramètres', error)
+      }
     }
   }
 }

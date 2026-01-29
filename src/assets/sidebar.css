@@ -62,7 +62,7 @@
     align-items: flex-start;
     align-self: stretch;
     gap: 0.25rem;
-    margin-bottom: 6.25rem;
+    margin-bottom: 3.25rem;
 }
 
 .sidebar.collapsed .sidebar-nav,

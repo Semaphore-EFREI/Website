@@ -17,7 +17,7 @@
       <section class="all-groups">
         <div class="group-cards">
           <article
-            v-for="group in groups"
+            v-for="group in groupsView"
             :key="group.name"
             class="group-card"
             @click="openGroup(group.name)"
@@ -35,35 +35,33 @@
 </template>
 
 <script>
-import studentsData from '../assets/json/etudiants.json'
+import { mapActions, mapState } from 'pinia'
+import { useGroupsStore, useAuthStore } from '../stores'
 
 export default {
   name: 'GroupesClasses',
   data() {
     return {
-      students: studentsData
+      
     }
   },
   computed: {
-    groups() {
-      const accumulator = {}
-      this.students.forEach(student => {
-        const studentGroups = Array.isArray(student.group)
-          ? student.group
-          : student.group
-            ? [student.group]
-            : []
-        studentGroups.forEach(name => {
-          if (!name) return
-          accumulator[name] = (accumulator[name] || 0) + 1
-        })
-      })
-      return Object.entries(accumulator)
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => a.name.localeCompare(b.name))
+    ...mapState(useGroupsStore, ['groups']),
+    ...mapState(useAuthStore, { currentUser: 'user' }),
+    schoolId() {
+      return this.currentUser?.schoolId || this.currentUser?.school_id || this.currentUser?.school?.id || null
+    },
+    groupsView() {
+      return this.groups
+        .map(group => ({ name: group.name, count: Array.isArray(group.studentIds) ? group.studentIds.length : 0 }))
+        .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
     }
   },
+  created() {
+    this.fetchGroups({ schoolId: this.schoolId }).catch(() => {})
+  },
   methods: {
+    ...mapActions(useGroupsStore, ['fetchGroups']),
     createCourse() {
       alert('Création de cours à venir')
     },

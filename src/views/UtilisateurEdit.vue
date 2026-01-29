@@ -5,7 +5,7 @@
         <button class="edit-back-btn" @click="goBack">
             <img src="../assets/images/arrow-left.svg" alt="Retour" />
         </button>
-        <h1 class="edit-title">Nouvel utilisateur</h1>
+        <h1 class="edit-title">{{ pageTitle }}</h1>
       </div>
       <button
         type="button"
@@ -71,11 +71,12 @@
 </template>
 
 <script>
+import { mapActions, mapState } from 'pinia'
 import defaultProfile from '../assets/images/user-invert.svg'
 import studentIcon from '../assets/images/student-blue.svg'
 import teacherIcon from '../assets/images/teacher-green.svg'
 import adminIcon from '../assets/images/admin-purple.svg'
-import { findUserByKey } from '../utils/user-data'
+import { useUsersStore, useAuthStore } from '../stores'
 
 export default {
   name: 'UtilisateurEdit',
@@ -101,19 +102,30 @@ export default {
     this.loadUser()
   },
   computed: {
+    ...mapState(useAuthStore, { currentUser: 'user' }),
     isFormValid() {
       const { firstName, lastName, email, password } = this.user
       return [firstName, lastName, email, password].every(Boolean)
+    },
+    isEditing() {
+      return Boolean(this.$route.query.id)
+    },
+    pageTitle() {
+      return this.isEditing ? 'Modifier utilisateur' : 'Nouvel utilisateur'
     }
   },
   watch: {
-    '$route.query.userKey': 'loadUser'
+    '$route.query.id': 'loadUser'
   },
   methods: {
-    loadUser() {
-      const key = this.$route.query.userKey
-      const target = findUserByKey(key)
-      if (!target) {
+    ...mapActions(useUsersStore, {
+      fetchUser: 'fetchUserById',
+      createUserAction: 'createUser',
+      updateUserAction: 'updateUser'
+    }),
+    async loadUser() {
+      const id = this.$route.query.id
+      if (!id) {
         this.user = {
           profilePicture: '',
           firstName: '',
@@ -124,26 +136,58 @@ export default {
         }
         return
       }
-      const { firstName, lastName } = target
-      this.user = {
-        profilePicture: target.profilePicture,
-        firstName: firstName || target.name.split(' ')[0] || '',
-        lastName: lastName || target.name.split(' ').slice(1).join(' ') || '',
-        role: target.role,
-        email: target.email || '',
-        password: ''
+      try {
+        const target = await this.fetchUser(id)
+        if (!target) return
+        this.user = {
+          profilePicture: target.profilePicture || '',
+          firstName: target.firstName || target.name?.split(' ')[0] || '',
+          lastName: target.lastName || target.name?.split(' ').slice(1).join(' ') || '',
+          role: target.role || 'Étudiant',
+          email: target.email || '',
+          password: ''
+        }
+      } catch (error) {
+        console.error('Unable to load user', error)
       }
     },
     goBack() {
       this.$router.push({ name: 'Utilisateurs' })
     },
-    saveUser() {
-      if (!this.isFormValid) {
-        return
+    async saveUser() {
+      if (!this.isFormValid) return
+
+      const schoolId = this.currentUser?.schoolId || this.currentUser?.school_id || this.currentUser?.school?.id || null
+      const nowEpoch = Math.floor(Date.now() / 1000)
+      const payload = {
+        "id": this.user.id || this.generateId(),
+        "firstname": this.user.firstName,
+        "lastname": this.user.lastName,
+        "email": this.user.email,
+        "password": this.user.password,
+        "createdOn": nowEpoch,
+        "school": schoolId,
+        "studentNumber": this.user.studentNumber || this.generateStudentNumber(),
       }
-      // À implémenter : sauvegarde
-      alert('Utilisateur enregistré (simulation)')
-      this.goBack()
+
+      try {
+        if (this.isEditing) {
+          await this.updateUserAction(this.$route.query.id, payload)
+        } else {
+          await this.createUserAction(payload)
+        }
+        this.goBack()
+      } catch (error) {
+        console.error('Unable to save user', error)
+      }
+    },
+    generateId() {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
+      const s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1)
+      return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`
+    },
+    generateStudentNumber() {
+      return Number(String(Date.now()).slice(-8))
     }
   }
 }

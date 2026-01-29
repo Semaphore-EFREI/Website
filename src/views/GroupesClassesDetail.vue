@@ -17,7 +17,7 @@
 
     <section class="role-users-grid">
       <div class="user-cards">
-        <article v-for="user in students" :key="user.key" class="user-card" @click="openUser(user)">
+        <article v-for="user in students" :key="user.id || user.key" class="user-card" @click="openUser(user)">
           <img :src="user.profilePicture || defaultProfile" alt="Photo de profil" class="user-avatar" />
           <div class="name">{{ user.name }}</div>
           <div class="role" :class="roleClass(user.role)">
@@ -64,7 +64,7 @@
           <div class="group-chips" v-if="selectedUser.groups && selectedUser.groups.length">
             <span
               v-for="(group, index) in selectedUser.groups"
-              :key="`${selectedUser.key}-group-${index}`"
+              :key="`${selectedUser.id || selectedUser.key}-group-${index}`"
               class="chip"
             >
               {{ group }}
@@ -78,8 +78,9 @@
 </template>
 
 <script>
+import { mapActions, mapState } from 'pinia'
 import defaultProfile from '../assets/images/user-invert.svg'
-import { getUsers } from '../utils/user-data'
+import { useUsersStore, useGroupsStore, useAuthStore } from '../stores'
 
 export default {
   name: 'GroupesClassesDetail',
@@ -96,12 +97,29 @@ export default {
     }
   },
   computed: {
+    ...mapState(useUsersStore, ['users']),
+    ...mapState(useGroupsStore, ['groups']),
+    ...mapState(useAuthStore, { currentUser: 'user' }),
+    schoolId() {
+      return this.currentUser?.schoolId || this.currentUser?.school_id || this.currentUser?.school?.id || null
+    },
+    group() {
+      return this.groups.find(g => g.name === this.groupName) || null
+    },
     students() {
-      const normalized = getUsers().filter(user => user.role === 'Étudiant')
-      return normalized.filter(user => user.groups.includes(this.groupName))
+      if (!this.group) return []
+      const ids = this.group.studentIds || []
+      return this.users
+        .filter(user => ['Étudiant', 'student'].includes(user.role))
+        .filter(user => ids.includes(user.id))
     }
   },
+  created() {
+    Promise.all([this.fetchGroups({ schoolId: this.schoolId }), this.fetchUsers()]).catch(() => {})
+  },
   methods: {
+    ...mapActions(useUsersStore, ['fetchUsers']),
+    ...mapActions(useGroupsStore, ['fetchGroups']),
     goBack() {
       this.$router.push({ name: 'GroupesClasses' })
     },
@@ -116,7 +134,7 @@ export default {
     },
     editUser(user) {
       if (!user) return
-      this.$router.push({ name: 'UtilisateurEdit', query: { userKey: user.key } })
+      this.$router.push({ name: 'UtilisateurEdit', query: { id: user.id } })
     },
     roleIcon(role) {
       const map = {

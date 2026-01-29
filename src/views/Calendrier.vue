@@ -91,30 +91,14 @@
 </template>
 
 <script>
-import classesData from '../assets/json/classes.json';
+import { mapActions, mapState } from 'pinia'
+import { useCalendarStore } from '../stores'
 
 export default {
   data() {
     return {
       selectedDate: new Date(),
-      hours: ['8h00', '9h10', '10h20', '11h30', '12h40', '13h40', '14h50', '16h00', '17h10', '18h20','19h30'],
-      // Sample class data
-      classes: classesData
-
-    }
-  },
-  mounted() {
-    // Si une date est passée en query parameter, utiliser cette date
-    if (this.$route.query.date) {
-      const dateStr = this.$route.query.date;
-      // Parse date string in format DD/MM/YYYY
-      const parts = dateStr.split('/');
-      if (parts.length === 3) {
-        const day = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1;
-        const year = parseInt(parts[2], 10);
-        this.selectedDate = new Date(year, month, day);
-      }
+      hours: ['8h00', '9h10', '10h20', '11h30', '12h40', '13h40', '14h50', '16h00', '17h10', '18h20','19h30']
     }
   },
   computed: {
@@ -134,10 +118,29 @@ export default {
     },
     filteredClasses() {
       const key = this.dateKey(this.selectedDate);
-      return this.classes.filter(c => c.day === key);
+      return this.normalizedCourses.filter(c => c.day === key);
+    },
+    ...mapState(useCalendarStore, ['courses']),
+    normalizedCourses() {
+      return this.courses.map(course => this.normalizeCourse(course));
+    }
+  },
+  created() {
+    this.fetchCourses().catch(() => {});
+    // Si une date est passée en query parameter, utiliser cette date
+    if (this.$route.query.date) {
+      const dateStr = this.$route.query.date;
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parseInt(parts[2], 10);
+        this.selectedDate = new Date(year, month, day);
+      }
     }
   },
   methods: {
+    ...mapActions(useCalendarStore, ['fetchCourses']),
     previousDay() {
       this.selectedDate = new Date(this.selectedDate.setDate(this.selectedDate.getDate() - 1));
     },
@@ -172,6 +175,46 @@ export default {
       const month = `${date.getMonth() + 1}`.padStart(2, '0');
       const year = date.getFullYear();
       return `${day}/${month}/${year}`;
+    },
+    normalizeCourse(course) {
+      if (!course) {
+        return { id: null, subject: '', startTime: '', endTime: '', day: '', room: '', teacher: [], group: '', status: '' };
+      }
+
+      const fromIso = (value) => {
+        if (!value) return { day: '', time: '' };
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return { day: '', time: '' };
+        const hours = `${d.getHours()}`.padStart(2, '0');
+        const minutes = `${d.getMinutes()}`.padStart(2, '0');
+        return {
+          day: this.dateKey(d),
+          time: `${hours}h${minutes}`
+        };
+      };
+
+      const startInfo = fromIso(course.start || course.startDate);
+      const endInfo = fromIso(course.end || course.endDate);
+
+      const teacherValue = Array.isArray(course.teacher)
+        ? course.teacher
+        : course.teacher
+          ? [course.teacher]
+          : course.teacherId
+            ? [course.teacherId]
+            : [];
+
+      return {
+        id: course.id,
+        subject: course.subject || course.title || 'Cours',
+        startTime: course.startTime || startInfo.time,
+        endTime: course.endTime || endInfo.time,
+        day: course.day || startInfo.day,
+        room: course.room || course.roomName || '',
+        teacher: teacherValue,
+        group: course.group || course.className || '',
+        status: course.status || 'planned'
+      };
     }
   }
 }
