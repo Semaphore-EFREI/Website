@@ -6,7 +6,7 @@
     "startTime": "8h00",
     "endTime": "9h10",
     "room": "K007",
-    "teacher": "Jessica LEE",
+    "teacher": ["Jessica LEE"],
     "group": "Groupe 1",
     "status": "finished"
 },
@@ -17,7 +17,7 @@
     "startTime": "8h00",
     "endTime": "10h20",
     "room": "K008",
-    "teacher": "Pierre DUPONT",
+    "teacher": ["Pierre DUPONT"],
     "group": "Groupe 2",
     "status": "finished"
 },
@@ -28,7 +28,7 @@
     "startTime": "10h20",
     "endTime": "12h40",
     "room": "K009",
-    "teacher": "Marie MARTIN",
+    "teacher": ["Marie MARTIN", "Paul RENAUD"],
     "group": "Groupe 1",
     "status": "started"    
 },
@@ -39,7 +39,7 @@
     "startTime": "13h40",
     "endTime": "15h00",
     "room": "K010",
-    "teacher": "Jean BERNARD",
+    "teacher": ["Jean BERNARD"],
     "group": "Groupe 3",
     "status": "started-absent"
 },
@@ -50,7 +50,7 @@
     "startTime": "14h50",
     "endTime": "16h00",
     "room": "K011",
-    "teacher": "Sophie THOMAS",
+    "teacher": ["Sophie THOMAS"],
     "group": "Groupe 2",
     "status": "started"
 },
@@ -61,7 +61,7 @@
     "startTime": "16h00",
     "endTime": "17h10",
     "room": "K012",
-    "teacher": "Laurent ROBERT",
+    "teacher": ["Laurent ROBERT"],
     "group": "Groupe 1",
     "status": "planned"
 },
@@ -72,7 +72,7 @@
     "startTime": "17h10",
     "endTime": "18h20",
     "room": "Gymnase",
-    "teacher": "Caroline DUPUIS",
+    "teacher": ["Caroline DUPUIS"],
     "group": "Groupe 1",
     "status": "planned"
 },
@@ -83,7 +83,7 @@
     "startTime": "18h20",
     "endTime": "19h30",
     "room": "K013",
-    "teacher": "Julien LEROY",
+    "teacher": ["Julien LEROY"],
     "group": "Groupe 2",
     "status": "planned"
 },
@@ -94,7 +94,7 @@
     "startTime": "8h00",
     "endTime": "9h10",
     "room": "K014",
-    "teacher": "Sophie LAMAR",
+    "teacher": ["Sophie LAMAR"],
     "group": "Groupe 3",
     "status": "finished"
 },
@@ -105,7 +105,7 @@
     "startTime": "9h10",
     "endTime": "10h20",
     "room": "K015",
-    "teacher": "Thomas MOREL",
+    "teacher": ["Thomas MOREL"],
     "group": "Groupe 2",
     "status": "finished-absent"
 },
@@ -116,7 +116,7 @@
     "startTime": "10h20",
     "endTime": "11h30",
     "room": "K016",
-    "teacher": "Élodie FONTAINE",
+    "teacher": ["Élodie FONTAINE"],
     "group": "Groupe 1",
     "status": "started"
 },
@@ -127,7 +127,7 @@
     "startTime": "11h30",
     "endTime": "12h40",
     "room": "K017",
-    "teacher": "Marc LECLERC",
+    "teacher": ["Marc LECLERC"],
     "group": "Groupe 2",
     "status": "started"
 },
@@ -138,7 +138,7 @@
     "startTime": "13h40",
     "endTime": "14h50",
     "room": "K018",
-    "teacher": "Laura BERNARD",
+    "teacher": ["Laura BERNARD"],
     "group": "Groupe 3",
     "status": "started"
 },
@@ -149,7 +149,7 @@
     "startTime": "14h50",
     "endTime": "16h00",
     "room": "K019",
-    "teacher": "Miguel FERNANDEZ",
+    "teacher": ["Miguel FERNANDEZ"],
     "group": "Groupe 1",
     "status": "started"
 },
@@ -160,7 +160,7 @@
     "startTime": "16h00",
     "endTime": "17h10",
     "room": "K020",
-    "teacher": "Claire MARTIN",
+    "teacher": ["Claire MARTIN"],
     "group": "Groupe 2",
     "status": "planned"
 },
@@ -171,7 +171,7 @@
     "startTime": "17h10",
     "endTime": "18h20",
     "room": "K021",
-    "teacher": "Jean-Michel DUPONT",
+    "teacher": ["Jean-Michel DUPONT"],
     "group": "Groupe 3",
     "status": "planned"
 },
@@ -182,7 +182,7 @@
     "startTime": "18h20",
     "endTime": "19h30",
     "room": "Gymnase",
-    "teacher": "Anne LEGRAND",
+    "teacher": ["Anne LEGRAND"],
     "group": "Groupe 2",
     "status": "planned"  
 },
@@ -193,7 +193,7 @@
     "startTime": "8h00",
     "endTime": "9h10",
     "room": "K008",
-    "teacher": "Pierre DUPONT",
+    "teacher": ["Pierre DUPONT"],
     "group": "Groupe 1",
     "status": "finished"
   },
@@ -204,7 +204,7 @@
     "startTime": "9h10",
     "endTime": "10h20",
     "room": "K022",
-    "teacher": "Nathalie GIRARD",
+    "teacher": ["Nathalie GIRARD"],
     "group": "Groupe 2",
     "status": "finished"
   },
@@ -215,7 +215,7 @@
     "startTime": "10h20",
     "endTime": "11h30",
     "room": "K023",
-    "teacher": "Paul RENAUD",
+    "teacher": ["Paul RENAUD"],
     "group": "Groupe 3",
     "status": "started"
   },
@@ -226,7 +226,7 @@
     "startTime": "11h30",
     "endTime": "12h40",
     "room": "K011",
-    "teacher": "Sophie THOMAS",
+    "teacher": ["Sophie THOMAS"],
     "group": "Groupe 1",
     "status": "started-absent"
   },
@@ -237,7 +237,7 @@
     "startTime": "13h40",
     "endTime": "14h50",
     "room": "K010",
-    "teacher": "Jean BERNARD",
+    "teacher": ["Jean BERNARD"],
     "group": "Groupe 2",
     "status": "planned"
   },
@@ -248,7 +248,7 @@
     "startTime": "8h00",
     "endTime": "9h10",
     "room": "K007",
-    "teacher": "Jessica LEE",
+    "teacher": ["Jessica LEE"],
     "group": "Groupe 3",
     "status": "finished"
   },
@@ -259,7 +259,7 @@
     "startTime": "9h10",
     "endTime": "10h20",
     "room": "K009",
-    "teacher": "Marie MARTIN",
+    "teacher": ["Marie MARTIN"],
     "group": "Groupe 2",
     "status": "started"
   },
@@ -270,7 +270,7 @@
     "startTime": "10h20",
     "endTime": "11h30",
     "room": "K018",
-    "teacher": "Laura BERNARD",
+    "teacher": ["Laura BERNARD"],
     "group": "Groupe 1",
     "status": "started"
   },
@@ -281,7 +281,7 @@
     "startTime": "13h40",
     "endTime": "14h50",
     "room": "Gymnase",
-    "teacher": "Anne LEGRAND",
+    "teacher": ["Anne LEGRAND"],
     "group": "Groupe 3",
     "status": "planned"
   },
@@ -292,7 +292,7 @@
     "startTime": "14h50",
     "endTime": "16h00",
     "room": "K013",
-    "teacher": "Julien LEROY",
+    "teacher": ["Julien LEROY"],
     "group": "Groupe 1",
     "status": "planned"
   }

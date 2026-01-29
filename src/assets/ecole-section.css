@@ -46,6 +46,7 @@
     border-radius: 2.375rem;
     background: var(--Fond-Secondaire, #EFEDE3);
     background: var(--Fond-Secondaire, color(display-p3 0.9373 0.9294 0.898));
+    border: none;   
 }
 
 .parametres-form p {

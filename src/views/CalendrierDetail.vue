@@ -36,7 +36,7 @@
                 <div class="info-item1"><span>{{ course.room }}</span></div>
             </div>
             <div class="info-2">
-                <div class="info-item2"><span>{{ course.teacher }}</span></div>
+                <div class="info-item2"><span>{{ course.teacher.join(', ') }}</span></div>
                 <div class="info-item2"><span>{{ course.group }}</span></div>
             </div>
         </div>
@@ -52,9 +52,9 @@
         <section class="teacher-section">
         <h2>Enseignants</h2>
         <div class="card-list-teacher">
-            <div class="person-card" :class="teacher?.signatureStatus || 'none'">
+            <div v-for="teacher in teachers" :key="teacher.name" class="person-card" :class="teacher?.signatureStatus || 'none'">
               <div class="person-header">
-                <div class="name">{{ course.teacher }}</div>
+                <div class="name">{{ teacher.name }}</div>
                 <div
                   v-if="teacher && teacher.meta"
                   class="signature-status"
@@ -68,13 +68,13 @@
                   <img src="../assets/images/absent.svg" alt="Absent" class="signature-image" />
                 </div>
                 <div v-else-if="teacher && teacher.signatureUrl">
-                  <img :src="teacher.signatureUrl" :alt="`Signature de ${course.teacher}`" class="signature-image" />
+                  <img :src="teacher.signatureUrl" :alt="`Signature de ${teacher.name}`" class="signature-image" />
                 </div>
                 <div v-else class="signature-none">Aucune signature</div>
               </div>
                 <div class="actions" v-if="!isPlanned">
-                  <button class="btn-present" :class="teacher?.meta?.class || 'none'" @click="setTeacherStatus('present')">✔</button>
-                  <button class="btn-absent" :class="teacher?.meta?.class || 'none'" @click="setTeacherStatus('absent')">✖</button>
+                  <button class="btn-present" :class="teacher?.meta?.class || 'none'" @click="setTeacherStatus(teacher.name, 'present')">✔</button>
+                  <button class="btn-absent" :class="teacher?.meta?.class || 'none'" @click="setTeacherStatus(teacher.name, 'absent')">✖</button>
                 </div>
             </div>
         </div>
@@ -126,7 +126,9 @@ import studentsData from '../assets/json/etudiants.json'
 import attendanceData from '../assets/json/attendance.json'
 import attendanceTeachersData from '../assets/json/attendance-teachers.json'
 import clockIcon from '../assets/images/clock.svg'
+import clockcheckIcon from '../assets/images/clock-check.svg'
 import checkIcon from '../assets/images/check.svg'
+import absentIcon from '../assets/images/croix-black.svg'
 
 const signatureImages = import.meta.glob('../assets/images/*', {
   eager: true,
@@ -147,7 +149,7 @@ export default {
   data() {
     return {
       course: null,
-      teacher: null,
+      teachers: [],
       students: []
     }
   },
@@ -159,23 +161,25 @@ export default {
       if (!this.course) return { text: '', icon: null }
       const statusMap = {
         finished: { text: 'Ce cours est terminé', icon: checkIcon },
-        'finished-absent': { text: "Ce cours est terminé (présence professeur non validée)", icon: checkIcon },
-        started: { text: 'Ce cours a débuté', icon: clockIcon },
-        'started-absent': { text: "Ce cours a débuté (présence professeur non validée)", icon: clockIcon },
+        'finished-absent': { text: "Ce cours est terminé, mais l'enseignant n'a pas validé sa présence", icon: absentIcon },
+        started: { text: 'Ce cours a débuté', icon: clockcheckIcon },
+        'started-absent': { text: "Ce cours a débuté. En attente de la signature de l'enseignant", icon: clockIcon },
         planned: { text: "Ce cours n'a pas encore débuté", icon: null }
       }
       return statusMap[this.course.status] || { text: '', icon: null }
     },
     allPresentStatus() {
-      if (this.students.length === 0) return ''
-      const allPresent = this.students.every(s => s.meta?.class === 'present') && 
-                        this.teacher?.meta?.class === 'present'
+      if (this.students.length === 0 && this.teachers.length === 0) return ''
+      const studentsPresent = this.students.length === 0 || this.students.every(s => s.meta?.class === 'present')
+      const teachersPresent = this.teachers.length === 0 || this.teachers.every(t => t.meta?.class === 'present')
+      const allPresent = studentsPresent && teachersPresent
       return allPresent ? 'present' : ''
     },
     allAbsentStatus() {
-      if (this.students.length === 0) return ''
-      const allAbsent = this.students.every(s => s.meta?.class === 'absent') && 
-                       this.teacher?.meta?.class === 'absent'
+      if (this.students.length === 0 && this.teachers.length === 0) return ''
+      const studentsAbsent = this.students.length === 0 || this.students.every(s => s.meta?.class === 'absent')
+      const teachersAbsent = this.teachers.length === 0 || this.teachers.every(t => t.meta?.class === 'absent')
+      const allAbsent = studentsAbsent && teachersAbsent
       return allAbsent ? 'absent' : ''
     }
   },
@@ -194,30 +198,24 @@ export default {
         return student.group === this.course.group
       })
       const attendance = attendanceData.filter(a => Number(a.courseId) === courseId)
-      const teacherAttendance = attendanceTeachersData.find(
-        a => Number(a.courseId) === courseId && a.teacher === this.course.teacher
-      )
-
-      if (teacherAttendance) {
-        const status = teacherAttendance.status || 'none'
+      this.teachers = (this.course.teacher || []).map(name => {
+        const teacherAttendance = attendanceTeachersData.find(
+          a => Number(a.courseId) === courseId && a.teacher === name
+        )
+        const status = teacherAttendance && teacherAttendance.status ? teacherAttendance.status : 'none'
         const meta = this.signatureMeta(status)
         let signatureUrl = null
-        if (status === 'signed' && teacherAttendance.signature) {
+        if (status === 'signed' && teacherAttendance && teacherAttendance.signature) {
           const signatureFile = teacherAttendance.signature.split('/').pop()
           signatureUrl = signatureFile && signatureByName[signatureFile] ? signatureByName[signatureFile] : null
         }
-        this.teacher = {
+        return {
+          name,
           signatureStatus: status,
           signatureUrl,
           meta
         }
-      } else {
-        this.teacher = {
-          signatureStatus: 'none',
-          signatureUrl: null,
-          meta: null
-        }
-      }
+      })
 
       this.students = roster.map(student => {
         const entry = attendance.find(a => Number(a.studentId) === Number(student.id))
@@ -245,15 +243,16 @@ export default {
       }
       return map[status] || null
     },
-    setTeacherStatus(status) {
-      if (!this.teacher) return
-      this.teacher.signatureStatus = status
-      this.teacher.meta = this.signatureMeta(status)
+    setTeacherStatus(teacherName, status) {
+      const teacher = this.teachers.find(t => t.name === teacherName)
+      if (!teacher) return
+      teacher.signatureStatus = status
+      teacher.meta = this.signatureMeta(status)
       // Update display based on status
       if (status === 'absent') {
-        this.teacher.signatureUrl = null
+        teacher.signatureUrl = null
       } else if (status === 'present') {
-        this.teacher.signatureUrl = null
+        teacher.signatureUrl = null
       }
     },
     setStudentStatus(studentId, status) {
@@ -269,17 +268,25 @@ export default {
       }
     },
     setAllPresent() {
-      // Set all students to present
+      // Set all students and teachers to present
       this.students.forEach(student => {
         if (student.signatureStatus !== 'signed') {
           this.setStudentStatus(student.id, 'present')
         }
       })
+      this.teachers.forEach(teacher => {
+        if (teacher.signatureStatus !== 'signed') {
+          this.setTeacherStatus(teacher.name, 'present')
+        }
+      })
     },
     setAllAbsent() {
-      // Set all students to absent
+      // Set all students and teachers to absent
       this.students.forEach(student => {
           this.setStudentStatus(student.id, 'absent')
+      })
+      this.teachers.forEach(teacher => {
+        this.setTeacherStatus(teacher.name, 'absent')
       })
     },
     goBack() {

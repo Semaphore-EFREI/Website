@@ -156,9 +156,13 @@ h2 {
     gap: 0.5rem;
     align-self: stretch;
     border-radius: 1.5rem;
-    background: rgba(154, 154, 154, 0.32);
-    background: color(display-p3 0.6039 0.6039 0.6039 / 0.32);
+    background: linear-gradient(0deg, rgba(154, 154, 154, 0.16) 0%, rgba(154, 154, 154, 0.16) 100%), #FFF; 
+    background: linear-gradient(0deg, color(display-p3 0.6039 0.6039 0.6039 / 0.16) 0%, color(display-p3 0.6039 0.6039 0.6039 / 0.16) 100%), color(display-p3 1 1 1);
 }
+
+.finished-absent {
+    background: rgba(219, 40, 36, 0.32);
+    background: color(display-p3 0.7882 0.2314 0.1882 / 0.32);}    
 
 .started, .started-absent {
     display: flex;
@@ -170,6 +174,11 @@ h2 {
     border-radius: 1.5rem;
     background: rgba(0, 119, 150, 0.32);
     background: color(display-p3 0.1799 0.4609 0.576 / 0.32);
+}
+
+.started-absent {
+    background: rgba(230, 100, 0, 0.32);
+    background: color(display-p3 0.84 0.4238 0.1613 / 0.32);
 }
 
 .status-chip {
@@ -186,8 +195,8 @@ h2 {
 }
 
 .status-chip__icon {
-    width: 1.125rem;
-    height: 1.125rem;
+    width: 1rem;
+    height: 1rem;
 }
 
 .teacher-section, .student-section {

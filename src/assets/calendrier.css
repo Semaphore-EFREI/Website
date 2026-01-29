@@ -340,13 +340,13 @@ body.sidebar-expanded .header-content {
 }
 
 .started {
-    background: linear-gradient(0deg, rgba(230, 100, 0, 0.16) 0%, rgba(230, 100, 0, 0.16) 100%), #FFF;
-    background: linear-gradient(0deg, color(display-p3 0.84 0.4238 0.1613 / 0.16) 0%, color(display-p3 0.84 0.4238 0.1613 / 0.16) 100%), color(display-p3 1 1 1);
+    background: linear-gradient(0deg, rgba(0, 119, 150, 0.16) 0%, rgba(0, 119, 150, 0.16) 100%), #FFF;
+    background: linear-gradient(0deg, color(display-p3 0.1799 0.4609 0.576 / 0.16) 0%, color(display-p3 0.1799 0.4609 0.576 / 0.16) 100%), color(display-p3 1 1 1);
 }
 
 .started-absent {
-    background: linear-gradient(0deg, rgba(0, 119, 150, 0.16) 0%, rgba(0, 119, 150, 0.16) 100%), #FFF;
-    background: linear-gradient(0deg, color(display-p3 0.1799 0.4609 0.576 / 0.16) 0%, color(display-p3 0.1799 0.4609 0.576 / 0.16) 100%), color(display-p3 1 1 1);
+    background: linear-gradient(0deg, rgba(230, 100, 0, 0.16) 0%, rgba(230, 100, 0, 0.16) 100%), #FFF;
+    background: linear-gradient(0deg, color(display-p3 0.84 0.4238 0.1613 / 0.16) 0%, color(display-p3 0.84 0.4238 0.1613 / 0.16) 100%), color(display-p3 1 1 1);
 }
 
 .planned {
@@ -480,13 +480,13 @@ body.sidebar-expanded .header-content {
 }
 
 .legend-color.started {
-    background: rgba(230, 100, 0, 0.32);
-    background: color(display-p3 0.84 0.4238 0.1613 / 0.32);
+    background: rgba(0, 119, 150, 0.32);
+    background: color(display-p3 0.1799 0.4609 0.576 / 0.32);
 }
 
 .legend-color.started-absent {
-    background: rgba(0, 119, 150, 0.32);
-    background: color(display-p3 0.1799 0.4609 0.576 / 0.32);
+    background: rgba(230, 100, 0, 0.32);
+    background: color(display-p3 0.84 0.4238 0.1613 / 0.32);
 }
 
 .legend-color.planned {

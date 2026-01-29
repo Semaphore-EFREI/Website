@@ -249,12 +249,10 @@ export default {
     openItem(item) {
       this.selectedItem = item
       this.editingName = item.displayName
-      document.body.style.overflow = 'hidden'
     },
     closeItem() {
       this.selectedItem = null
       this.editingName = ''
-      document.body.style.overflow = ''
     },
     saveItem() {
       if (!this.selectedItem || !this.editingName.trim()) return

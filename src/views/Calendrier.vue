@@ -54,7 +54,7 @@
                   <div class="block-time">{{ block.startTime }}-{{ block.endTime }}</div>
                   <div class="block-room">{{ block.room }}</div>
                 </div>
-                <div class="block-teacher">{{ block.teacher }}</div>
+                <div class="block-teacher">{{ block.teacher.join(', ') }}</div>
                 <div class="block-container">
                   <div class="block-group">{{ block.group }}</div>
                 </div>

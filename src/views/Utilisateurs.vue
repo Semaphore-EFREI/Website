@@ -134,11 +134,9 @@ export default {
   methods: {
     openUser(user) {
       this.selectedUser = user
-      document.body.style.overflow = 'hidden'
     },
     closeUser() {
       this.selectedUser = null
-      document.body.style.overflow = ''
     },
     openRole(role) {
       const map = {
@@ -181,7 +179,6 @@ export default {
     }
   },
   beforeUnmount() {
-    document.body.style.overflow = ''
   }
 }
 </script>

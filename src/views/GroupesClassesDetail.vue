@@ -107,11 +107,9 @@ export default {
     },
     openUser(user) {
       this.selectedUser = user
-      document.body.style.overflow = 'hidden'
     },
     closeUser() {
       this.selectedUser = null
-      document.body.style.overflow = ''
     },
     addUser() {
       alert('Ajout d\'un étudiant à venir')
