@@ -168,6 +168,7 @@ export default {
     async deleteUserAction(user) {
       try {
         await this.removeUser(user.id)
+        await this.fetchUsers()
         this.selectedUser = null
       } catch (error) {
         console.error('Unable to delete user', error)

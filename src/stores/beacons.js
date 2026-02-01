@@ -8,16 +8,35 @@ export const useBeaconsStore = defineStore('beacons', {
     error: null
   }),
   getters: {
-    byId: (state) => (id) => state.beacons.find((t) => t.id === Number(id)),
-    byLabel: (state) => (label) => state.beacons.filter((t) => t.label.toLowerCase().includes(label.toLowerCase()))
+    byId: (state) => (id) => state.beacons.find((t) => String(t.id) === String(id)),
+    byLabel: (state) => (label) => state.beacons.filter((t) => (t.label || '').toLowerCase().includes(label.toLowerCase()))
   },
   actions: {
-    async fetchBeacons() {
+    async fetchBeacons(params = {}) {
       this.loading = true;
       this.error = null;
       try {
-        const response = await request('/beacons', { method: 'GET' });
-        this.beacons = Array.isArray(response.items) ? response.items : [];
+        const response = await request('/beacons', { method: 'GET', params });
+
+        const parsed = (() => {
+          if (Array.isArray(response)) return response;
+          if (typeof response === 'string') {
+            try {
+              const maybeJson = JSON.parse(response);
+              if (Array.isArray(maybeJson)) return maybeJson;
+              if (Array.isArray(maybeJson?.items)) return maybeJson.items;
+            } catch (_e) {
+              return [];
+            }
+          }
+          if (Array.isArray(response?.items)) return response.items;
+          return [];
+        })();
+
+        this.beacons = parsed.map((b, index) => ({
+          ...b,
+          label: b.label || b.name || `${b.serialNumber ?? ''}` || `Balise ${index + 1}`
+        }));
         return this.beacons;
       } catch (err) {
         this.error = err.message || 'Unable to fetch beacons';
@@ -32,63 +51,15 @@ export const useBeaconsStore = defineStore('beacons', {
       this.error = null;
       try {
         const response = await request(`/beacon/${id}`, { method: 'GET' });
-        const beacon = response.beacon ?? null;
+        const beacon = response.beacon ?? response ?? null;
         if (!beacon) throw new Error('Beacon not found');
-        const index = this.beacons.findIndex((t) => t.id === beacon.id);
+        const normalized = { ...beacon, label: beacon.label || beacon.name || `${beacon.serialNumber ?? ''}` };
+        const index = this.beacons.findIndex((t) => String(t.id) === String(normalized.id));
         if (index >= 0) this.beacons.splice(index, 1, beacon);
-        else this.beacons.push(beacon);
-        return beacon;
+        else this.beacons.push(normalized);
+        return normalized;
       } catch (err) {
         this.error = err.message || 'Unable to fetch beacon';
-        throw err;
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    async createBeacon(payload) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const response = await request('/beacon', { method: 'POST', data: payload });
-        const beacon = response.beacon;
-        if (!beacon) throw new Error('Beacon creation failed');
-        this.beacons.push(beacon);
-        return beacon;
-      } catch (err) {
-        this.error = err.message || 'Unable to create beacon';
-        throw err;
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    async updateBeacon(id, updates) {
-      this.loading = true;
-      this.error = null;
-      try {
-        const response = await request(`/beacon/${id}`, { method: 'PATCH', data: updates });
-        const beacon = response.beacon;
-        if (!beacon) throw new Error('Beacon update failed');
-        const index = this.beacons.findIndex((t) => t.id === beacon.id);
-        if (index >= 0) this.beacons.splice(index, 1, beacon);
-        return beacon;
-      } catch (err) {
-        this.error = err.message || 'Unable to update beacon';
-        throw err;
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    async deleteBeacon(id) {
-      this.loading = true;
-      this.error = null;
-      try {
-        await request(`/beacon/${id}`, { method: 'DELETE' });
-        this.beacons = this.beacons.filter((t) => t.id !== Number(id));
-      } catch (err) {
-        this.error = err.message || 'Unable to delete beacon';
         throw err;
       } finally {
         this.loading = false;
@@ -112,7 +83,7 @@ export const useBeaconsStore = defineStore('beacons', {
       this.loading = true;
       this.error = null;
       try {
-        await request(`/beacon/${beaconId}/classroom`, { method: 'DELETE', data: { "classroomId": classId } });
+        await request(`/beacon/${beaconId}/classroom/${classId}`, { method: 'DELETE' });
       } catch (err) {
         this.error = err.message || 'Unable to remove beacon from class';
         throw err;

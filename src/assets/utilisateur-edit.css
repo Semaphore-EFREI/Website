@@ -316,6 +316,17 @@
     line-height: normal;
 }
 
+.edit-email-error {
+        color: #b00020;
+        font-family: Montserrat;
+        font-size: 0.8125rem;
+        font-style: normal;
+        font-weight: 500;
+        line-height: normal;
+        padding-left: 0.75rem;
+        margin-top: -0.25rem;
+}
+
 @media (max-width: 800px) {
   body.sidebar-expanded .edit-user-page {
     margin-left: 0;

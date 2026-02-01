@@ -8,7 +8,8 @@
         <h1 class="edit-title">{{ pageTitle }}</h1>
       </div>
       <button
-        type="button"
+        type="submit"
+        form="edit-user-form"
         class="edit-save-btn"
         :disabled="!isFormValid"
         @click="saveUser"
@@ -16,7 +17,7 @@
         Enregistrer
       </button>
     </header>
-    <form class="edit-user-form" @submit.prevent="saveUser">
+    <form id="edit-user-form" class="edit-user-form" @submit.prevent="saveUser">
       <div class="edit-user-info">
         <div class="edit-user-avatar-block">
             <img :src="user.profilePicture || defaultProfile" alt="Photo de profil" class="edit-user-avatar" />
@@ -59,7 +60,16 @@
         <h2>Contact</h2>
         <div class="edit-user-contact-divider">
             <label for="email" class="edit-input-label">Mail</label>
-            <input id="email" v-model="user.email" placeholder="Adresse mail" class="edit-input" type="email" required />
+            <input
+              id="email"
+              v-model="user.email"
+              placeholder="Adresse mail"
+              class="edit-input"
+              type="email"
+              required
+              @input="onEmailInput"
+            />
+            <p v-if="emailError" class="edit-email-error">{{ emailError }}</p>
         </div>
         <div class="edit-user-contact-divider">
         <label for="password" class="edit-input-label">Mot de passe</label>
@@ -88,8 +98,11 @@ export default {
         lastName: '',
         role: 'Étudiant',
         email: '',
-        password: ''
+        password: '',
+        studentNumber: '',
+        adminRole: 'super_admin'
       },
+      emailError: '',
       defaultProfile,
       roleIcons: {
         student: studentIcon,
@@ -103,9 +116,14 @@ export default {
   },
   computed: {
     ...mapState(useAuthStore, { currentUser: 'user' }),
+    emailValid() {
+      const email = (this.user.email || '').trim()
+      const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      return Boolean(email) && pattern.test(email)
+    },
     isFormValid() {
       const { firstName, lastName, email, password } = this.user
-      return [firstName, lastName, email, password].every(Boolean)
+      return Boolean(firstName?.trim() && lastName?.trim() && (email || '').trim() && password)
     },
     isEditing() {
       return Boolean(this.$route.query.id)
@@ -132,8 +150,11 @@ export default {
           lastName: '',
           role: 'Étudiant',
           email: '',
-          password: ''
+          password: '',
+          studentNumber: '',
+          adminRole: 'super_admin'
         }
+        this.emailError = ''
         return
       }
       try {
@@ -145,8 +166,13 @@ export default {
           lastName: target.lastName || target.name?.split(' ').slice(1).join(' ') || '',
           role: target.role || 'Étudiant',
           email: target.email || '',
-          password: ''
+          password: '',
+          studentNumber: target.studentNumber || target.student_number || '',
+          adminRole: target.roleKey === 'admin'
+            ? (target.adminRole || target.admin_role || target.roleName || target.roleDescription || 'super_admin')
+            : 'super_admin'
         }
+        this.emailError = ''
       } catch (error) {
         console.error('Unable to load user', error)
       }
@@ -155,24 +181,45 @@ export default {
       this.$router.push({ name: 'Utilisateurs' })
     },
     async saveUser() {
+      this.emailError = ''
+      if (!this.emailValid) {
+        this.emailError = "Adresse mail invalide"
+        return
+      }
+
       if (!this.isFormValid) return
 
       const schoolId = this.currentUser?.schoolId || this.currentUser?.school_id || this.currentUser?.school?.id || null
-      const nowEpoch = Math.floor(Date.now() / 1000)
+      const roleKey = this.resolveRoleKey(this.user.role)
+      const firstName = (this.user.firstName || '').trim()
+      const lastName = (this.user.lastName || '').trim()
+      const email = (this.user.email || '').trim()
       const payload = {
-        "id": this.user.id || this.generateId(),
-        "firstname": this.user.firstName,
-        "lastname": this.user.lastName,
-        "email": this.user.email,
-        "password": this.user.password,
-        "createdOn": nowEpoch,
-        "school": schoolId,
-        "studentNumber": this.user.studentNumber || this.generateStudentNumber(),
+        userType: roleKey,
+        firstname: firstName,
+        lastname: lastName,
+        email,
+        password: this.user.password,
+        school: schoolId
+      }
+
+      if (!this.isEditing) {
+        payload.createdOn = Math.floor(Date.now() / 1000)
+      }
+
+      if (roleKey === 'student') {
+        payload.studentNumber = this.user.studentNumber || this.generateStudentNumber()
+      }
+
+      if (roleKey === 'admin') {
+        // Backend requires an admin "role" string (ex: "super_admin")
+        payload.role = this.user.adminRole || 'super_admin'
       }
 
       try {
         if (this.isEditing) {
-          await this.updateUserAction(this.$route.query.id, payload)
+          const id = this.$route.query.id
+          await this.updateUserAction(id, { ...payload, id })
         } else {
           await this.createUserAction(payload)
         }
@@ -188,6 +235,16 @@ export default {
     },
     generateStudentNumber() {
       return Number(String(Date.now()).slice(-8))
+    },
+    resolveRoleKey(roleLabel) {
+      const value = (roleLabel || '').toString().toLowerCase()
+      if (['étudiant', 'etudiant', 'student'].includes(value)) return 'student'
+      if (['enseignant', 'teacher'].includes(value)) return 'teacher'
+      if (['admin', 'administrateur', 'administrator'].includes(value)) return 'admin'
+      return 'student'
+    },
+    onEmailInput() {
+      if (this.emailError) this.emailError = ''
     }
   }
 }

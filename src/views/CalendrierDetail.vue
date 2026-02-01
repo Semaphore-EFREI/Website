@@ -36,7 +36,7 @@
                 <div class="info-item1"><span>{{ course.room }}</span></div>
             </div>
             <div class="info-2">
-                <div class="info-item2"><span>{{ course.teacher.join(', ') }}</span></div>
+              <div class="info-item2"><span>{{ teacherDisplayNames.join(', ') }}</span></div>
                 <div class="info-item2"><span>{{ course.group }}</span></div>
             </div>
         </div>
@@ -49,10 +49,10 @@
         </div>
         </section>
 
-        <section class="teacher-section">
+        <section class="teacher-section" :key="refreshKey">
         <h2>Enseignants</h2>
         <div class="card-list-teacher">
-            <div v-for="teacher in teachers" :key="teacher.name" class="person-card" :class="teacher?.signatureStatus || 'none'">
+          <div v-for="teacher in teachers" :key="teacher.name" class="person-card" :class="teacher?.signatureStatus || 'none'">
               <div class="person-header">
                 <div class="name">{{ teacher.name }}</div>
                 <div
@@ -73,17 +73,27 @@
                 <div v-else class="signature-none">Aucune signature</div>
               </div>
                 <div class="actions" v-if="!isPlanned">
-                  <button class="btn-present" :class="teacher?.meta?.class || 'none'" @click="setTeacherStatus(teacher.id, 'present')">✔</button>
-                  <button class="btn-absent" :class="teacher?.meta?.class || 'none'" @click="setTeacherStatus(teacher.id, 'absent')">✖</button>
+                  <button
+                    class="btn-present"
+                    :class="teacher?.meta?.class || 'none'"
+                    :disabled="isPresentDisabled(teacher)"
+                    @click="setTeacherStatus(teacher.id, 'present')"
+                  >✔</button>
+                  <button
+                    class="btn-absent"
+                    :class="teacher?.meta?.class || 'none'"
+                    :disabled="isAbsentDisabled(teacher)"
+                    @click="setTeacherStatus(teacher.id, 'absent')"
+                  >✖</button>
                 </div>
             </div>
         </div>
         </section>
 
-        <section class="student-section">
+        <section class="student-section" :key="`students-${refreshKey}`">
         <h2>Étudiants</h2>
         <div class="card-list-student">
-            <div v-for="student in students" :key="student.id" class="person-card" :class="student.signatureStatus">
+          <div v-for="student in students" :key="student.id" class="person-card" :class="student.signatureStatus || 'none'">
             <div class="person-header">
                 <div class="name">{{ student.name }}</div>
                 <div
@@ -105,8 +115,18 @@
                 <div v-else class="signature-none">Aucune signature</div>
             </div>
             <div class="actions" v-if="!isPlanned">
-              <button class="btn-present" :class="student.meta?.class || 'none'" @click="setStudentStatus(student.id, 'present')">✔</button>
-              <button class="btn-absent" :class="student.meta?.class || 'none'" @click="setStudentStatus(student.id, 'absent')">✖</button>
+              <button
+                class="btn-present"
+                :class="student.meta?.class || 'none'"
+                :disabled="isPresentDisabled(student)"
+                @click="setStudentStatus(student.id, 'present')"
+              >✔</button>
+              <button
+                class="btn-absent"
+                :class="student.meta?.class || 'none'"
+                :disabled="isAbsentDisabled(student)"
+                @click="setStudentStatus(student.id, 'absent')"
+              >✖</button>
             </div>
             </div>
         </div>
@@ -116,7 +136,7 @@
 
   <div v-else class="detail-page empty-state">
     <p>Cours introuvable.</p>
-    <button class="btn modify" @click="goBack">Retour au calendrier</button>
+    <button class="btn-modify" @click="goBack">Retour au calendrier</button>
   </div>
 </template>
 
@@ -126,7 +146,7 @@ import clockIcon from '../assets/images/clock.svg'
 import clockcheckIcon from '../assets/images/clock-check.svg'
 import checkIcon from '../assets/images/check.svg'
 import absentIcon from '../assets/images/croix-black.svg'
-import { useCalendarStore, useSignaturesStore, useUsersStore } from '../stores'
+import { useAuthStore, useCalendarStore, useSignaturesStore, useUsersStore } from '../stores'
 
 export default {
   name: 'CalendrierDetail',
@@ -141,14 +161,19 @@ export default {
       course: null,
       teachers: [],
       students: [],
-      loading: true
+      signaturesLocal: [],
+      loading: true,
+      refreshKey: 0
     }
   },
   computed: {
-    ...mapState(useSignaturesStore, ['signatures']),
+    ...mapState(useAuthStore, ['user']),
     ...mapState(useUsersStore, ['users']),
     isPlanned() {
       return this.course && this.course.status === 'planned'
+    },
+    currentAdminId() {
+      return this.user?.id || this.user?.userId || this.user?.user?.id || null
     },
     statusLabel() {
       if (!this.course) return { text: '', icon: null }
@@ -175,8 +200,18 @@ export default {
       const allAbsent = studentsAbsent && teachersAbsent
       return allAbsent ? 'absent' : ''
     },
+    teacherDisplayNames() {
+      if (Array.isArray(this.teachers) && this.teachers.length) {
+        return this.teachers.map((t) => t.name || this.resolveUserName(t.id) || t.id).filter(Boolean)
+      }
+      if (Array.isArray(this.course?.teacher)) {
+        return this.course.teacher.map((t) => (typeof t === 'object' ? t.name || t.id : t)).filter(Boolean)
+      }
+      if (this.course?.teacher) return [this.course.teacher].filter(Boolean)
+      return []
+    },
     signaturesForCourse() {
-      return this.signatures.filter(sig => Number(sig.courseId) === Number(this.id))
+      return this.signaturesLocal.filter(sig => String(sig.courseId) === String(this.id))
     }
   },
   created() {
@@ -185,11 +220,10 @@ export default {
   methods: {
     ...mapActions(useCalendarStore, { fetchCourseAction: 'fetchCourse' }),
     ...mapActions(useSignaturesStore, {
-      fetchSignaturesAction: 'fetchSignatures',
       addSignature: 'addSignature',
       updateSignature: 'updateSignature'
     }),
-    ...mapActions(useUsersStore, ['fetchUsers']),
+    ...mapActions(useUsersStore, ['fetchUserById']),
     async loadData() {
       this.loading = true
       try {
@@ -203,11 +237,18 @@ export default {
       }
     },
     async loadRoster() {
-      await Promise.all([this.fetchSignaturesAction(this.id), this.fetchUsers()]).catch(() => {})
-      const signatures = this.signaturesForCourse
+      const baseSignatures = Array.isArray(this.course?.signature) ? this.course.signature : []
+      const normalizeSig = (sig) => this.normalizeSignature(sig)
 
-      const teacherSignatures = signatures.filter(sig => sig.teacherId || sig.role === 'teacher')
-      const studentSignatures = signatures.filter(sig => sig.studentId || sig.role === 'student')
+      // Always prefer fresh server signatures to avoid stale states
+      this.signaturesLocal = baseSignatures.map(normalizeSig).filter(Boolean)
+
+      const teacherSignatures = this.signaturesLocal.filter(
+        (sig) => (sig.type === 'teacher' || sig.role === 'teacher') && (sig.teacher || sig.teacherId)
+      )
+      const studentSignatures = this.signaturesLocal.filter(
+        (sig) => (sig.type === 'student' || sig.role === 'student' || (!sig.type && (sig.student || sig.studentId)))
+      )
 
       const baseTeachers = Array.isArray(this.course?.teacher)
         ? this.course.teacher.map(val => (typeof val === 'object' ? val : { teacherId: val }))
@@ -216,45 +257,153 @@ export default {
           : []
 
       const baseStudents = Array.isArray(this.course?.students)
-        ? this.course.students.map(id => ({ studentId: id }))
+        ? this.course.students.map((s) => ({ studentId: s.id ?? s.studentId ?? s.userId ?? s, id: s.id ?? s.studentId ?? s.userId ?? s, ...s }))
         : []
 
-      const teacherMerged = [...baseTeachers, ...teacherSignatures]
-      const studentMerged = [...baseStudents, ...studentSignatures]
+      const soloStudents = Array.isArray(this.course?.soloStudents)
+        ? this.course.soloStudents.map((s) => ({ studentId: s.id ?? s.studentId ?? s.userId ?? s, ...s }))
+        : []
+
+      const teacherMerged = [
+        ...baseTeachers,
+        ...teacherSignatures.map((sig) => ({
+          teacherId: sig.teacherId ?? sig.teacher?.id ?? sig.userId,
+          firstName: sig.teacher?.firstName ?? sig.teacher?.firstname,
+          lastName: sig.teacher?.lastName ?? sig.teacher?.lastname,
+          name: sig.teacher?.name,
+          signatureUrl: sig.image || sig.signatureUrl,
+          status: sig.status,
+          signatureId: sig.id
+        }))
+      ]
+
+      const studentMerged = [
+        ...baseStudents,
+        ...soloStudents,
+        ...studentSignatures.map((sig) => ({
+          studentId: sig.studentId ?? (typeof sig.student === 'string' ? sig.student : sig.student?.id) ?? sig.userId,
+          id: sig.studentId ?? (typeof sig.student === 'string' ? sig.student : sig.student?.id) ?? sig.userId,
+          firstName: sig.student?.firstName ?? sig.student?.firstname,
+          lastName: sig.student?.lastName ?? sig.student?.lastname,
+          name: sig.student?.name,
+          signatureUrl: sig.image || sig.signatureUrl,
+          status: sig.status,
+          signatureId: sig.id
+        }))
+      ]
+
+      await Promise.all([
+        this.populateStudentNames(studentMerged),
+        this.populateTeacherNames(teacherMerged)
+      ])
 
       this.teachers = this.mergePersons(teacherMerged, 'teacher')
       this.students = this.mergePersons(studentMerged, 'student')
+      this.applySignatureStatuses()
+      console.log('[CalendrierDetail] roster', {
+        signaturesLocal: this.signaturesLocal,
+        students: this.students
+      })
     },
     mergePersons(entries, role) {
       const map = new Map()
       entries.forEach(entry => {
-        const id = role === 'teacher' ? (entry.teacherId ?? entry.id ?? entry.userId) : (entry.studentId ?? entry.id ?? entry.userId)
+        const id = role === 'teacher'
+          ? (entry.teacherId ?? entry.teacher?.id ?? entry.id ?? entry.userId)
+          : (entry.studentId ?? entry.student?.id ?? entry.id ?? entry.userId)
         if (!id) return
         const status = entry.status || 'none'
         const existing = map.get(id) || {}
+        const firstName = entry.firstName || entry.firstname
+        const lastName = entry.lastName || entry.lastname
+        const displayName = entry.name || [firstName, lastName].filter(Boolean).join(' ').trim() || this.resolveUserName(id)
+        const meta = this.signatureMeta(status)
+        const normalizedStatus = meta?.class || status
         map.set(id, {
           id,
-          name: existing.name || entry.name || this.resolveUserName(id),
-          signatureStatus: status,
+          name: existing.name || displayName || `#${id}`,
+          signatureStatus: normalizedStatus,
           signatureUrl: entry.signatureUrl || existing.signatureUrl || null,
-          meta: this.signatureMeta(status)
+          signatureId: entry.signatureId || existing.signatureId || null,
+          meta: meta || (normalizedStatus ? this.signatureMeta(normalizedStatus) : null)
         })
       })
       return Array.from(map.values())
     },
+    async populateStudentNames(entries) {
+      const idsToFetch = entries
+        .map((e) => e.studentId ?? e.id)
+        .filter((id, idx, arr) => id && arr.indexOf(id) === idx)
+        .filter((id) => {
+          const user = this.users.find((u) => String(u.id) === String(id))
+          return !user
+        })
+
+      for (const id of idsToFetch) {
+        await this.fetchUserById(id, 'student').catch(() => {})
+      }
+
+      entries.forEach((entry) => {
+        const id = entry.studentId ?? entry.id
+        const user = this.users.find((u) => String(u.id) === String(id))
+        if (user) {
+          entry.firstName = entry.firstName || user.firstName
+          entry.lastName = entry.lastName || user.lastName
+          entry.name = entry.name || user.name
+        }
+      })
+    },
+    async populateTeacherNames(entries) {
+      const idsToFetch = entries
+        .map((e) => e.teacherId ?? e.id)
+        .filter((id, idx, arr) => id && arr.indexOf(id) === idx)
+        .filter((id) => {
+          const user = this.users.find((u) => String(u.id) === String(id))
+          return !user
+        })
+
+      for (const id of idsToFetch) {
+        await this.fetchUserById(id, 'teacher').catch(() => {})
+      }
+
+      entries.forEach((entry) => {
+        const id = entry.teacherId ?? entry.id
+        const user = this.users.find((u) => String(u.id) === String(id))
+        if (user) {
+          entry.firstName = entry.firstName || user.firstName
+          entry.lastName = entry.lastName || user.lastName
+          entry.name = entry.name || user.name
+        }
+      })
+    },
     resolveUserName(id) {
-      const user = this.users.find(u => Number(u.id) === Number(id))
-      if (!user) return `#${id}`
-      if (user.name) return user.name
-      return `${user.firstName || ''} ${user.lastName || ''}`.trim() || `#${id}`
+      const user = this.users.find(u => String(u.id) === String(id))
+      if (!user) return ''
+      return user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim()
     },
     normalizeCourse(course) {
       if (!course) return null
 
+      const toDate = (value) => {
+        if (value === null || value === undefined) return null
+        if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value
+        if (typeof value === 'number') {
+          const ms = value < 1e12 ? value * 1000 : value
+          const d = new Date(ms)
+          return Number.isNaN(d.getTime()) ? null : d
+        }
+        if (typeof value === 'string') {
+          const numeric = Number(value)
+          if (!Number.isNaN(numeric)) return toDate(numeric)
+          const d = new Date(value)
+          return Number.isNaN(d.getTime()) ? null : d
+        }
+        return null
+      }
+
       const toDayTime = (value) => {
-        if (!value) return { day: '', time: '' }
-        const d = new Date(value)
-        if (Number.isNaN(d.getTime())) return { day: '', time: '' }
+        const d = toDate(value)
+        if (!d) return { day: '', time: '' }
         const hours = `${d.getHours()}`.padStart(2, '0')
         const minutes = `${d.getMinutes()}`.padStart(2, '0')
         return {
@@ -263,20 +412,63 @@ export default {
         }
       }
 
-      const startInfo = toDayTime(course.start || course.startDate)
+      const startInfo = toDayTime(course.start || course.startDate || course.date)
       const endInfo = toDayTime(course.end || course.endDate)
+
+      const now = Date.now()
+      const startMs = toDate(course.start || course.startDate || course.date)?.getTime() ?? null
+      const endMs = toDate(course.end || course.endDate)?.getTime() ?? null
+
+      const hasTeacherSig = Array.isArray(course.signature)
+        ? course.signature.some(
+            (sig) =>
+              sig &&
+              (sig.type === 'teacher' || sig.role === 'teacher' || (!sig.student && (sig.teacher || sig.teacherId))) &&
+              (sig.status === 'signed' || sig.status === 'present')
+          )
+        : false
+
+      let status = course.status || 'planned'
+      if (startMs && now >= startMs && (!endMs || now < endMs)) {
+        status = hasTeacherSig ? 'started' : 'started-absent'
+      } else if (endMs && now >= endMs) {
+        status = hasTeacherSig ? 'finished' : 'finished-absent'
+      } else if (startMs && now < startMs) {
+        status = 'planned'
+      }
+
+      const roomLabel = (() => {
+        if (Array.isArray(course.classrooms) && course.classrooms.length) {
+          return course.classrooms.map((c) => c?.name || c?.id || '').filter(Boolean).join(', ')
+        }
+        return course.room || course.roomName || ''
+      })()
+
+      const teacherNames = (() => {
+        const list = course.teacher || course.teachers || []
+        const arr = Array.isArray(list) ? list : [list]
+        return arr
+          .map((t) => {
+            if (typeof t === 'object' && t !== null) {
+              return t.name || [t.firstName || t.firstname, t.lastName || t.lastname].filter(Boolean).join(' ').trim() || t.id
+            }
+            return t
+          })
+          .filter(Boolean)
+      })()
 
       return {
         id: course.id,
-        subject: course.subject || course.title || 'Cours',
+        subject: course.subject || course.title || course.name || 'Cours',
         day: course.day || startInfo.day,
         startTime: course.startTime || startInfo.time,
         endTime: course.endTime || endInfo.time,
-        room: course.room || course.roomName || '',
-        teacher: course.teacher || [],
-        group: course.group || course.className || '',
-        status: course.status || 'planned',
-        students: course.students || []
+        room: roomLabel,
+        teacher: teacherNames,
+        group: course.group || course.className || (Array.isArray(course.studentGroups) ? course.studentGroups.map((g) => g?.name).filter(Boolean).join(', ') : ''),
+        status,
+        students: course.students || course.soloStudents || [],
+        signature: course.signature || []
       }
     },
     signatureMeta(status) {
@@ -288,40 +480,129 @@ export default {
       return map[status] || null
     },
     async setTeacherStatus(teacherId, status) {
-      const target = this.signaturesForCourse.find(sig => Number(sig.teacherId) === Number(teacherId))
-      if (target) {
-        await this.updateSignature(target.id, { status }).catch(() => {})
-      } else {
-        await this.addSignature({ courseId: this.course.id, teacherId, status }).catch(() => {})
-      }
-      this.loadRoster()
+      const teacher = this.teachers.find((t) => String(t.id) === String(teacherId))
+      if (this.isStatusLocked(teacher, status)) return
+      await this.saveSignature('teacher', teacherId, status, teacher?.signatureId)
+      await this.refreshSilently()
     },
     async setStudentStatus(studentId, status) {
-      const target = this.signaturesForCourse.find(sig => Number(sig.studentId) === Number(studentId))
-      if (target) {
-        await this.updateSignature(target.id, { status }).catch(() => {})
-      } else {
-        await this.addSignature({ courseId: this.course.id, studentId, status }).catch(() => {})
+      const student = this.students.find((s) => String(s.id) === String(studentId))
+      if (this.isStatusLocked(student, status)) return
+      await this.saveSignature('student', studentId, status, student?.signatureId)
+      await this.refreshSilently()
+    },
+    upsertSignature(sig) {
+      const normalized = this.normalizeSignature(sig)
+      const idx = this.signaturesLocal.findIndex((s) => String(s.id) === String(normalized.id))
+      if (idx >= 0) this.signaturesLocal.splice(idx, 1, normalized)
+      else this.signaturesLocal.push(normalized)
+    },
+    normalizeSignature(sig) {
+      if (!sig) return null
+      const studentId = sig.studentId ?? (typeof sig.student === 'string' ? sig.student : sig.student?.id)
+      const teacherId = sig.teacherId ?? (typeof sig.teacher === 'string' ? sig.teacher : sig.teacher?.id)
+      return { ...sig, studentId, teacherId, status: sig.status || 'none' }
+    },
+    applySignatureStatuses() {
+      const sigMap = new Map()
+      this.signaturesLocal.forEach((sig) => {
+        const studentId = sig.studentId ?? (typeof sig.student === 'string' ? sig.student : sig.student?.id)
+        const teacherId = sig.teacherId ?? (typeof sig.teacher === 'string' ? sig.teacher : sig.teacher?.id)
+        const sigType = sig.type || sig.role
+        if (studentId && sigType !== 'teacher') sigMap.set(`student-${studentId}`, sig)
+        if (teacherId && sigType === 'teacher') sigMap.set(`teacher-${teacherId}`, sig)
+      })
+
+      const mapPerson = (person, role) => {
+        const keyId = person.id || person.studentId || person.teacherId
+        const sig = sigMap.get(`${role}-${keyId}`)
+        const status = sig?.status || person.signatureStatus || person.meta?.class || 'none'
+        const meta = this.signatureMeta(status) || person.meta || null
+        return {
+          ...person,
+          signatureStatus: meta?.class || status,
+          meta,
+          signatureId: person.signatureId || sig?.id || null,
+          signatureUrl: person.signatureUrl || sig?.image || sig?.signatureUrl || null
+        }
       }
-      this.loadRoster()
+
+      this.students = Array.isArray(this.students) ? this.students.map((s) => mapPerson(s, 'student')) : []
+      this.teachers = Array.isArray(this.teachers) ? this.teachers.map((t) => mapPerson(t, 'teacher')) : []
     },
     async setAllPresent() {
-      await Promise.all([
-        ...this.students.map(student => this.setStudentStatus(student.id, 'present')),
-        ...this.teachers.map(teacher => this.setTeacherStatus(teacher.id, 'present'))
-      ])
+      await this.applyBulkStatus('present')
     },
     async setAllAbsent() {
-      await Promise.all([
-        ...this.students.map(student => this.setStudentStatus(student.id, 'absent')),
-        ...this.teachers.map(teacher => this.setTeacherStatus(teacher.id, 'absent'))
-      ])
+      await this.applyBulkStatus('absent')
+    },
+    async applyBulkStatus(status) {
+      const targets = this.students.filter((s) => !this.isSigned(s))
+
+      for (const person of targets) {
+        if (this.isStatusLocked(person, status)) continue
+        await this.saveSignature('student', person.id, status, person.signatureId)
+      }
+      await this.refreshSilently()
+    },
+    async saveSignature(role, personId, status, signatureId) {
+      if (!this.course?.id) return null
+      if (signatureId) {
+        const updatePayload = { status }
+        const updated = await this.updateSignature(signatureId, updatePayload).catch(() => null)
+        if (updated) this.upsertSignature(updated)
+        return updated
+      }
+
+      const payload = {
+        course: this.course.id,
+        status,
+        method: 'admin',
+        date: Math.floor(Date.now() / 1000)
+      }
+
+      if (role === 'student') {
+        payload.student = personId
+      } else {
+        payload.teacher = personId
+      }
+
+      const created = await this.addSignature(payload).catch(() => null)
+      if (created) this.upsertSignature(created)
+      return created
+    },
+    isSigned(person) {
+      const status = person?.meta?.class || person?.signatureStatus
+      return status === 'signed'
+    },
+    isStatusLocked(person, nextStatus) {
+      const current = person?.meta?.class || person?.signatureStatus || 'none'
+      if (current === nextStatus) return true
+      if (nextStatus === 'present' && current === 'present') return true
+      if (nextStatus === 'absent' && current === 'absent') return true
+      return false
+    },
+    isPresentDisabled(person) {
+      const status = person?.meta?.class || person?.signatureStatus
+      return status === 'present'
+    },
+    isAbsentDisabled(person) {
+      const status = person?.meta?.class || person?.signatureStatus
+      return status === 'absent'
     },
     goBack() {
       this.$router.push({
         name: 'Calendrier',
         query: { date: this.course?.day }
       })
+    },
+    async refreshSilently() {
+      try {
+        await this.loadData()
+        this.refreshKey += 1
+      } catch (error) {
+        console.error('Unable to refresh course silently', error)
+      }
     },
     goEdit() {
       if (!this.course) return

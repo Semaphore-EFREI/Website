@@ -3,7 +3,7 @@ import { request, setAuthToken, clearAuthToken } from './apiClient';
 
 const STORAGE_KEYS = {
   token: 'auth_token',
-  refresh: 'auth_refresh_token',
+  refresh: 'auth_refreshToken',
   user: 'auth_user'
 };
 
@@ -64,10 +64,10 @@ export const useAuthStore = defineStore('auth', {
       this.error = null;
       try {
         const response = await request('/auth/login', { method: 'POST', data: { email, password } });
-        const token = response.access_token ?? response.token;
+        const token = response.accessToken ?? response.token;
         if (!token) throw new Error('Missing access token');
         this.token = token;
-        this.refreshToken = response.refresh_token ?? response.refreshToken ?? null;
+        this.refreshToken = response.refreshToken ?? null;
         setAuthToken(this.token);
         await this.fetchCurrentUser();
         persistSession({ token: this.token, refreshToken: this.refreshToken, user: this.user });
@@ -103,11 +103,11 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await request('/auth/refresh', { method: 'POST', data: { refresh_token: this.refreshToken } });
-        const token = response.token ?? response.access_token ?? this.token;
+        const response = await request('/auth/refresh', { method: 'POST', data: { refreshToken: this.refreshToken } });
+        const token = response.token ?? response.accessToken ?? this.token;
         if (!token) throw new Error('Missing access token');
         this.token = token;
-        this.refreshToken = response.refresh_token ?? response.refreshToken ?? this.refreshToken;
+        this.refreshToken = response.refreshToken ?? this.refreshToken;
         setAuthToken(this.token);
         persistSession({ token: this.token, refreshToken: this.refreshToken, user: this.user });
         return { token: this.token, refreshToken: this.refreshToken };

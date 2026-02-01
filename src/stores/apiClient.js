@@ -31,8 +31,8 @@ function redactPayload(data) {
 function summarizeBody(body) {
   if (body === null || body === undefined) return body;
   try {
-    if (typeof body === 'string') return body.slice(0, 1000);
-    return JSON.stringify(body).slice(0, 1000);
+    if (typeof body === 'string') return body; // log full string body
+    return JSON.stringify(body);
   } catch (_e) {
     return '[unserializable body]';
   }

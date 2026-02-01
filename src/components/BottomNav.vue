@@ -22,11 +22,13 @@
 </template>
 
 <script>
+import { mapActions } from 'pinia'
 import calendrierIcon from '../assets/images/calendrier_black.svg?raw'
 import userAltIcon from '../assets/images/useralt-black.svg?raw'
 import groupIcon from '../assets/images/group.svg?raw'
 import schoolIcon from '../assets/images/school.svg?raw'
 import userIcon from '../assets/images/user.svg?raw'
+import { useAuthStore } from '../stores'
 
 export default {
   name: 'BottomNav',
@@ -44,7 +46,7 @@ export default {
         { label: 'Utilisateurs', routeName: 'Utilisateurs', icon: 'useralt-black' },
         { label: 'Groupes', routeName: 'GroupesClasses', icon: 'group' },
         { label: 'École', routeName: 'Ecole', icon: 'school' },
-        { label: 'Mon Compte', routeName: 'UtilisateurEdit', icon: 'user' }
+        { label: 'Déconnexion', routeName: null, icon: 'user', logout: true }
       ]
     }
   },
@@ -61,6 +63,7 @@ export default {
     }
   },
   methods: {
+    ...mapActions(useAuthStore, ['logout']),
     isActive(item) {
       if (!item?.routeName) return false
       if (item.routeName === 'Calendrier' && this.$route.name === 'CalendrierDetail') return true
@@ -70,6 +73,12 @@ export default {
       return this.$route.name === item.routeName
     },
     handleNav(item) {
+      if (item.logout) {
+        this.logout()
+        this.$router.push({ name: 'Connexion' }).catch(() => {})
+        return
+      }
+
       if (!item.routeName) return
       if (this.$route.name === item.routeName) {
         if (!item.params) return

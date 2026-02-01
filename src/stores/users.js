@@ -70,6 +70,14 @@ function extractList(response, key) {
   return [];
 }
 
+function isDifferent(nextVal, currentVal) {
+  if (nextVal === undefined) return false;
+  if (nextVal === null && currentVal === null) return false;
+  const left = typeof nextVal === 'object' ? JSON.stringify(nextVal) : nextVal;
+  const right = typeof currentVal === 'object' ? JSON.stringify(currentVal) : currentVal;
+  return left !== right;
+}
+
 function singularPath(roleKey, id) {
   return `/${ROLE_SINGULAR[roleKey]}/${id}`;
 }
@@ -94,7 +102,7 @@ export const useUsersStore = defineStore('users', {
   }),
   getters: {
     count: (state) => state.users.length,
-    byId: (state) => (id) => state.users.find((u) => u.id === Number(id)),
+    byId: (state) => (id) => state.users.find((u) => String(u.id) === String(id)),
     byRole: (state) => (role) => state.users.filter((u) => u.role === role),
     filtered: (state) => {
       return state.users.filter((u) => {
@@ -154,7 +162,7 @@ export const useUsersStore = defineStore('users', {
       this.loading = true;
       this.error = null;
 
-      const roleFromState = this.users.find((u) => u.id === Number(id))?.roleKey;
+      const roleFromState = this.users.find((u) => String(u.id) === String(id))?.roleKey;
       const roleKey = toRoleKey(role || roleFromState);
       const rolesToTry = roleKey ? [roleKey] : ['student', 'teacher', 'admin'];
       let lastError = null;
@@ -176,15 +184,18 @@ export const useUsersStore = defineStore('users', {
     },
 
     async createUser(payload) {
-      const roleKey = toRoleKey(payload.role) || 'student';
+      // userType allows differentiating the API route from admin "role" payload field
+      const roleKey = toRoleKey(payload.userType || payload.role) || 'student';
       const schoolId = resolveSchoolId(payload.schoolId ?? payload.school_id);
       this.loading = true;
       this.error = null;
 
       try {
+        const { userType, id, userId, _id, ...body } = payload; // id must not be sent on create
+
         const response = await request(creationPath(roleKey), {
           method: 'POST',
-          data: payload
+          data: body
         });
         const user = normalizeUser(response.user ?? response[ROLE_SINGULAR[roleKey]] ?? response, roleKey);
         this.upsertUser(user);
@@ -198,15 +209,35 @@ export const useUsersStore = defineStore('users', {
     },
 
     async updateUser(id, updates) {
-      const existingRole = this.users.find((u) => u.id === Number(id))?.roleKey;
-      const roleKey = toRoleKey(updates.role || existingRole) || existingRole || 'student';
+      const existing = this.users.find((u) => String(u.id) === String(id)) || {};
+      const existingRole = existing.roleKey;
+      const roleKey = toRoleKey(updates.userType || updates.role || existingRole) || existingRole || 'student';
       this.loading = true;
       this.error = null;
 
       try {
+        const { userType, ...body } = updates;
+
+        const patchPayload = {};
+
+        Object.keys(body).forEach((key) => {
+          const value = body[key];
+          if (value === undefined) return;
+          if (key === 'password' && !value) return; // don't send empty password
+          const currentVal = existing[key];
+          if (isDifferent(value, currentVal)) {
+            patchPayload[key] = value;
+          }
+        });
+
+        // No changes detected -> return existing
+        if (Object.keys(patchPayload).length === 0) {
+          return existing;
+        }
+
         const response = await request(singularPath(roleKey, id), {
           method: 'PATCH',
-          data: updates
+          data: patchPayload
         });
         const user = normalizeUser(response.user ?? response[ROLE_SINGULAR[roleKey]] ?? response, roleKey);
         this.upsertUser(user);
@@ -220,13 +251,14 @@ export const useUsersStore = defineStore('users', {
     },
 
     async deleteUser(id, role) {
-      const roleKey = toRoleKey(role || this.users.find((u) => u.id === Number(id))?.roleKey) || 'student';
+      const roleKey = toRoleKey(role || this.users.find((u) => String(u.id) === String(id))?.roleKey) || 'student';
       this.loading = true;
       this.error = null;
 
       try {
         await request(singularPath(roleKey, id), { method: 'DELETE' });
-        this.users = this.users.filter((u) => u.id !== Number(id));
+        const targetId = String(id);
+        this.users = this.users.filter((u) => String(u.id) !== targetId);
       } catch (err) {
         this.error = err.message || 'Unable to delete user';
         throw err;

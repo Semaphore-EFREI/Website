@@ -107,8 +107,8 @@
 
 .user-card {
     display: flex;
-    min-width: 8rem;
-    max-width: 11.25rem;
+    min-width: 10.5rem;
+    max-width: 14rem;
     height: 13.75rem;
     padding: 1.5rem;
     flex-direction: column;

@@ -54,7 +54,7 @@
     <div class="sidebar-user">
       <div class="user-avatar">{{ userInitials }}</div>
       <div class="user-info">
-        <div class="user-name">{{ user.name }}</div>
+        <div class="user-name">{{ userName }}</div>
         <button class="logout-link" type="button" @click="logout">Déconnexion</button>
       </div>
     </div>
@@ -62,6 +62,7 @@
 </template>
 
 <script>
+import { mapActions, mapState } from 'pinia'
 import calendrierIcon from '../assets/images/calendrier_black.svg?raw'
 import userAltIcon from '../assets/images/useralt-black.svg?raw'
 import groupIcon from '../assets/images/group.svg?raw'
@@ -70,6 +71,7 @@ import userIcon from '../assets/images/user.svg?raw'
 import studentIcon from '../assets/images/student.svg?raw'
 import teacherIcon from '../assets/images/teacher.svg?raw'
 import adminIcon from '../assets/images/admin.svg?raw'
+import { useAuthStore } from '../stores'
 
 export default {
   name: 'Sidebar',
@@ -112,20 +114,27 @@ export default {
           ]
         }
       ],
-      user: {
-        name: 'Jean Lassalle'
-      }
     }
   },
   computed: {
+    ...mapState(useAuthStore, { authUser: 'user' }),
+    userName() {
+      const user = this.authUser || {}
+      const firstName = user.firstName || user.firstname || ''
+      const lastName = user.lastName || user.lastname || ''
+      const name = user.name || `${firstName} ${lastName}`.trim()
+      return name || user.email || 'Utilisateur'
+    },
     userInitials() {
-      return this.user.name
+      const source = this.userName || ''
+      const initials = source
         .split(' ')
         .filter(Boolean)
         .map(part => part[0])
         .join('')
         .slice(0, 2)
         .toUpperCase()
+      return initials || 'U'
     },
     processedIcons() {
       const sanitize = (svg) =>
@@ -150,6 +159,7 @@ export default {
     document.body.classList.remove('sidebar-expanded', 'sidebar-collapsed')
   },
   methods: {
+    ...mapActions(useAuthStore, { logoutAction: 'logout' }),
     syncBodyClass(collapsed) {
       document.body.classList.toggle('sidebar-expanded', !collapsed)
       document.body.classList.toggle('sidebar-collapsed', collapsed)
@@ -194,6 +204,7 @@ export default {
       this.$router.push(route).catch(() => {})
     },
     logout() {
+      this.logoutAction()
       this.$router.push({ name: 'Connexion' })
     }
   }

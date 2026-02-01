@@ -9,7 +9,12 @@
           <h1 class="edit-title">{{ sectionLabel }}</h1>
         </div>
       </div>
-      <button class="role-add-btn" type="button" @click="handleAction">
+      <button
+        v-if="section !== 'balises'"
+        class="role-add-btn"
+        type="button"
+        @click="handleAction"
+      >
         <img src="../assets/images/plus-sign-white.svg" alt="Ajouter" class="plus-icon" />
         {{ buttonLabel }}
       </button>
@@ -145,11 +150,15 @@
     </form>
   </main>
 
-  <div v-if="selectedItem && section !== 'parametres'" class="user-modal-overlay" @click.self="closeItem">
+  <div
+    v-if="selectedItem && section === 'salles'"
+    class="user-modal-overlay"
+    @click.self="closeItem"
+  >
     <div class="user-modal">
       <header class="user-modal__header">
         <div class="user-modal__header-content">
-          <div class="modal-back">
+          <div>
             <button class="modal-btn ghost" type="button" @click="closeItem">
               <img src="../assets/images/arrow-left.svg" alt="arrow" class="btn-icon" />
             </button>
@@ -163,16 +172,81 @@
       </header>
       <div class="user-modal__body">
         <div class="modal-edit-form">
-          <input 
-            id="item-name" 
-            v-model="editingName" 
-            type="text" 
+          <input
+            id="item-name"
+            v-model="editingName"
+            type="text"
             class="edit-input"
             placeholder="Nom"
           />
+          <p class="beacon-serials" v-if="selectedRoomBeaconSerials.length">
+            Balises : {{ selectedRoomBeaconSerials.join(', ') }}
+          </p>
+          <p class="beacon-serials muted" v-else>Balises : aucune</p>
           <button class="btn-save" type="button" @click="saveItem">
             <span>Enregistrer</span>
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    v-if="selectedItem && section === 'balises'"
+    class="select-modal"
+    @click.self="closeItem"
+  >
+    <div class="select-modal__panel">
+      <header class="select-modal__header">
+        <div class="header-row">
+          <div class="header-back-container">
+            <button class="modal-back modal-btn" type="button" @click="closeItem">
+              <img src="../assets/images/arrow-left.svg" alt="Retour" />
+            </button>
+          </div>
+          <h3>Assigner une salle</h3>
+          <div class="header-save-container">
+            <button
+              class="modal-save"
+              type="button"
+              :aria-busy="isSavingAssignment"
+              :disabled="isSavingAssignment"
+              @click="saveBeaconAssignment"
+            >
+              <img src="../assets/images/check-white.svg" alt="Valider" />
+            </button>
+          </div>
+        </div>
+        <p class="beacon-name">{{ selectedItem.displayName }}</p>
+        <div class="modal-search">
+          <div class="modal-search-input-wrapper">
+            <input
+              v-model="roomSearch"
+              type="search"
+              placeholder="A 001"
+              class="text-input modal-search-input"
+            />
+            <button class="modal-search-icon" type="button" aria-label="Rechercher">
+              <img src="../assets/images/search.svg" alt="" />
+            </button>
+          </div>
+        </div>
+      </header>
+      <div class="select-modal__grid">
+        <div class="select-modal__group">
+          <p>Salles</p>
+          <div class="select-modal__pillgrid">
+            <button
+              v-for="room in filteredRoomOptions"
+              :key="room.id"
+              type="button"
+              class="select-pill"
+              :class="{ active: selectedRoomDraft === room.id }"
+              @click="toggleRoomDraft(room.id)"
+            >
+              <span>{{ room.name }}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -216,6 +290,9 @@ export default {
       defaultProfile,
       checkboxEmpty,
       checkboxFilled,
+      roomSearch: '',
+      selectedRoomDraft: null,
+      isSavingAssignment: false,
       settings: {
         closureDelay: 0,
         teachersCanModifyDelay: false,
@@ -253,61 +330,133 @@ export default {
     },
     displayItems() {
       if (this.section === 'salles') {
-        return this.salles.map((salle, index) => ({
-          key: `salle-${index}`,
+        return this.salles.map((salle, index) => {
+          const beaconList = this.roomBeacons(salle)
+          const beaconCount = beaconList.length
+          return {
+          key: salle.id || `salle-${index}`,
+          id: salle.id,
           name: salle.name,
           displayName: salle.name,
-          type: `${(salle.balises || []).length} balise${(salle.balises || []).length !== 1 ? 's' : ''}`,
+          type: `${beaconCount} balise${beaconCount !== 1 ? 's' : ''}`,
           profilePicture: null,
-          balises: Array.isArray(salle.balises) ? salle.balises : []
-        }))
+          balises: Array.isArray(salle.balises) ? salle.balises : [],
+          beacons: beaconList
+        }
+        })
       } else if (this.section === 'balises') {
         return (this.balisesStore || []).map((balise, index) => ({
           key: balise.id || `balise-${index}`,
-          name: balise.label || balise.name || balise.id || `Balise ${index + 1}`,
-          displayName: balise.label || balise.name || balise.id || `Balise ${index + 1}`,
-          type: 'Balise',
-          profilePicture: null
+          id: balise.id,
+          name: balise.label || balise.name || `${balise.serialNumber ?? ''}` || balise.id || `Balise ${index + 1}`,
+          displayName: balise.label || balise.name || `${balise.serialNumber ?? ''}` || balise.id || `Balise ${index + 1}`,
+          type: this.roomNameForBeacon(balise) || (balise.classroom ? this.displayRoomFallback(balise.classroom) : 'Aucune salle'),
+          profilePicture: null,
+          assignedRoomId: this.findRoomIdForBeacon(balise) || balise.classroom || null
         }))
       }
       return []
+    },
+    filteredRoomOptions() {
+      const term = (this.roomSearch || '').trim().toLowerCase()
+      return (this.salles || [])
+        .map((room) => ({ id: room.id, name: room.name || `Salle ${room.id}` }))
+        .filter((room) => room.name.toLowerCase().includes(term))
+        .sort((a, b) => a.name.localeCompare(b.name))
+    },
+    selectedRoomBeaconSerials() {
+      if (this.section !== 'salles' || !this.selectedItem) return []
+      const room = (this.salles || []).find((r) => String(r.id) === String(this.selectedItem.id)) || this.selectedItem
+      return this.roomBeacons(room)
+        .map((b, idx) => {
+          const val = b.serialNumber ?? b.serial_number ?? b.label ?? b.name ?? `Balise ${idx + 1}`
+          return val
+        })
+        .filter((v) => v !== undefined && v !== null && String(v).trim() !== '')
+        .map((v) => String(v))
     },
     schoolId() {
       return this.currentUser?.schoolId || this.currentUser?.school_id || this.currentUser?.school?.id || null
     },
   },
   methods: {
-    ...mapActions(useRoomsStore, ['fetchRooms']),
-    ...mapActions(useBeaconsStore, ['fetchBeacons']),
+    ...mapActions(useRoomsStore, ['fetchRooms', 'fetchRoom', 'createRoom', 'updateRoom', 'deleteRoom']),
+    ...mapActions(useBeaconsStore, ['fetchBeacons', 'fetchBeacon', 'assignBeaconToClass', 'removeBeaconFromClass']),
     ...mapActions(useSchoolsStore, ['updateSchoolPreferences']),
     goBack() {
       this.$router.push({ name: 'Ecole' }).catch(() => {})
     },
-    openItem(item) {
-      this.selectedItem = item
+    async openItem(item) {
       this.editingName = item.displayName
+      this.isNewItem = false
+      this.roomSearch = ''
+
+      if (this.section === 'balises' && item?.id) {
+        try {
+          const fresh = await this.fetchBeacon(item.id)
+          const assignedRoomId = this.findRoomIdForBeacon(fresh) || fresh.classroom || null
+          this.selectedItem = {
+            ...item,
+            ...fresh,
+            assignedRoomId
+          }
+          this.selectedRoomDraft = assignedRoomId
+        } catch (_err) {
+          const assignedRoomId = this.findRoomIdForBeacon(item) || item.classroom || null
+          this.selectedItem = { ...item, assignedRoomId }
+          this.selectedRoomDraft = assignedRoomId
+        }
+      } else if (this.section === 'salles' && item?.id) {
+        try {
+          const freshRoom = await this.fetchRoom(item.id, { include: 'beacons' })
+          this.selectedItem = { ...item, ...freshRoom, displayName: freshRoom.name || item.displayName || '' }
+        } catch (_err) {
+          this.selectedItem = item
+        }
+      } else {
+        this.selectedItem = item
+        this.selectedRoomDraft = this.section === 'balises' ? this.findRoomIdForBeacon(item) : null
+      }
+
+      document.body.style.overflow = 'hidden'
     },
     saveItem() {
       if (!this.selectedItem || !this.editingName.trim()) return
-      this.selectedItem.displayName = this.editingName
-      this.selectedItem.name = this.editingName
-      if (this.isNewItem) {
-        alert('Nouvel élément ajouté')
-      } else {
-        alert('Changements enregistrés')
+      if (this.section !== 'salles') {
+        alert('Modification disponible uniquement pour les salles')
+        return
       }
-      this.closeItem()
+      const name = this.editingName.trim()
+      const id = this.selectedItem.id
+      const action = this.isNewItem
+        ? () => this.createRoom({ name })
+        : () => this.updateRoom(id, { name })
+      action()
+        .then(() => this.fetchRooms({ schoolId: this.schoolId }))
+        .then(() => this.closeItem())
+        .catch((error) => {
+          console.error('Erreur lors de la sauvegarde de la salle', error)
+          alert("Impossible d'enregistrer la salle")
+        })
     },
     deleteItem(item) {
       if (!item) return
-      alert(`Suppression de "${item.displayName}" à venir`)
-      this.closeItem()
+      if (this.section !== 'salles') {
+        alert('Suppression disponible uniquement pour les salles')
+        this.closeItem()
+        return
+      }
+      this.deleteRoom(item.id)
+        .then(() => this.fetchRooms({ schoolId: this.schoolId }))
+        .then(() => this.closeItem())
+        .catch((error) => {
+          console.error('Erreur lors de la suppression de la salle', error)
+          alert('Impossible de supprimer la salle')
+        })
     },
     handleAction() {
       if (this.section === 'salles') {
         this.openNewItem('salle')
-      } else if (this.section === 'balises') {
-        this.openNewItem('balise')
       } else if (this.section === 'parametres') {
         this.savePreferences()
       }
@@ -315,6 +464,7 @@ export default {
     openNewItem(type) {
       const newItem = {
         key: `new-${type}-${Date.now()}`,
+        id: null,
         name: '',
         displayName: '',
         type: type === 'salle' ? '0 balise' : 'Balise',
@@ -323,13 +473,99 @@ export default {
       this.selectedItem = newItem
       this.editingName = ''
       this.isNewItem = true
+      this.roomSearch = ''
+      this.selectedRoomDraft = null
       document.body.style.overflow = 'hidden'
     },
     closeItem() {
       this.selectedItem = null
       this.editingName = ''
       this.isNewItem = false
+      this.roomSearch = ''
+      this.selectedRoomDraft = null
+      this.isSavingAssignment = false
       document.body.style.overflow = ''
+    },
+    roomBeacons(room) {
+      if (!room) return []
+      if (Array.isArray(room.beacons)) return room.beacons
+      if (Array.isArray(room.balises)) return room.balises
+      return []
+    },
+    normalizeBeaconKey(beacon) {
+      if (!beacon) return ''
+      return String(beacon.id ?? beacon.serialNumber ?? beacon.label ?? beacon.name ?? '').trim()
+    },
+    resolveRoomNameById(roomId) {
+      if (!roomId) return null
+      const room = (this.salles || []).find((r) => String(r.id) === String(roomId))
+      return room?.name || null
+    },
+    displayRoomFallback(roomId) {
+      return `Salle ${String(roomId).slice(0, 6)}`
+    },
+    normalizeBeaconEntry(entry) {
+      if (entry === null || entry === undefined) return ''
+      if (typeof entry === 'object') {
+        return String(entry.id ?? entry.serialNumber ?? entry.label ?? entry.name ?? '').trim()
+      }
+      return String(entry).trim()
+    },
+    findRoomIdForBeacon(beacon) {
+      const beaconKey = this.normalizeBeaconKey(beacon)
+      if (!beaconKey) return null
+      if (beacon?.classroom) return beacon.classroom
+      const foundRoom = (this.salles || []).find((room) =>
+        (room.balises || []).some((balise) => this.normalizeBeaconEntry(balise) === beaconKey)
+      )
+      return foundRoom?.id ?? null
+    },
+    roomNameForBeacon(beacon) {
+      const roomId = this.findRoomIdForBeacon(beacon)
+      if (!roomId) return null
+      return this.resolveRoomNameById(roomId) || this.displayRoomFallback(roomId)
+    },
+    toggleRoomDraft(roomId) {
+      this.selectedRoomDraft = this.selectedRoomDraft === roomId ? null : roomId
+    },
+    async saveBeaconAssignment() {
+      if (!this.selectedItem || !this.selectedItem.id) {
+        this.closeItem()
+        return
+      }
+
+      const beaconId = this.selectedItem.id
+      const currentRoomId = this.selectedItem.assignedRoomId ?? this.findRoomIdForBeacon(this.selectedItem)
+      const targetRoomId = this.selectedRoomDraft ?? null
+      const normalizedCurrent = currentRoomId ? String(currentRoomId) : null
+      const normalizedTarget = targetRoomId ? String(targetRoomId) : null
+
+      if (normalizedCurrent === normalizedTarget) {
+        this.closeItem()
+        return
+      }
+
+      this.isSavingAssignment = true
+      try {
+        if (normalizedCurrent && normalizedCurrent !== normalizedTarget) {
+          await this.removeBeaconFromClass(beaconId, normalizedCurrent)
+        }
+
+        if (normalizedTarget && normalizedTarget !== normalizedCurrent) {
+          await this.assignBeaconToClass(beaconId, normalizedTarget)
+        }
+
+        await Promise.all([
+          this.fetchBeacons({ schoolId: this.schoolId }).catch(() => {}),
+          this.fetchRooms({ schoolId: this.schoolId }).catch(() => {})
+        ])
+        this.closeItem()
+      } catch (error) {
+        console.error('Erreur lors de la mise à jour de la balise', error)
+        alert("Impossible de mettre à jour l'assignation de la balise")
+      } finally {
+        this.isSavingAssignment = false
+      }
     },
     itemIcon(type) {
       return new URL('../assets/images/user.svg', import.meta.url).href

@@ -16,7 +16,7 @@
         :disabled="isCreateDisabled"
         :title="courseSettings.disableCourseModification ? 'La modification des cours est désactivée dans les paramètres.' : ''"
       >
-        <img src="../assets/images/plus-sign-white.svg" alt="Ajouter" class="plus-icon" /> Créer
+        <img src="../assets/images/plus-sign-white.svg" alt="Ajouter" class="plus-icon" /> {{ saveButtonLabel }}
       </button>
     </header>
 
@@ -317,6 +317,7 @@
 <script>
 import { mapActions, mapState } from 'pinia'
 import { useCalendarStore, useUsersStore, useGroupsStore, useRoomsStore, useAuthStore } from '../stores'
+import { request } from '../stores/apiClient'
 
 const SETTINGS_STORAGE_KEY = 'ecole-settings'
 
@@ -334,12 +335,22 @@ export default {
       rooms: [],
       teachers: [],
       students: [],
+      teacherIds: [],
+      studentIds: [],
+      groupIds: [],
       showTeacherModal: false,
       showStudentModal: false,
       showRoomModal: false,
       teacherDraft: [],
       studentDraft: [],
       roomDraft: [],
+      originalAssignments: {
+        rooms: [],
+        teachers: [],
+        students: [],
+        groups: []
+      },
+      originalCourse: null,
       teacherSearch: '',
       studentSearch: '',
       roomSearch: '',
@@ -404,9 +415,13 @@ export default {
     schoolId() {
       return this.currentUser?.schoolId || this.currentUser?.school_id || this.currentUser?.school?.id || null
     },
+    saveButtonLabel() {
+      return this.originCourseId ? 'Sauvegarder' : 'Créer'
+    },
     isFormValid() {
       const { name, date, startTime, endTime, rooms } = this.course
-      return [name, date, startTime, endTime].every(val => (val || '').trim().length > 0) && rooms.length > 0
+      const clean = (val) => String(val ?? '').trim()
+      return [name, date, startTime, endTime].every(val => clean(val).length > 0) && rooms.length > 0
     },
     isCreateDisabled() {
       return this.courseSettings.disableCourseModification || !this.isFormValid
@@ -428,7 +443,7 @@ export default {
       updateCourseAction: 'updateCourse',
       fetchCourseAction: 'fetchCourse'
     }),
-    ...mapActions(useUsersStore, ['fetchUsers']),
+    ...mapActions(useUsersStore, ['fetchUsers', 'fetchUserById']),
     ...mapActions(useGroupsStore, ['fetchGroups']),
     ...mapActions(useRoomsStore, ['fetchRooms']),
     goBack() {
@@ -447,29 +462,39 @@ export default {
     },
     async saveCourse() {
       const { date: startEpoch, endDate: endEpoch } = this.buildEpochDates()
+      const assignments = {
+        rooms: this.course.rooms,
+        teachers: this.teacherIds,
+        students: this.studentIds,
+        groups: this.groupIds
+      }
+
       const payload = {
-        id: this.course.id || this.generateCourseId(),
         name: this.course.name,
         date: startEpoch,
         endDate: endEpoch,
-        startTime: this.course.startTime,
-        endTime: this.course.endTime,
-        rooms: this.course.rooms,
-        teachers: this.teachers,
-        groups: this.students,
-        isOnline: false,
-        signatureClosingDelay: 15,
-        signatureClosed: false,
-        school: this.schoolId
+        classroomsId: assignments.rooms,
+        teachersId: assignments.teachers,
+        studentsId: assignments.students,
+        studentGroupsId: assignments.groups
       }
 
       try {
         if (this.originCourseId) {
-          await this.updateCourseAction(this.originCourseId, payload)
+          await this.saveEdits(this.originCourseId, { ...payload, id: this.originCourseId })
+          this.goBack()
+          return
         } else {
-          await this.createCourseAction(payload)
+          const created = await this.createCourseAction({
+            ...payload
+          })
+          if (created?.id) {
+            await this.syncAssignments(created.id, assignments)
+          }
+          const targetDate = (this.course?.date || '').trim()
+          this.$router.push({ name: 'Calendrier', query: targetDate ? { date: targetDate } : {} })
+          return
         }
-        this.goBack()
       } catch (error) {
         console.error('Unable to save course', error)
       }
@@ -523,10 +548,20 @@ export default {
     },
     validateTeacherSelection() {
       this.teachers = [...this.teacherDraft]
+      const ids = new Set()
+      this.teachers.forEach((name) => {
+        const user = this.users.find((u) => u.roleKey === 'teacher' && u.name === name)
+        ids.add(user?.id || name)
+      })
+      this.teacherIds = [...ids]
       this.closeTeacherModal()
     },
     removeTeacher(name) {
       this.teachers = this.teachers.filter(t => t !== name)
+      this.teacherIds = this.teacherIds.filter((id) => {
+        const user = this.users.find((u) => String(u.id) === String(id))
+        return user ? user.name !== name : true
+      })
     },
     openStudentModal() {
       this.studentDraft = [...this.students]
@@ -545,10 +580,37 @@ export default {
     },
     validateStudentSelection() {
       this.students = [...this.studentDraft]
+      const studentIdSet = new Set()
+      const groupIdSet = new Set()
+      this.students.forEach((label) => {
+        const group = this.groups.find((g) => g.name === label)
+        if (group) {
+          groupIdSet.add(group.id)
+          return
+        }
+        const user = this.users.find((u) => u.roleKey === 'student' && u.name === label)
+        if (user) {
+          studentIdSet.add(user.id)
+        } else {
+          // fallback keep label as id if unknown
+          studentIdSet.add(label)
+        }
+      })
+      this.studentIds = [...studentIdSet]
+      this.groupIds = [...groupIdSet]
       this.closeStudentModal()
     },
     removeStudent(group) {
       this.students = this.students.filter(g => g !== group)
+      const groupEntry = this.groups.find((g) => g.name === group)
+      if (groupEntry) {
+        this.groupIds = this.groupIds.filter((id) => String(id) !== String(groupEntry.id))
+      } else {
+        this.studentIds = this.studentIds.filter((id) => {
+          const user = this.users.find((u) => String(u.id) === String(id))
+          return user ? user.name !== group : true
+        })
+      }
     },
     async prefillFromRoute() {
       const courseId = this.$route.query.courseId
@@ -557,20 +619,71 @@ export default {
         const found = await this.fetchCourseAction(courseId)
         if (!found) return
         const normalized = this.normalizeCourse(found)
+        this.course.id = normalized.id || courseId
         this.course.name = normalized.name
         this.course.date = normalized.date
         this.course.startTime = normalized.startTime
         this.course.endTime = normalized.endTime
         this.course.rooms = normalized.rooms
-        this.teachers = normalized.teachers
-        this.students = normalized.groups
+        this.teacherIds = [...normalized.teachers]
+        this.studentIds = [...normalized.groups]
+        this.groupIds = [...normalized.groupIds]
+
+        this.teachers = await this.resolveTeacherNames(this.teacherIds)
+        this.students = await this.resolveStudentNames(this.studentIds)
 
         this.teacherDraft = [...this.teachers]
         this.studentDraft = [...this.students]
         this.roomDraft = [...this.course.rooms]
+        this.originalAssignments = {
+          rooms: [...this.course.rooms],
+          teachers: [...this.teacherIds],
+          students: [...this.studentIds],
+          groups: [...this.groupIds]
+        }
+        const originalDate = this.toEpochSafe(found.start || found.startDate || found.date)
+        const originalEnd = this.toEpochSafe(found.end || found.endDate)
+        this.originalCourse = {
+          id: courseId,
+          name: normalized.name,
+          date: originalDate,
+          endDate: originalEnd
+        }
       } catch (error) {
         console.error('Unable to prefill course', error)
       }
+    },
+    async resolveTeacherNames(ids) {
+      const uniqueIds = Array.isArray(ids)
+        ? ids.map((v) => String(v)).filter(Boolean).filter((v, i, arr) => arr.indexOf(v) === i)
+        : []
+
+      const missing = uniqueIds.filter((id) => !this.users.find((u) => String(u.id) === id))
+      for (const id of missing) {
+        await this.fetchUserById(id, 'teacher').catch(() => {})
+      }
+      return uniqueIds
+        .map((id) => {
+          const user = this.users.find((u) => String(u.id) === id)
+          return user?.name || id
+        })
+        .filter(Boolean)
+    },
+    async resolveStudentNames(ids) {
+      const uniqueIds = Array.isArray(ids)
+        ? ids.map((v) => String(v)).filter(Boolean).filter((v, i, arr) => arr.indexOf(v) === i)
+        : []
+
+      const missing = uniqueIds.filter((id) => !this.users.find((u) => String(u.id) === id))
+      for (const id of missing) {
+        await this.fetchUserById(id, 'student').catch(() => {})
+      }
+      return uniqueIds
+        .map((id) => {
+          const user = this.users.find((u) => String(u.id) === id)
+          return user?.name || id
+        })
+        .filter(Boolean)
     },
     openRoomModal() {
       this.roomDraft = [...this.course.rooms]
@@ -638,6 +751,12 @@ export default {
       const hex = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1)
       return `${hex()}${hex()}-${hex()}-${hex()}-${hex()}-${hex()}${hex()}${hex()}`
     },
+    toEpochSafe(value) {
+      if (value === null || value === undefined) return null
+      const num = Number(value)
+      if (Number.isNaN(num)) return null
+      return num >= 1e12 ? Math.floor(num / 1000) : num
+    },
     normalizeCourse(course) {
       if (!course) return {
         name: '',
@@ -646,13 +765,15 @@ export default {
         endTime: '',
         rooms: [],
         teachers: [],
-        groups: []
+        groups: [],
+        groupIds: []
       }
 
       const toDateString = (value) => {
-        if (!value) return ''
-        const d = new Date(value)
-        if (Number.isNaN(d.getTime())) return value
+        if (!value && value !== 0) return ''
+        const ms = Number(value) < 1e12 ? Number(value) * 1000 : Number(value)
+        const d = new Date(ms)
+        if (Number.isNaN(d.getTime())) return ''
         const day = `${d.getDate()}`.padStart(2, '0')
         const month = `${d.getMonth() + 1}`.padStart(2, '0')
         const year = d.getFullYear()
@@ -660,22 +781,164 @@ export default {
       }
 
       const toTimeString = (value) => {
-        if (!value) return ''
-        if (value.includes('h')) return value
-        const [hour, minute] = value.split(':')
-        if (!hour || !minute) return value
-        return `${hour.padStart(2, '0')}h${minute.padStart(2, '0')}`
+        if (value === null || value === undefined) return ''
+        if (typeof value === 'string' && value.includes('h')) return value
+        const ms = Number(value) < 1e12 ? Number(value) * 1000 : Number(value)
+        const d = new Date(ms)
+        if (Number.isNaN(d.getTime())) return ''
+        const hours = `${d.getHours()}`.padStart(2, '0')
+        const minutes = `${d.getMinutes()}`.padStart(2, '0')
+        return `${hours}h${minutes}`
       }
+
+      const normalizePeople = (list) => {
+        if (!list) return []
+        const arr = Array.isArray(list) ? list : [list]
+        return arr
+          .map((item) => {
+            if (typeof item === 'object' && item !== null) {
+              const fullName = [item.firstName || item.firstname, item.lastName || item.lastname].filter(Boolean).join(' ').trim()
+              return item.name || fullName || item.id || ''
+            }
+            return item
+          })
+          .map((val) => String(val || '').trim())
+          .filter(Boolean)
+      }
+
+      const startSource = course.start ?? course.startDate ?? course.date ?? null
+      const endSource = course.end ?? course.endDate ?? null
+      const rooms = this.parseRooms(course.rooms || course.room || (Array.isArray(course.classrooms) ? course.classrooms.map(r => r.id ?? r.name ?? r) : []))
+
+      const normalizeUsers = (list) => {
+        if (!list) return []
+        const arr = Array.isArray(list) ? list : [list]
+        return arr
+          .map((item) => {
+            if (typeof item === 'object' && item !== null) {
+              return item.id ?? item.userId ?? item.teacherId ?? item.studentId ?? item.name ?? ''
+            }
+            return item
+          })
+          .map((val) => String(val || '').trim())
+          .filter(Boolean)
+      }
+
+      const studentIds = Array.isArray(course.students)
+        ? course.students.map((s) => s?.id ?? s?.studentId ?? s?.userId ?? s)
+        : []
+      const groupIds = Array.isArray(course.studentGroups)
+        ? course.studentGroups.map((g) => g?.id ?? g)
+        : []
 
       return {
         id: course.id,
-        name: course.name || course.subject || '',
-        date: course.date || course.day || toDateString(course.start || course.startDate || ''),
-        startTime: course.startTime || toTimeString(course.start?.split('T')[1]?.slice(0,5) || ''),
-        endTime: course.endTime || toTimeString(course.end?.split('T')[1]?.slice(0,5) || ''),
-        rooms: this.parseRooms(course.rooms || course.room),
-        teachers: Array.isArray(course.teacher) ? course.teacher : course.teacher ? [course.teacher] : [],
-        groups: Array.isArray(course.group) ? course.group : course.group ? [course.group] : []
+        name: String(course.name || course.subject || '').trim(),
+        date: toDateString(startSource),
+        startTime: toTimeString(startSource),
+        endTime: toTimeString(endSource),
+        rooms,
+        teachers: normalizeUsers(course.teachers || course.teacher),
+        groups: normalizeUsers(studentIds),
+        groupIds: normalizeUsers(groupIds)
+      }
+    },
+    normalizeList(list) {
+      return Array.isArray(list) ? list.map((item) => String(item)).filter(Boolean) : []
+    },
+    async saveEdits(courseId, payload) {
+      const updates = {}
+      const toSeconds = (val) => {
+        if (val === null || val === undefined) return null
+        const num = Number(val)
+        if (Number.isNaN(num)) return null
+        return num >= 1e12 ? Math.floor(num / 1000) : num
+      }
+
+      const originalDate = toSeconds(this.originalCourse?.date)
+      const originalEndDate = toSeconds(this.originalCourse?.endDate)
+
+      const dateChanged = payload.date !== null && payload.date !== undefined && payload.date !== originalDate
+      const endChanged = payload.endDate !== null && payload.endDate !== undefined && payload.endDate !== originalEndDate
+
+      if (payload.name && payload.name !== this.originalCourse?.name) updates.name = payload.name
+      if (dateChanged || endChanged) {
+        updates.date = payload.date
+        updates.endDate = payload.endDate
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await this.updateCourseAction(courseId, updates)
+        this.originalCourse = {
+          ...this.originalCourse,
+          ...updates
+        }
+      }
+
+      const assignments = {
+        rooms: payload.classroomsId || payload.rooms || [],
+        teachers: payload.teachersId || payload.teachers || [],
+        students: payload.studentsId || payload.students || [],
+        groups: payload.studentGroupsId || payload.groups || []
+      }
+
+      await this.syncAssignments(courseId, assignments)
+    },
+    async syncAssignments(courseId, payload) {
+      if (!courseId) return
+      const currentRooms = this.normalizeList(payload.rooms)
+      const currentTeachers = this.normalizeList(payload.teachers)
+      const currentStudents = this.normalizeList(payload.students)
+      const currentGroups = this.normalizeList(payload.groups)
+
+      const initialRooms = this.normalizeList(this.originalAssignments.rooms)
+      const initialTeachers = this.normalizeList(this.originalAssignments.teachers)
+      const initialStudents = this.normalizeList(this.originalAssignments.students)
+      const initialGroups = this.normalizeList(this.originalAssignments.groups)
+
+      const diff = (next, prev) => {
+        const nextSet = new Set(next)
+        const prevSet = new Set(prev)
+        const added = [...nextSet].filter((val) => !prevSet.has(val))
+        const removed = [...prevSet].filter((val) => !nextSet.has(val))
+        return { added, removed }
+      }
+
+      const roomDiff = diff(currentRooms, initialRooms)
+      const teacherDiff = diff(currentTeachers, initialTeachers)
+      const studentDiff = diff(currentStudents, initialStudents)
+      const groupDiff = diff(currentGroups, initialGroups)
+
+      const tasks = [
+        ...roomDiff.added.map((roomId) => this.syncSingleAssignment(courseId, 'classrooms', 'classroomId', roomId, 'POST')),
+        ...roomDiff.removed.map((roomId) => this.syncSingleAssignment(courseId, `classrooms/${roomId}`, null, null, 'DELETE')),
+        ...teacherDiff.added.map((teacherId) => this.syncSingleAssignment(courseId, 'teacher', 'teacherId', teacherId, 'POST')),
+        ...teacherDiff.removed.map((teacherId) => this.syncSingleAssignment(courseId, `teacher/${teacherId}`, null, null, 'DELETE')),
+        ...groupDiff.added.map((groupId) => this.syncSingleAssignment(courseId, 'studentGroups', 'groupId', groupId, 'POST')),
+        ...groupDiff.removed.map((groupId) => this.syncSingleAssignment(courseId, `studentGroup/${groupId}`, null, null, 'DELETE')),
+        ...studentDiff.added.map((studentId) => this.syncSingleAssignment(courseId, 'students', 'studentId', studentId, 'POST')),
+        ...studentDiff.removed.map((studentId) => this.syncSingleAssignment(courseId, `student/${studentId}`, null, null, 'DELETE'))
+      ]
+
+      if (tasks.length === 0) return
+      try {
+        await Promise.all(tasks)
+        this.originalAssignments = {
+          rooms: [...currentRooms],
+          teachers: [...currentTeachers],
+          students: [...currentStudents],
+          groups: [...currentGroups]
+        }
+      } catch (error) {
+        console.warn('Some assignment updates failed', error)
+      }
+    },
+    async syncSingleAssignment(courseId, endpoint, idKey, idValue, method) {
+      try {
+        const payload = idKey ? { [idKey]: idValue } : undefined
+        await request(`/course/${courseId}/${endpoint}`, { method, data: payload })
+      } catch (error) {
+        console.warn('Unable to sync assignment', { courseId, endpoint, idValue, method, error })
       }
     },
     loadSettings() {
