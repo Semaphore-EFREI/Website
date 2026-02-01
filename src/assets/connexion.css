@@ -142,8 +142,8 @@ input::placeholder {
     font-style: normal;
     font-weight: 500;
     line-height: normal;
-  margin-bottom: 1rem;
-  text-align: center;
-  align-self: center;
-  width: 100%;
+    margin-bottom: 1rem;
+    text-align: center;
+    align-self: center;
+    width: 100%;
 }
