@@ -28,7 +28,7 @@ export const useGroupsStore = defineStore('groups', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await request(`/studentGroups/${schoolId}`, { method: 'GET'});
+        const response = await request(`/studentGroups/${schoolId}`, { method: 'GET', params });
         const items = Array.isArray(response.items) ? response.items : Array.isArray(response) ? response : [];
         this.groups = items;
         return this.groups;
@@ -40,12 +40,22 @@ export const useGroupsStore = defineStore('groups', {
       }
     },
 
-    async fetchGroup(id) {
+    async fetchGroup(id, params = {}) {
       this.loading = true;
       this.error = null;
       try {
-        const response = await request(`/studentGroup/${id}`, { method: 'GET' });
-        const group = response.group ?? null;
+        const response = await request(`/studentGroup/${id}`, { method: 'GET', params });
+        const group = (() => {
+          if (response?.group) return response.group;
+          if (typeof response === 'string') {
+            try {
+              return JSON.parse(response);
+            } catch (_e) {
+              return null;
+            }
+          }
+          return response ?? null;
+        })();
         if (!group) throw new Error('Group not found');
         const index = this.groups.findIndex((g) => String(g.id) === String(group.id));
         if (index >= 0) this.groups.splice(index, 1, group);
@@ -64,8 +74,8 @@ export const useGroupsStore = defineStore('groups', {
       this.error = null;
       try {
         const response = await request('/studentGroup', { method: 'POST', data: payload });
-        const group = response.group;
-        if (!group) throw new Error('Group creation failed');
+        const group = response?.group || response || null;
+        if (!group || !group.id) throw new Error('Group creation failed');
         this.groups.push(group);
         return group;
       } catch (err) {
@@ -81,10 +91,24 @@ export const useGroupsStore = defineStore('groups', {
       this.error = null;
       try {
         const response = await request(`/studentGroup/${id}`, { method: 'PATCH', data: updates });
-        const group = response.group;
-        if (!group) throw new Error('Group update failed');
+        let group = response?.group ?? response ?? null;
+        // Fallback when API returns an empty body or stringified JSON
+        if (!group || typeof group !== 'object') {
+          if (typeof group === 'string') {
+            try {
+              group = JSON.parse(group);
+            } catch (_e) {
+              group = null;
+            }
+          }
+        }
+        if (!group) {
+          group = { id, ...updates };
+        }
+        if (!group.id) group.id = id;
         const index = this.groups.findIndex((g) => String(g.id) === String(group.id));
         if (index >= 0) this.groups.splice(index, 1, group);
+        else this.groups.push(group);
         return group;
       } catch (err) {
         this.error = err.message || 'Unable to update group';

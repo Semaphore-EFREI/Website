@@ -20,18 +20,91 @@
             v-for="group in groupsView"
             :key="group.name"
             class="group-card"
-            @click="openGroup(group.name)"
+            @click="openGroup(group.name, group.id)"
           >
             <img src="../assets/images/group-big.svg" alt="group" class="group-img" />
             <div class="group-info">
                 <div class="group-name">{{ group.name }}</div>
                 <div class="group-count">{{ group.count }} personnes</div>
             </div>
+            <div class="group-actions">
+              <button class="group-action group-action--edit" type="button" @click.stop="openEditModal(group)">
+                <img src="../assets/images/modify.svg" alt="Modifier" />
+              </button>
+            </div>
           </article>
         </div>
       </section>
     </div>
   </main>
+
+  <div v-if="showCreateModal" class="select-modal" @click.self="closeCreateModal">
+    <div class="select-modal__panel">
+      <header class="select-modal__header">
+        <div class="header-row">
+          <div class="header-back-container">
+            <button class="modal-back" type="button" @click="closeCreateModal">
+              <img src="../assets/images/arrow-left.svg" alt="Retour" />
+            </button>
+          </div>
+          <h3>{{ groupModalTitle }}</h3>
+          <div class="header-save-container">
+            <button
+              class="modal-save"
+              type="button"
+              :aria-busy="isSavingGroup"
+              :disabled="isSavingGroup || !newGroupName.trim()"
+              @click="saveNewGroup"
+            >
+              <img src="../assets/images/check-white.svg" alt="Valider" />
+            </button>
+          </div>
+        </div>
+      </header>
+      <div class="select-modal__body">
+        <label class="field-group">
+          <input
+            v-model="newGroupName"
+            type="text"
+            class="text-input"
+            placeholder="P1A"
+          />
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="showEditModal" class="user-modal-overlay group-edit-modal" @click.self="closeEditModal">
+    <div class="user-modal">
+      <header class="user-modal__header">
+        <div class="user-modal__header-content">
+          <div>
+            <button class="modal-btn ghost" type="button" @click="closeEditModal">
+              <img src="../assets/images/arrow-left.svg" alt="arrow" class="btn-icon" />
+            </button>
+          </div>
+          <div class="modal-actions">
+            <button class="modal-btn danger" type="button" :disabled="isDeleting" @click="deleteCurrentGroup">
+              <img src="../assets/images/delete.svg" alt="delete" class="btn-icon" />
+            </button>
+          </div>
+        </div>
+      </header>
+      <div class="user-modal__body">
+        <div class="modal-edit-form">
+          <input
+            v-model="editGroupName"
+            type="text"
+            class="edit-input"
+            placeholder="Nom du groupe"
+          />
+          <button class="btn-save" type="button" :aria-busy="isSavingGroup" :disabled="isSavingGroup || !editGroupName.trim()" @click="saveEditGroup">
+            <span>Enregistrer</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -42,7 +115,13 @@ export default {
   name: 'GroupesClasses',
   data() {
     return {
-      
+      showCreateModal: false,
+      newGroupName: '',
+      isSavingGroup: false,
+      editingGroupId: null,
+      isDeleting: false,
+      showEditModal: false,
+      editGroupName: ''
     }
   },
   computed: {
@@ -52,22 +131,106 @@ export default {
       return this.currentUser?.schoolId || this.currentUser?.school_id || this.currentUser?.school?.id || null
     },
     groupsView() {
-      return this.groups
-        .map(group => ({ name: group.name, count: Array.isArray(group.studentIds) ? group.studentIds.length : 0 }))
-        .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+      const cleanGroups = (this.groups || [])
+        .filter((group) => {
+          const name = String(group?.name || '').trim()
+          return name && !name.startsWith('single-')
+        })
+        .map(group => ({ id: group.id, name: group.name, count: this.groupCount(group) }))
+      return cleanGroups.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    },
+    groupModalTitle() {
+      return this.editingGroupId ? 'Modifier le groupe' : 'Nouveau groupe'
     }
   },
   created() {
-    this.fetchGroups({ schoolId: this.schoolId }).catch(() => {})
+    this.loadGroupsWithStudents().catch(() => {})
   },
   methods: {
-    ...mapActions(useGroupsStore, ['fetchGroups']),
-    createCourse() {
-      alert('Création de cours à venir')
+    ...mapActions(useGroupsStore, ['fetchGroups', 'fetchGroup', 'createGroup', 'updateGroup', 'deleteGroup']),
+    async loadGroupsWithStudents() {
+      try {
+        await this.fetchGroups({ schoolId: this.schoolId, include: 'students' })
+      } catch (_e) {
+        // Already handled in store
+      }
+
+      const ids = (this.groups || []).map((g) => g.id).filter(Boolean)
+      await Promise.all(ids.map((id) => this.fetchGroup(id, { include: 'students' }).catch(() => null)))
     },
-    openGroup(name) {
+    createCourse() {
+      this.editingGroupId = null
+      this.newGroupName = ''
+      this.showCreateModal = true
+    },
+    openEditModal(group) {
+      this.editingGroupId = group?.id ?? null
+      this.editGroupName = group?.name || ''
+      this.showEditModal = true
+    },
+    async saveNewGroup() {
+      const name = this.newGroupName.trim()
+      if (!name || this.isSavingGroup) return
+      this.isSavingGroup = true
+      try {
+        if (this.editingGroupId) {
+          await this.updateGroup(this.editingGroupId, { name })
+        } else {
+          await this.createGroup({ name, singleStudentGroup: false })
+        }
+        this.newGroupName = ''
+        this.editingGroupId = null
+        this.showCreateModal = false
+      } catch (error) {
+        console.error('Unable to create group', error)
+      } finally {
+        this.isSavingGroup = false
+      }
+    },
+    async saveEditGroup() {
+      const name = this.editGroupName.trim()
+      if (!name || this.isSavingGroup || !this.editingGroupId) return
+      this.isSavingGroup = true
+      try {
+        await this.updateGroup(this.editingGroupId, { name })
+        this.closeEditModal()
+      } catch (error) {
+        console.error('Unable to update group', error)
+      } finally {
+        this.isSavingGroup = false
+      }
+    },
+    async deleteCurrentGroup() {
+      if (!this.editingGroupId || this.isDeleting) return
+      this.isDeleting = true
+      try {
+        await this.deleteGroup(this.editingGroupId)
+        this.closeEditModal()
+      } catch (error) {
+        console.error('Unable to delete group', error)
+      } finally {
+        this.isDeleting = false
+      }
+    },
+    groupCount(group) {
+      if (!group) return 0
+      const fromIds = Array.isArray(group.studentIds) ? group.studentIds.filter(Boolean).length : 0
+      const fromObjects = Array.isArray(group.students) ? group.students.filter(Boolean).length : 0
+      const fromCount = Number.isFinite(group.studentCount) ? group.studentCount : Number.isFinite(group.studentsCount) ? group.studentsCount : null
+      return fromIds || fromObjects || fromCount || 0
+    },
+    openGroup(name, id) {
       if (!name) return
-      this.$router.push({ name: 'GroupesClassesDetail', params: { groupName: name } })
+      this.$router.push({ name: 'GroupesClassesDetail', params: { groupName: name }, query: id ? { id } : {} })
+    },
+    closeCreateModal() {
+      this.editingGroupId = null
+      this.showCreateModal = false
+    },
+    closeEditModal() {
+      this.editingGroupId = null
+      this.editGroupName = ''
+      this.showEditModal = false
     }
   }
 }

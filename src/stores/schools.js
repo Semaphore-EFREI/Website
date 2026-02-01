@@ -34,11 +34,11 @@ export const useSchoolsStore = defineStore('schools', {
       }
     },
 
-    async fetchSchool(id) {
+    async fetchSchool(id, params = {}) {
       this.loading = true;
       this.error = null;
       try {
-        const response = await request(`/school/${id}`, { method: 'GET' });
+        const response = await request(`/school/${id}`, { method: 'GET', params });
         const school = response.school ?? response ?? null;
         if (!school) throw new Error('School not found');
         const index = this.schools.findIndex((s) => String(s.id) === String(school.id));

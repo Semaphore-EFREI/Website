@@ -133,3 +133,17 @@ input::placeholder {
     font-weight: 600;
     line-height: normal;
 }
+
+.error-text {
+    color: #681717;
+    color: color(display-p3 0.4118 0.0902 0.0902);
+    font-family: Montserrat;
+    font-size: 0.875rem;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+  margin-bottom: 1rem;
+  text-align: center;
+  align-self: center;
+  width: 100%;
+}

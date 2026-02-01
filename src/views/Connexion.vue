@@ -55,8 +55,19 @@ export default {
         })
         this.$router.push({ name: 'Calendrier' })
       } catch (error) {
-        this.errorMessage = error?.message || 'Impossible de se connecter'
+        this.errorMessage = this.formatLoginError(error)
       }
+    },
+    formatLoginError(error) {
+      const msg = error?.message || ''
+      const raw = typeof error === 'string' ? error : (error?.error || '')
+      const text = [msg, raw].join(' ').toLowerCase()
+
+      if (text.includes('invalid_credentials') || text.includes('invalid credentials')) {
+        return 'Identifiants incorrects'
+      }
+
+      return msg || 'Impossible de se connecter'
     }
   }
 }

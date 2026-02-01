@@ -378,7 +378,11 @@ export default {
       return this.teacherOptions.filter(name => !q || name.toLowerCase().includes(q))
     },
     groupOptions() {
-      return this.groups.map(g => g.name).filter(Boolean).sort()
+      return this.groups
+        .map(g => g.name)
+        .filter(Boolean)
+        .filter((name) => !String(name).toLowerCase().startsWith('single-'))
+        .sort()
     },
     filteredGroupOptions() {
       const q = this.studentSearch.trim().toLowerCase()

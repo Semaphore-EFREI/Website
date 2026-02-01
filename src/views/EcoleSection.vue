@@ -121,20 +121,6 @@
 
         <label class="checkbox-item">
           <input 
-            v-model="settings.QRCodeEnabled" 
-            type="checkbox"
-            class="checkbox-input"
-          />
-          <img 
-            :src="settings.QRCodeEnabled ? checkboxFilled : checkboxEmpty" 
-            alt="checkbox" 
-            class="checkbox-icon"
-          />
-          <span>Signature par QR Code activée</span>
-        </label>
-
-        <label class="checkbox-item">
-          <input 
             v-model="settings.disableCourseModification" 
             type="checkbox"
             class="checkbox-input"
@@ -382,7 +368,7 @@ export default {
   methods: {
     ...mapActions(useRoomsStore, ['fetchRooms', 'fetchRoom', 'createRoom', 'updateRoom', 'deleteRoom']),
     ...mapActions(useBeaconsStore, ['fetchBeacons', 'fetchBeacon', 'assignBeaconToClass', 'removeBeaconFromClass']),
-    ...mapActions(useSchoolsStore, ['updateSchoolPreferences']),
+    ...mapActions(useSchoolsStore, ['updateSchoolPreferences', 'fetchSchool']),
     goBack() {
       this.$router.push({ name: 'Ecole' }).catch(() => {})
     },
@@ -573,18 +559,43 @@ export default {
     itemClass(type) {
       return ''
     },
-    loadSettings() {
-      if (typeof localStorage === 'undefined') return
-      try {
-        const raw = localStorage.getItem(SETTINGS_STORAGE_KEY)
-        if (!raw) return
-        const parsed = JSON.parse(raw)
-        this.settings = {
-          ...this.settings,
-          ...parsed
+    async loadSettings() {
+      if (this.section !== 'parametres') return
+
+      const schoolId = this.schoolId
+      let loaded = false
+
+      if (schoolId) {
+        try {
+          const school = await this.fetchSchool(schoolId, { expand: 'preferences' })
+          const prefs = school?.preferences ?? null
+          if (prefs) {
+            this.settings = {
+              ...this.settings,
+              closureDelay: Number(prefs.defaultSignatureClosingDelay ?? 0),
+              teachersCanModifyDelay: Boolean(prefs.teacherCanModifyClosingdelay),
+              studentsCanSignBefore: Boolean(prefs.studentsCanSignBeforeTeacher),
+              contactSignatureEnabled: Boolean(prefs.nfcEnabled),
+              torchSignatureEnabled: Boolean(prefs.flashlightEnabled),
+              disableCourseModification: Boolean(prefs.disableCourseModificationFromUI)
+            }
+            loaded = true
+          }
+        } catch (error) {
+          console.error('Impossible de charger les préférences établissement', error)
         }
-      } catch (error) {
-        console.error('Impossible de charger les paramètres', error)
+      }
+
+      if (!loaded && typeof localStorage !== 'undefined') {
+        try {
+          const raw = localStorage.getItem(SETTINGS_STORAGE_KEY)
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            this.settings = { ...this.settings, ...parsed }
+          }
+        } catch (error) {
+          console.error('Impossible de charger les paramètres locaux', error)
+        }
       }
     },
     persistSettings() {
@@ -603,13 +614,12 @@ export default {
         return
       }
       const payload = {
-        id: schoolId,
         defaultSignatureClosingDelay: Number(this.settings.closureDelay) ?? 15,
         teacherCanModifyClosingdelay: Boolean(this.settings.teachersCanModifyDelay),
         studentsCanSignBeforeTeacher: Boolean(this.settings.studentsCanSignBefore),
         nfcEnabled: Boolean(this.settings.contactSignatureEnabled),
         flashlightEnabled: Boolean(this.settings.torchSignatureEnabled),
-        qrCodeEnabled: Boolean(this.settings.QRCodeEnabled)
+        disableCourseModificationFromUI: Boolean(this.settings.disableCourseModification)
       }
       try {
         await this.updateSchoolPreferences(schoolId, payload)

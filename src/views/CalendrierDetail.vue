@@ -457,6 +457,33 @@ export default {
           .filter(Boolean)
       })()
 
+      const groupLabel = (() => {
+        const names = []
+        const appendVal = (val) => {
+          if (!val) return
+          if (Array.isArray(val)) {
+            val.forEach(appendVal)
+            return
+          }
+          if (typeof val === 'object') {
+            appendVal(val.name || val.id)
+            return
+          }
+          names.push(String(val))
+        }
+
+        appendVal(course.studentGroups)
+        appendVal(course.group)
+        appendVal(course.className)
+
+        const filtered = names
+          .map((n) => String(n || '').trim())
+          .filter(Boolean)
+          .filter((n) => !n.toLowerCase().startsWith('single-'))
+
+        return filtered.length ? filtered.join(', ') : 'Étudiants variés'
+      })()
+
       return {
         id: course.id,
         subject: course.subject || course.title || course.name || 'Cours',
@@ -465,7 +492,7 @@ export default {
         endTime: course.endTime || endInfo.time,
         room: roomLabel,
         teacher: teacherNames,
-        group: course.group || course.className || (Array.isArray(course.studentGroups) ? course.studentGroups.map((g) => g?.name).filter(Boolean).join(', ') : ''),
+        group: groupLabel,
         status,
         students: course.students || course.soloStudents || [],
         signature: course.signature || []

@@ -348,8 +348,8 @@ export default {
               .filter(Boolean)
           : [];
 
-        const studentIds = Array.isArray(course.students)
-          ? course.students
+        const singlesFromSolo = Array.isArray(course.soloStudents)
+          ? course.soloStudents
               .map((s) => {
                 if (typeof s === 'object' && s !== null) return s.id || s.userId || s.studentId || '';
                 return s;
@@ -358,7 +358,7 @@ export default {
               .filter(Boolean)
           : [];
 
-        return [...new Set([...singlesFromGroups, ...studentIds])];
+        return [...new Set([...singlesFromGroups, ...singlesFromSolo])];
       })();
 
       const singlesLabel = singleStudentIds.length ? 'Étudiants variés' : '';
