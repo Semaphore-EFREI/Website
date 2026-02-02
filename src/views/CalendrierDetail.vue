@@ -59,7 +59,13 @@
                   v-if="teacher && teacher.meta"
                   class="signature-status"
                   :class="teacher.meta.class">
-                  <span class="status-icon">{{ teacher.meta.icon }}</span>
+                  <img
+                    v-if="teacher.meta.iconType === 'image' && teacher.meta.icon"
+                    :src="teacher.meta.icon"
+                    :alt="teacher.meta.iconAlt || teacher.meta.label"
+                    class="status-icon-image"
+                  />
+                  <span v-else-if="teacher.meta.icon" class="status-icon">{{ teacher.meta.icon }}</span>
                   <span class="status-label">{{ teacher.meta.label }}</span>
                 </div>
               </div>
@@ -67,12 +73,15 @@
                 <div v-if="teacher && teacher.meta && teacher.meta.class === 'absent'">
                   <img src="../assets/images/absent.svg" alt="Absent" class="signature-image" />
                 </div>
+                <div v-else-if="teacher && teacher.meta && teacher.meta.class === 'excused'">
+                  <img :src="excusedSignatureIcon" alt="Excusé" class="signature-image" />
+                </div>
                 <div v-else-if="teacher && teacher.signatureUrl">
                   <img :src="teacher.signatureUrl" :alt="`Signature de ${teacher.name}`" class="signature-image" />
                 </div>
                 <div v-else class="signature-none">Aucune signature</div>
               </div>
-                <div class="actions" v-if="!isPlanned">
+                <div class="actions" v-if="!isPlanned && !isExcused(teacher)">
                   <button
                     class="btn-present"
                     :class="teacher?.meta?.class || 'none'"
@@ -100,7 +109,13 @@
                   v-if="student.meta"
                   class="signature-status"
                   :class="student.meta.class">
-                  <span class="status-icon">{{ student.meta.icon }}</span>
+                  <img
+                    v-if="student.meta.iconType === 'image' && student.meta.icon"
+                    :src="student.meta.icon"
+                    :alt="student.meta.iconAlt || student.meta.label"
+                    class="status-icon-image"
+                  />
+                  <span v-else-if="student.meta.icon" class="status-icon">{{ student.meta.icon }}</span>
                   <span class="status-label">{{ student.meta.label }}</span>
                 </div>
             </div>
@@ -109,12 +124,15 @@
                 v-if="student.meta && student.meta.class === 'absent'">
                     <img src="../assets/images/absent.svg" alt="Absent" class="signature-image" />
                 </div>
+                <div v-else-if="student.meta && student.meta.class === 'excused'">
+                  <img :src="excusedSignatureIcon" alt="Excusé" class="signature-image" />
+                </div>
                 <div v-else-if="student.signatureUrl">
                 <img :src="student.signatureUrl" :alt="`Signature de ${student.name}`" class="signature-image" />
                 </div>
                 <div v-else class="signature-none">Aucune signature</div>
             </div>
-            <div class="actions" v-if="!isPlanned">
+            <div class="actions" v-if="!isPlanned && !isExcused(student)">
               <button
                 class="btn-present"
                 :class="student.meta?.class || 'none'"
@@ -128,6 +146,7 @@
                 @click="setStudentStatus(student.id, 'absent')"
               >✖</button>
             </div>
+
             </div>
         </div>
         </section>
@@ -146,6 +165,8 @@ import clockIcon from '../assets/images/clock.svg'
 import clockcheckIcon from '../assets/images/clock-check.svg'
 import checkIcon from '../assets/images/check.svg'
 import absentIcon from '../assets/images/croix-black.svg'
+import excusedIcon from '../assets/images/excused-icon.svg'
+import excusedSignatureIcon from '../assets/images/excused.svg'
 import { useAuthStore, useCalendarStore, useSignaturesStore, useUsersStore } from '../stores'
 
 export default {
@@ -163,7 +184,9 @@ export default {
       students: [],
       signaturesLocal: [],
       loading: true,
-      refreshKey: 0
+      refreshKey: 0,
+      excusedSignatureIcon,
+      clockIcon
     }
   },
   computed: {
@@ -424,7 +447,7 @@ export default {
             (sig) =>
               sig &&
               (sig.type === 'teacher' || sig.role === 'teacher' || (!sig.student && (sig.teacher || sig.teacherId))) &&
-              (sig.status === 'signed' || sig.status === 'present')
+        (sig.status === 'signed' || sig.status === 'present' || sig.status === 'late')
           )
         : false
 
@@ -502,7 +525,9 @@ export default {
       const map = {
         absent: { label: 'Absent', icon: '✖', class: 'absent' },
         signed: { label: 'Signé', icon: '✔', class: 'signed' },
-        present: { label: 'Présent', icon: '✔', class: 'present' }
+        present: { label: 'Présent', icon: '✔', class: 'present' },
+        late: { label: 'En retard', icon: clockIcon, iconType: 'image', iconAlt: 'En retard', class: 'late' },
+        excused: { label: 'Excusé', icon: excusedIcon, iconType: 'image', iconAlt: 'Excusé', class: 'excused' }
       }
       return map[status] || null
     },
@@ -528,7 +553,8 @@ export default {
       if (!sig) return null
       const studentId = sig.studentId ?? (typeof sig.student === 'string' ? sig.student : sig.student?.id)
       const teacherId = sig.teacherId ?? (typeof sig.teacher === 'string' ? sig.teacher : sig.teacher?.id)
-      return { ...sig, studentId, teacherId, status: sig.status || 'none' }
+      const status = sig.status === 'invalid' ? 'none' : (sig.status || 'none')
+      return { ...sig, studentId, teacherId, status }
     },
     applySignatureStatuses() {
       const sigMap = new Map()
@@ -564,7 +590,13 @@ export default {
       await this.applyBulkStatus('absent')
     },
     async applyBulkStatus(status) {
-      const targets = this.students.filter((s) => !this.isSigned(s))
+      const isBulkPresent = status === 'present'
+      const targets = this.students.filter((s) => {
+        const current = s?.meta?.class || s?.signatureStatus || 'none'
+        if (current === 'excused') return false
+        if (isBulkPresent) return current !== 'signed' && current !== 'late'
+        return true
+      })
 
       for (const person of targets) {
         if (this.isStatusLocked(person, status)) continue
@@ -611,11 +643,15 @@ export default {
     },
     isPresentDisabled(person) {
       const status = person?.meta?.class || person?.signatureStatus
-      return status === 'present'
+      return status === 'present' || status === 'signed' || status === 'late' || status === 'excused'
     },
     isAbsentDisabled(person) {
       const status = person?.meta?.class || person?.signatureStatus
-      return status === 'absent'
+      return status === 'absent' || status === 'excused'
+    },
+    isExcused(person) {
+      const status = person?.meta?.class || person?.signatureStatus
+      return status === 'excused'
     },
     goBack() {
       this.$router.push({

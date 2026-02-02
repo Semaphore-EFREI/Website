@@ -248,6 +248,16 @@ h2 {
     background: linear-gradient(0deg, color(display-p3 0.7882 0.2314 0.1882 / 0.16) 0%, color(display-p3 0.7882 0.2314 0.1882 / 0.16) 100%), var(--Fond-Tertiaire, color(display-p3 1 1 1));
 }
 
+.person-card.late {
+    background: linear-gradient(0deg, rgba(230, 100, 0, 0.16) 0%, rgba(230, 100, 0, 0.16) 100%), var(--Fond-Tertiaire, #FFF);
+    background: linear-gradient(0deg, color(display-p3 0.84 0.4238 0.1613 / 0.16) 0%, color(display-p3 0.84 0.4238 0.1613 / 0.16) 100%), var(--Fond-Tertiaire, color(display-p3 1 1 1));
+}
+
+.person-card.excused {
+    background: linear-gradient(0deg, rgba(134, 77, 176, 0.16) 0%, rgba(134, 77, 176, 0.16) 100%), var(--Fond-Tertiaire, #FFF);
+    background: linear-gradient(0deg, color(display-p3 0.4941 0.3137 0.6706 / 0.16) 0%, color(display-p3 0.4941 0.3137 0.6706 / 0.16) 100%), var(--Fond-Tertiaire, color(display-p3 1 1 1));
+}
+
 .person-card.none {
     background: var(--Fond-Tertiaire, #FFF);
     background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
@@ -298,6 +308,20 @@ h2 {
     color: var(--Rouge, color(display-p3 0.7882 0.2314 0.1882));
 }
 
+.signature-status.late {
+    background: rgba(255, 255, 255, 0.48);
+    background: color(display-p3 1 1 1 / 0.48);
+    color: var(--Orange, #F85900);
+    color: var(--Orange, color(display-p3 0.84 0.4238 0.1613));
+}
+
+.signature-status.excused {
+    background: rgba(255, 255, 255, 0.48);
+    background: color(display-p3 1 1 1 / 0.48);
+    color: var(--Violet, #8F49B6);
+    color: var(--Violet, color(display-p3 0.4941 0.3137 0.6706));
+}
+
 .status-icon {
     text-align: center;
     font-feature-settings: 'liga' off, 'clig' off;
@@ -308,6 +332,15 @@ h2 {
     line-height: normal;
     letter-spacing: -0.025rem;
     padding-bottom: 0.1875rem; /* Ajustement visuel pour l'alignement vertical */
+}
+
+.status-icon-image {
+    width: 0.875rem;
+    height: 0.875rem;
+}
+
+.signature-status.late .status-icon-image {
+    filter: invert(43%) sepia(74%) saturate(1965%) hue-rotate(8deg) brightness(98%) contrast(102%);
 }
 
 .status-label {
@@ -490,7 +523,7 @@ h2 {
     transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
 }
 
-.btn-present.signed, .btn-present.present, .btn-absent.absent {
+.btn-present.signed, .btn-present.present, .btn-present.late, .btn-absent.absent {
     opacity: 0.56;
     background: var(--Fond-Primaire, #FAF9F6);
     background: var(--Fond-Primaire, color(display-p3 0.9804 0.9765 0.9647));
@@ -503,14 +536,15 @@ h2 {
     background: var(--Fond-Secondaire, color(display-p3 0.9373 0.9294 0.898));
 }
 
-.btn-present:hover:not(.signed):not(.present):not(.absent) {
+.btn-present:hover:not(.signed):not(.present):not(.absent):not(.late) {
     transform: translateY(-0.0625rem);
     box-shadow: 0 0.1875rem 0.5rem rgba(0,0,0,0.12);
 }
 
 /* Allow a subtle hover even when status is already set (signed/present/absent) */
 .btn-present.present:hover,
-.btn-present.signed:hover {
+.btn-present.signed:hover,
+.btn-present.late:hover {
     transform: translateY(-0.0625rem);
     box-shadow: 0 0.125rem 0.375rem rgba(0,0,0,0.1);
 }

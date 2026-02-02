@@ -133,9 +133,15 @@ export default {
     this.fetchUsers().catch(() => {})
   },
   methods: {
-    ...mapActions(useUsersStore, { fetchUsers: 'fetchUsers', removeUser: 'deleteUser' }),
-    openUser(user) {
-      this.selectedUser = user
+    ...mapActions(useUsersStore, { fetchUsers: 'fetchUsers', removeUser: 'deleteUser', fetchUserProfile: 'fetchUserProfile' }),
+    async openUser(user) {
+      try {
+        const enrichedUser = await this.fetchUserProfile(user.id, user.role)
+        this.selectedUser = enrichedUser
+      } catch (error) {
+        console.error('Unable to load user profile:', error)
+        this.selectedUser = user
+      }
     },
     closeUser() {
       this.selectedUser = null

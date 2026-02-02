@@ -35,7 +35,9 @@ export const useAuthStore = defineStore('auth', {
     refreshToken: loadPersistedState().refreshToken,
     user: loadPersistedState().user,
     loading: false,
-    error: null
+    error: null,
+    isRefreshing: false,
+    refreshPromise: null
   }),
   getters: {
     isAuthenticated: (state) => Boolean(state.token),
@@ -99,24 +101,66 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async refreshTokens() {
-      if (!this.refreshToken) return null;
+      // Prevent concurrent refresh attempts
+      if (this.isRefreshing && this.refreshPromise) {
+        return this.refreshPromise;
+      }
+
+      if (!this.refreshToken) {
+        console.warn('[Auth] No refresh token available');
+        return null;
+      }
+
+      this.isRefreshing = true;
       this.loading = true;
       this.error = null;
-      try {
-        const response = await request('/auth/refresh', { method: 'POST', data: { refreshToken: this.refreshToken } });
-        const token = response.token ?? response.accessToken ?? this.token;
-        if (!token) throw new Error('Missing access token');
-        this.token = token;
-        this.refreshToken = response.refreshToken ?? this.refreshToken;
-        setAuthToken(this.token);
-        persistSession({ token: this.token, refreshToken: this.refreshToken, user: this.user });
-        return { token: this.token, refreshToken: this.refreshToken };
-      } catch (err) {
-        this.error = err.message || 'Unable to refresh token';
-        throw err;
-      } finally {
-        this.loading = false;
-      }
+
+      // Store the current refreshToken to use
+      const currentRefreshToken = this.refreshToken;
+
+      this.refreshPromise = (async () => {
+        try {
+          const response = await request('/auth/refresh', { 
+            method: 'POST', 
+            data: { refreshToken: currentRefreshToken } 
+          });
+          
+          const newToken = response.token ?? response.accessToken;
+          const newRefreshToken = response.refreshToken;
+
+          if (!newToken) {
+            throw new Error('Missing access token in refresh response');
+          }
+
+          // CRITICAL: Always update refreshToken if provided by server
+          // If server doesn't provide a new refreshToken, log warning and logout
+          if (!newRefreshToken) {
+            console.error('[Auth] Server did not return a new refreshToken, logging out');
+            this.logout();
+            throw new Error('Server did not return a new refreshToken');
+          }
+
+          this.token = newToken;
+          this.refreshToken = newRefreshToken;
+          setAuthToken(this.token);
+          persistSession({ token: this.token, refreshToken: this.refreshToken, user: this.user });
+          
+          console.log('[Auth] Token refreshed successfully');
+          return { token: this.token, refreshToken: this.refreshToken };
+        } catch (err) {
+          console.error('[Auth] Token refresh failed:', err.message);
+          this.error = err.message || 'Unable to refresh token';
+          // Clear auth state on refresh failure to prevent reuse of invalid token
+          this.logout();
+          throw err;
+        } finally {
+          this.loading = false;
+          this.isRefreshing = false;
+          this.refreshPromise = null;
+        }
+      })();
+
+      return this.refreshPromise;
     },
 
     logout() {

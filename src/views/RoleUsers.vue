@@ -132,12 +132,18 @@ export default {
     this.fetchUsers().catch(() => {})
   },
   methods: {
-    ...mapActions(useUsersStore, ['fetchUsers']),
+    ...mapActions(useUsersStore, ['fetchUsers', 'fetchUserProfile']),
     goBack() {
       this.$router.push({ name: 'Utilisateurs' })
     },
-    openUser(user) {
-      this.selectedUser = user
+    async openUser(user) {
+      try {
+        const enrichedUser = await this.fetchUserProfile(user.id, user.role)
+        this.selectedUser = enrichedUser
+      } catch (error) {
+        console.error('Unable to load user profile:', error)
+        this.selectedUser = user
+      }
       document.body.style.overflow = 'hidden'
     },
     closeUser() {

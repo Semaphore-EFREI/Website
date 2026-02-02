@@ -1,13 +1,14 @@
 /* Sidebar styles */
 
 .sidebar {
-    position: absolute;
+    position: fixed;
     top: 1.5rem;
     left: 1.5rem;
+    bottom: 1.5rem;
     display: flex;
     width: 18.75rem;
-    min-height: 0.625rem;
-    padding: 1rem 1rem 3.125rem 1rem;
+    max-height: calc(100vh - 3rem);
+    padding: 1rem 1rem 1rem 1rem;
     flex-direction: column;
     justify-content: space-between;
     align-items: flex-start;
@@ -20,13 +21,18 @@
     box-shadow: 0 0 1.5rem 0 color(display-p3 0 0 0 / 0.12);
     backdrop-filter: blur(1.25rem);
     z-index: 100;
+    overflow-y: auto;
 }
 
 .sidebar.collapsed {
-    width: 4rem;
+    width: 4.5rem;
+    height: auto;
+    max-height: none;
+    bottom: auto;
     padding: 0.75rem;
     align-items: center;
     gap: 0;
+    justify-content: flex-start;
 }
 
 .sidebar-top {

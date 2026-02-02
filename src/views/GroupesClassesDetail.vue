@@ -204,7 +204,7 @@ export default {
     this.initialize()
   },
   methods: {
-    ...mapActions(useUsersStore, ['fetchUsers']),
+    ...mapActions(useUsersStore, ['fetchUsers', 'fetchUserProfile']),
     ...mapActions(useGroupsStore, ['fetchGroups', 'fetchGroup']),
     async initialize() {
       try {
@@ -226,8 +226,14 @@ export default {
     goBack() {
       this.$router.push({ name: 'GroupesClasses' })
     },
-    openUser(user) {
-      this.selectedUser = user
+    async openUser(user) {
+      try {
+        const enrichedUser = await this.fetchUserProfile(user.id, user.role)
+        this.selectedUser = enrichedUser
+      } catch (error) {
+        console.error('Unable to load user profile:', error)
+        this.selectedUser = user
+      }
     },
     closeUser() {
       this.selectedUser = null

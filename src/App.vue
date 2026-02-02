@@ -143,7 +143,7 @@ export default {
 }
 
 /* Fix overlap where clamp doesn't allocate enough space */
-@media (min-width: 800px) and (max-width: 1400px) {
+@media (min-width: 800px) and (max-width: 1700px) {
   .app-main.with-sidebar :deep(.detail-page),
   .app-main.with-sidebar :deep(.users-content),
   .app-main.with-sidebar :deep(.edit-user-page) {

@@ -46,7 +46,10 @@ function normalizeUser(raw, explicitRoleKey) {
   const email = raw?.email ?? raw?.mail ?? '';
   const name = (raw?.name || `${firstName} ${lastName}`.trim() || email || `#${id}`).trim();
   const profilePicture = raw?.profilePicture ?? raw?.avatar ?? '';
-  const groups = raw?.groups ?? raw?.groupNames ?? raw?.classes ?? raw?.classrooms ?? [];
+  const rawGroups = raw?.groups ?? raw?.groupNames ?? raw?.classes ?? raw?.classrooms ?? [];
+  const groups = Array.isArray(rawGroups)
+    ? rawGroups.filter((g) => !String(g).startsWith('single-'))
+    : [];
 
   return {
     ...raw,
@@ -181,6 +184,55 @@ export const useUsersStore = defineStore('users', {
       this.error = lastError?.message || 'Unable to fetch user';
       this.loading = false;
       throw lastError || new Error('Unable to fetch user');
+    },
+
+    async fetchUserProfile(id, role) {
+      this.loading = true;
+      this.error = null;
+
+      const roleFromState = this.users.find((u) => String(u.id) === String(id))?.roleKey;
+      const roleKey = toRoleKey(role || roleFromState) || 'student';
+      let lastError = null;
+
+      try {
+        const response = await request(`${singularPath(roleKey, id)}?include=groups`, { method: 'GET' });
+        const user = normalizeUser(response.user ?? response[roleKey] ?? response, roleKey);
+        
+        if (user.groups && Array.isArray(user.groups) && user.groups.length > 0) {
+          const filteredGroupIds = user.groups.filter(
+            (groupId) => !String(groupId).startsWith('single-')
+          );
+          
+          const groupsWithNames = await Promise.all(
+            filteredGroupIds.map(async (groupId) => {
+              try {
+                const groupResponse = await request(`/studentGroup/${groupId}`, { method: 'GET' });
+                const groupName = groupResponse.name || groupResponse.studentGroup?.name || groupId;
+                // Filter out groups whose name starts with 'single-'
+                if (String(groupName).startsWith('single-')) {
+                  return null;
+                }
+                return groupName;
+              } catch (err) {
+                console.error(`Unable to fetch group ${groupId}:`, err);
+                return null;
+              }
+            })
+          );
+          user.groups = groupsWithNames.filter(Boolean);
+        } else {
+          user.groups = [];
+        }
+        
+        this.upsertUser(user);
+        this.loading = false;
+        return user;
+      } catch (err) {
+        lastError = err;
+        this.error = lastError?.message || 'Unable to fetch user profile';
+        this.loading = false;
+        throw lastError || new Error('Unable to fetch user profile');
+      }
     },
 
     async createUser(payload) {

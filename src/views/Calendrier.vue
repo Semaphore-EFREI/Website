@@ -152,14 +152,9 @@ export default {
     }
   },
   created() {
-    this.fetchCourses()
-      .then(async () => {
-        await this.loadTeacherUsers();
-        if (this.$route.query.date) return;
-        const autoDate = this.getFirstCourseDate();
-        if (autoDate) this.selectedDate = autoDate;
-      })
-      .catch(() => {});
+    // Initialize to today by default
+    this.selectedDate = new Date();
+    
     // Si une date est passée en query parameter, utiliser cette date
     if (this.$route.query.date) {
       const dateStr = this.$route.query.date;
@@ -171,6 +166,12 @@ export default {
         this.selectedDate = new Date(year, month, day);
       }
     }
+    
+    this.fetchCourses()
+      .then(async () => {
+        await this.loadTeacherUsers();
+      })
+      .catch(() => {});
   },
   methods: {
     ...mapActions(useCalendarStore, ['fetchCourses']),
@@ -374,7 +375,10 @@ export default {
         const now = Date.now();
         const hasTeacherSig = Array.isArray(course.signature)
           ? course.signature.some(
-              (sig) => sig && (sig.teacher || sig.teacherId || sig.type === 'teacher') && (sig.status === 'signed' || sig.status === 'present')
+              (sig) =>
+                sig &&
+                (sig.teacher || sig.teacherId || sig.type === 'teacher') &&
+                (sig.status === 'signed' || sig.status === 'present' || sig.status === 'late')
             )
           : false;
         if (now > endDate.getTime()) status = hasTeacherSig ? 'finished' : 'finished-absent';
