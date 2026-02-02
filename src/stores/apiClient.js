@@ -12,8 +12,8 @@ function buildUrl(path, params) {
   return `${API_BASE_URL}${path}${query ? `?${query}` : ''}`;
 }
 
-function buildHeaders() {
-  return authToken
+function buildHeaders(includeAuth = true) {
+  return includeAuth && authToken
     ? { ...defaultHeaders, Authorization: `Bearer ${authToken}` }
     : { ...defaultHeaders };
 }
@@ -38,10 +38,11 @@ function summarizeBody(body) {
   }
 }
 
-async function request(path, { method = 'GET', data, params } = {}) {
+async function request(path, { method = 'GET', data, params, skipAuth = false } = {}) {
   const url = buildUrl(path, params);
   const startedAt = Date.now();
   const redactedData = redactPayload(data);
+  const headers = buildHeaders(!skipAuth);
   let response;
   let parsedBody = null;
   let bodyLog = null;
@@ -51,7 +52,7 @@ async function request(path, { method = 'GET', data, params } = {}) {
     const execute = async () => {
       response = await fetch(url, {
         method,
-        headers: buildHeaders(),
+        headers,
         body: data ? JSON.stringify(data) : undefined
       });
 

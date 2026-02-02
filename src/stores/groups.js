@@ -44,7 +44,8 @@ export const useGroupsStore = defineStore('groups', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await request(`/studentGroup/${id}`, { method: 'GET', params });
+        const mergedParams = { include: 'students', ...params };
+        const response = await request(`/studentGroup/${id}`, { method: 'GET', params: mergedParams });
         const group = (() => {
           if (response?.group) return response.group;
           if (typeof response === 'string') {
@@ -132,12 +133,12 @@ export const useGroupsStore = defineStore('groups', {
       }
     },
 
-    async assignStudents(groupId, studentIds) {
+    async assignStudents(groupIds, studentIds) {
       this.loading = true;
       this.error = null;
       try {
-        await request(`/studentGroup/${groupId}/students`, { method: 'POST', data: { studentIds } });
-        const group = this.byId(groupId);
+        await request(`/studentGroup/${groupIds}/students`, { method: 'POST', data: { studentIds } });
+        const group = this.byId(groupIds);
         if (group) {
           const unique = new Set([...(group.studentIds ?? []), ...studentIds.map(Number)]);
           group.studentIds = Array.from(unique);
@@ -150,12 +151,12 @@ export const useGroupsStore = defineStore('groups', {
       }
     },
 
-    async removeStudents(groupId, studentIds) {
+    async removeStudents(groupIds, studentIds) {
       this.loading = true;
       this.error = null;
       try {
-        await request(`/studentGroup/${groupId}/students`, { method: 'DELETE', data: { studentIds } });
-        const group = this.byId(groupId);
+        await request(`/studentGroup/${groupIds}/students`, { method: 'DELETE', data: { studentIds } });
+        const group = this.byId(groupIds);
         if (group) {
           group.studentIds = (group.studentIds ?? []).filter((id) => !studentIds.map(Number).includes(id));
         }

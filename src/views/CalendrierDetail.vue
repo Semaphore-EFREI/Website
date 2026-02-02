@@ -180,6 +180,7 @@ export default {
   data() {
     return {
       course: null,
+      courseRaw: null,
       teachers: [],
       students: [],
       signaturesLocal: [],
@@ -251,6 +252,7 @@ export default {
       this.loading = true
       try {
         const course = await this.fetchCourseAction(this.id)
+        this.courseRaw = course
         this.course = this.normalizeCourse(course)
         await this.loadRoster()
       } catch (error) {
@@ -260,11 +262,62 @@ export default {
       }
     },
     async loadRoster() {
-      const baseSignatures = Array.isArray(this.course?.signature) ? this.course.signature : []
+      const sourceCourse = this.courseRaw || this.course || {}
+      const baseSignatures = Array.isArray(sourceCourse?.signature)
+        ? sourceCourse.signature
+        : Array.isArray(sourceCourse?.signatures)
+          ? sourceCourse.signatures
+          : []
       const normalizeSig = (sig) => this.normalizeSignature(sig)
 
-      // Always prefer fresh server signatures to avoid stale states
-      this.signaturesLocal = baseSignatures.map(normalizeSig).filter(Boolean)
+      const teacherList = Array.isArray(sourceCourse?.teachers)
+        ? sourceCourse.teachers
+        : Array.isArray(sourceCourse?.teacher)
+          ? sourceCourse.teacher
+          : sourceCourse?.teacher
+            ? [sourceCourse.teacher]
+            : []
+      const baseTeachers = teacherList.map((val) => {
+        if (typeof val === 'object' && val !== null) return val
+        return { teacherId: val }
+      })
+      const teacherIdSet = new Set(
+        baseTeachers
+          .map((t) => t.teacherId ?? t.teacher?.id ?? t.id)
+          .filter(Boolean)
+          .map((id) => String(id))
+      )
+
+      const baseStudents = [
+        ...(Array.isArray(sourceCourse?.students)
+          ? sourceCourse.students.map((s) => ({ studentId: s.id ?? s.studentId ?? s.userId ?? s, id: s.id ?? s.studentId ?? s.userId ?? s, ...s }))
+          : []),
+        ...(Array.isArray(sourceCourse?.soloStudents)
+          ? sourceCourse.soloStudents.map((s) => ({ studentId: s.id ?? s.studentId ?? s.userId ?? s, id: s.id ?? s.studentId ?? s.userId ?? s, ...s }))
+          : [])
+      ]
+      const studentIdSet = new Set(
+        baseStudents
+          .map((s) => s.studentId ?? s.id)
+          .filter(Boolean)
+          .map((id) => String(id))
+      )
+
+      // Always prefer fresh server signatures to avoid stale states, but only for users attached to the course
+      const filteredSignatures = baseSignatures
+        .map(normalizeSig)
+        .filter(Boolean)
+        .filter((sig) => {
+          const teacherId = sig.teacherId ?? sig.teacher?.id ?? sig.userId
+          const studentId = sig.studentId ?? (typeof sig.student === 'string' ? sig.student : sig.student?.id) ?? sig.userId
+          if (sig.type === 'teacher' || sig.role === 'teacher') return teacherId && teacherIdSet.has(String(teacherId))
+          if (sig.type === 'student' || sig.role === 'student' || (!sig.type && studentId)) {
+            return studentId && studentIdSet.has(String(studentId))
+          }
+          return false
+        })
+
+      this.signaturesLocal = filteredSignatures
 
       const teacherSignatures = this.signaturesLocal.filter(
         (sig) => (sig.type === 'teacher' || sig.role === 'teacher') && (sig.teacher || sig.teacherId)
@@ -272,20 +325,6 @@ export default {
       const studentSignatures = this.signaturesLocal.filter(
         (sig) => (sig.type === 'student' || sig.role === 'student' || (!sig.type && (sig.student || sig.studentId)))
       )
-
-      const baseTeachers = Array.isArray(this.course?.teacher)
-        ? this.course.teacher.map(val => (typeof val === 'object' ? val : { teacherId: val }))
-        : this.course?.teacher
-          ? [{ teacherId: this.course.teacher }]
-          : []
-
-      const baseStudents = Array.isArray(this.course?.students)
-        ? this.course.students.map((s) => ({ studentId: s.id ?? s.studentId ?? s.userId ?? s, id: s.id ?? s.studentId ?? s.userId ?? s, ...s }))
-        : []
-
-      const soloStudents = Array.isArray(this.course?.soloStudents)
-        ? this.course.soloStudents.map((s) => ({ studentId: s.id ?? s.studentId ?? s.userId ?? s, ...s }))
-        : []
 
       const teacherMerged = [
         ...baseTeachers,
@@ -302,7 +341,6 @@ export default {
 
       const studentMerged = [
         ...baseStudents,
-        ...soloStudents,
         ...studentSignatures.map((sig) => ({
           studentId: sig.studentId ?? (typeof sig.student === 'string' ? sig.student : sig.student?.id) ?? sig.userId,
           id: sig.studentId ?? (typeof sig.student === 'string' ? sig.student : sig.student?.id) ?? sig.userId,
@@ -518,7 +556,7 @@ export default {
         group: groupLabel,
         status,
         students: course.students || course.soloStudents || [],
-        signature: course.signature || []
+        signature: course.signature || course.signatures || []
       }
     },
     signatureMeta(status) {

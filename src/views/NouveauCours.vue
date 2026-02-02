@@ -117,10 +117,10 @@
             <img src="../assets/images/plus-sign-black.svg" alt="Ajouter" class="plus-icon" />
           </button>
         </div>
-        <div class="pill-grid" v-if="teachers.length">
-          <article v-for="teacher in teachers" :key="teacher" class="pill-card">
-            <div class="pill-name">{{ teacher }}</div>
-            <button type="button" class="pill-remove" @click="removeTeacher(teacher)">
+        <div class="pill-grid" v-if="teacherDisplayEntries.length">
+          <article v-for="teacher in teacherDisplayEntries" :key="teacher.id" class="pill-card">
+            <div class="pill-name">{{ teacher.name }}</div>
+            <button type="button" class="pill-remove" @click="removeTeacher(teacher.id)">
                 <img src="../assets/images/remove.svg" alt="Remove" class="remove-icon" />
             </button>
           </article>
@@ -135,9 +135,9 @@
             <img src="../assets/images/plus-sign-black.svg" alt="Ajouter" class="plus-icon" />
           </button>
         </div>
-        <div class="pill-grid" v-if="students.length">
-          <article v-for="student in students" :key="student" class="pill-card">
-            <div class="pill-name">{{ student }}</div>
+        <div class="pill-grid" v-if="studentDisplayEntries.length">
+          <article v-for="student in studentDisplayEntries" :key="`${student.type || 'student'}-${student.id}`" class="pill-card">
+            <div class="pill-name">{{ student.name }}</div>
             <button type="button" class="pill-remove" @click="removeStudent(student)">
                 <img src="../assets/images/remove.svg" alt="Remove" class="remove-icon" />
             </button>
@@ -182,13 +182,13 @@
                 <div class="select-modal__pillgrid">
                     <button
                     v-for="teacher in filteredTeacherOptions"
-                    :key="teacher"
+                    :key="teacher.id"
                     type="button"
                     class="select-pill"
-                    :class="{ active: teacherDraft.includes(teacher) }"
+                    :class="{ active: teacherIds.some((id) => String(id) === String(teacher.id)) }"
                     @click="toggleTeacherDraft(teacher)"
                     >
-                    <span>{{ teacher }}</span>
+                    <span>{{ teacher.name }}</span>
                     </button>
                 </div>
             </div>
@@ -231,14 +231,14 @@
                 <p>Groupes</p>
                 <div class="select-modal__pillgrid">
                     <button
-                    v-for="student in filteredGroupOptions"
-                    :key="student"
+                    v-for="group in filteredGroupOptions"
+                    :key="group.id"
                     type="button"
                     class="select-pill"
-                    :class="{ active: studentDraft.includes(student) }"
-                    @click="toggleStudentDraft(student)"
+                    :class="{ active: groupsIds.some((id) => String(id) === String(group.id)) }"
+                    @click="toggleGroupSelection(group)"
                     >
-                    <span>{{ student }}</span>
+                    <span>{{ group.name }}</span>
                     </button>
                 </div>
             </div>
@@ -247,13 +247,14 @@
                 <div class="select-modal__pillgrid">
                     <button
                     v-for="student in filteredStudentOptions"
-                    :key="student"
+                    :key="student.id"
                     type="button"
                     class="select-pill"
-                    :class="{ active: studentDraft.includes(student) }"
+                    :class="{ active: studentIds.some((id) => String(id) === String(student.id)), disabled: isGroupOnlyStudent(student.id) }"
+                    :disabled="isGroupOnlyStudent(student.id)"
                     @click="toggleStudentDraft(student)"
                     >
-                    <span>{{ student }}</span>
+                    <span>{{ student.name }}</span>
                     </button>
                 </div>
             </div>
@@ -300,8 +301,8 @@
                     :key="room.id"
                     type="button"
                     class="select-pill"
-                    :class="{ active: roomDraft.includes(room.id) }"
-                    @click="toggleRoomDraft(room.id)"
+                    :class="{ active: course.rooms.some((id) => String(id) === String(room.id)) }"
+                    @click="toggleRoomDraft(room)"
                     >
                     <span>{{ room.name }}</span>
                     </button>
@@ -332,24 +333,13 @@ export default {
         endTime: '',
         rooms: []
       },
-      rooms: [],
-      teachers: [],
-      students: [],
       teacherIds: [],
       studentIds: [],
-      groupIds: [],
+      courseStudentIdsAll: [],
+      groupsIds: [],
       showTeacherModal: false,
       showStudentModal: false,
       showRoomModal: false,
-      teacherDraft: [],
-      studentDraft: [],
-      roomDraft: [],
-      originalAssignments: {
-        rooms: [],
-        teachers: [],
-        students: [],
-        groups: []
-      },
       originalCourse: null,
       teacherSearch: '',
       studentSearch: '',
@@ -368,36 +358,43 @@ export default {
     ...mapState(useAuthStore, { currentUser: 'user' }),
     teacherOptions() {
       return this.users
-        .filter(user => ['teacher', 'Enseignant'].includes(user.role))
-        .map(user => user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim())
-        .filter(Boolean)
-        .sort()
+        .filter(user => ['teacher', 'Enseignant'].includes(user.role) || ['teacher'].includes(user.roleKey))
+        .map(user => ({ id: user.id, name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() }))
+        .filter((entry) => entry.name)
+        .sort((a, b) => a.name.localeCompare(b.name))
     },
     filteredTeacherOptions() {
       const q = this.teacherSearch.trim().toLowerCase()
-      return this.teacherOptions.filter(name => !q || name.toLowerCase().includes(q))
+      return this.teacherOptions.filter(option => !q || option.name.toLowerCase().includes(q))
     },
     groupOptions() {
       return this.groups
-        .map(g => g.name)
-        .filter(Boolean)
-        .filter((name) => !String(name).toLowerCase().startsWith('single-'))
-        .sort()
+        .filter((g) => !(g.singleStudentGroup === true || (typeof g.name === 'string' && g.name.toLowerCase().startsWith('single-'))))
+        .map(g => ({ id: g.id ?? g, name: g.name }))
+        .filter((entry) => entry.name)
+        .sort((a, b) => a.name.localeCompare(b.name))
     },
     filteredGroupOptions() {
       const q = this.studentSearch.trim().toLowerCase()
-      return this.groupOptions.filter(name => !q || name.toLowerCase().includes(q))
+      return this.groupOptions.filter(option => !q || option.name.toLowerCase().includes(q))
     },
     studentOptions() {
       return this.users
-        .filter(user => ['student', 'Étudiant'].includes(user.role))
-        .map(user => user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim())
-        .filter(Boolean)
-        .sort()
+        .filter(user => ['student', 'Étudiant'].includes(user.role) || ['student'].includes(user.roleKey))
+        .map(user => ({ id: user.id, name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() }))
+        .filter((entry) => entry.name)
+        .sort((a, b) => a.name.localeCompare(b.name))
     },
     filteredStudentOptions() {
       const q = this.studentSearch.trim().toLowerCase()
-      return this.studentOptions.filter(name => !q || name.toLowerCase().includes(q))
+      return this.studentOptions.filter(option => !q || option.name.toLowerCase().includes(q))
+    },
+    isGroupOnlyStudent() {
+      return (studentId) => {
+        const inCourse = this.courseStudentIdsAll.some((id) => String(id) === String(studentId))
+        const selectedSolo = this.studentIds.some((id) => String(id) === String(studentId))
+        return inCourse && !selectedSolo
+      }
     },
     filteredRoomOptions() {
       const q = this.roomSearch.trim().toLowerCase()
@@ -416,16 +413,27 @@ export default {
     hasSelectedRooms() {
       return this.course.rooms.length > 0
     },
+    teacherDisplayEntries() {
+      return this.teacherIds.map((id) => ({ id, name: this.findUserNameById(id, 'teacher') || id }))
+    },
+    studentDisplayEntries() {
+      const groupLabels = this.groupsIds.map((id) => ({ id, type: 'group', name: this.findGroupNameById(id) || id }))
+      const soloLabels = this.studentIds.map((id) => ({ id, type: 'student', name: this.findUserNameById(id, 'student') || id }))
+      return [...groupLabels, ...soloLabels]
+    },
+    activeCourseId() {
+      return this.originCourseId || this.course?.id || null
+    },
     schoolId() {
       return this.currentUser?.schoolId || this.currentUser?.school_id || this.currentUser?.school?.id || null
     },
     saveButtonLabel() {
-      return this.originCourseId ? 'Sauvegarder' : 'Créer'
+      return this.originCourseId ? 'Terminer' : 'Créer'
     },
     isFormValid() {
-      const { name, date, startTime, endTime, rooms } = this.course
+      const { name, date, startTime, endTime } = this.course
       const clean = (val) => String(val ?? '').trim()
-      return [name, date, startTime, endTime].every(val => clean(val).length > 0) && rooms.length > 0
+      return [name, date, startTime, endTime].every(val => clean(val).length > 0)
     },
     isCreateDisabled() {
       return this.courseSettings.disableCourseModification || !this.isFormValid
@@ -447,8 +455,8 @@ export default {
       updateCourseAction: 'updateCourse',
       fetchCourseAction: 'fetchCourse'
     }),
-    ...mapActions(useUsersStore, ['fetchUsers', 'fetchUserById']),
-    ...mapActions(useGroupsStore, ['fetchGroups']),
+    ...mapActions(useUsersStore, ['fetchUsers']),
+    ...mapActions(useGroupsStore, ['fetchGroups', 'fetchGroup']),
     ...mapActions(useRoomsStore, ['fetchRooms']),
     goBack() {
       if (this.originCourseId) {
@@ -466,21 +474,10 @@ export default {
     },
     async saveCourse() {
       const { date: startEpoch, endDate: endEpoch } = this.buildEpochDates()
-      const assignments = {
-        rooms: this.course.rooms,
-        teachers: this.teacherIds,
-        students: this.studentIds,
-        groups: this.groupIds
-      }
-
       const payload = {
         name: this.course.name,
         date: startEpoch,
-        endDate: endEpoch,
-        classroomsId: assignments.rooms,
-        teachersId: assignments.teachers,
-        studentsId: assignments.students,
-        studentGroupsId: assignments.groups
+        endDate: endEpoch
       }
 
       try {
@@ -493,7 +490,9 @@ export default {
             ...payload
           })
           if (created?.id) {
-            await this.syncAssignments(created.id, assignments)
+            this.originCourseId = created.id
+            this.course.id = created.id
+            this.originalCourse = { id: created.id, name: payload.name, date: startEpoch, endDate: endEpoch }
           }
           const targetDate = (this.course?.date || '').trim()
           this.$router.push({ name: 'Calendrier', query: targetDate ? { date: targetDate } : {} })
@@ -536,84 +535,106 @@ export default {
       this.course[`${type}Time`] = `${hour}h${minute}`
     },
     openTeacherModal() {
-      this.teacherDraft = [...this.teachers]
       this.teacherSearch = ''
       this.showTeacherModal = true
     },
     closeTeacherModal() {
       this.showTeacherModal = false
     },
-    toggleTeacherDraft(name) {
-      if (this.teacherDraft.includes(name)) {
-        this.teacherDraft = this.teacherDraft.filter(t => t !== name)
-      } else {
-        this.teacherDraft = [...this.teacherDraft, name]
+    async toggleTeacherDraft(teacher) {
+      if (!this.activeCourseId) {
+        console.warn('Aucun identifiant de cours pour mettre à jour les enseignants')
+        return
+      }
+      const exists = this.teacherIds.some((id) => String(id) === String(teacher.id))
+      const endpoint = exists ? `teacher/${teacher.id}` : 'teacher'
+      const method = exists ? 'DELETE' : 'POST'
+      const payload = exists ? undefined : { teacherId: teacher.id }
+      try {
+        await request(`/course/${this.activeCourseId}/${endpoint}`, { method, data: payload })
+        this.teacherIds = exists
+          ? this.teacherIds.filter((id) => String(id) !== String(teacher.id))
+          : [...this.teacherIds, teacher.id]
+      } catch (error) {
+        console.warn('Unable to toggle teacher', { teacher, error })
       }
     },
     validateTeacherSelection() {
-      this.teachers = [...this.teacherDraft]
-      const ids = new Set()
-      this.teachers.forEach((name) => {
-        const user = this.users.find((u) => u.roleKey === 'teacher' && u.name === name)
-        ids.add(user?.id || name)
-      })
-      this.teacherIds = [...ids]
       this.closeTeacherModal()
     },
-    removeTeacher(name) {
-      this.teachers = this.teachers.filter(t => t !== name)
-      this.teacherIds = this.teacherIds.filter((id) => {
-        const user = this.users.find((u) => String(u.id) === String(id))
-        return user ? user.name !== name : true
-      })
+    async removeTeacher(id) {
+      const teacher = { id }
+      await this.toggleTeacherDraft(teacher)
     },
     openStudentModal() {
-      this.studentDraft = [...this.students]
       this.studentSearch = ''
       this.showStudentModal = true
     },
     closeStudentModal() {
       this.showStudentModal = false
     },
-    toggleStudentDraft(group) {
-      if (this.studentDraft.includes(group)) {
-        this.studentDraft = this.studentDraft.filter(g => g !== group)
-      } else {
-        this.studentDraft = [...this.studentDraft, group]
+    async toggleGroupSelection(group) {
+      if (!this.activeCourseId) {
+        console.warn('Aucun identifiant de cours pour mettre à jour les groupes')
+        return
+      }
+      const exists = this.groupsIds.some((id) => String(id) === String(group.id))
+      const endpoint = exists ? `studentGroup/${group.id}` : 'studentGroups'
+      const method = exists ? 'DELETE' : 'POST'
+      const payload = exists ? undefined : { groupsIds: [group.id] }
+      try {
+        const members = await this.resolveGroupMembers(group.id)
+        if (!exists && members.length) {
+          const toRemove = members.filter((mid) => this.studentIds.some((sid) => String(sid) === String(mid)))
+          for (const studentId of toRemove) {
+            try {
+              await request(`/course/${this.activeCourseId}/student/${studentId}`, { method: 'DELETE' })
+              this.studentIds = this.studentIds.filter((id) => String(id) !== String(studentId))
+            } catch (error) {
+              console.warn('Unable to remove solo student before adding group', { group, studentId, error })
+            }
+          }
+        }
+
+        await request(`/course/${this.activeCourseId}/${endpoint}`, { method, data: payload })
+        const nextGroups = exists
+          ? this.groupsIds.filter((id) => String(id) !== String(group.id))
+          : [...this.groupsIds, group.id]
+        this.groupsIds = nextGroups
+        await this.refreshCourseStudentRosterFromGroups(nextGroups)
+      } catch (error) {
+        console.warn('Unable to toggle group', { group, error })
+      }
+    },
+    async toggleStudentDraft(student) {
+      if (!this.activeCourseId) {
+        console.warn('Aucun identifiant de cours pour mettre à jour les étudiants')
+        return
+      }
+      if (this.isGroupOnlyStudent(student.id)) {
+        return
+      }
+      const exists = this.studentIds.some((id) => String(id) === String(student.id))
+      const endpoint = exists ? `student/${student.id}` : 'students'
+      const method = exists ? 'DELETE' : 'POST'
+      const payload = exists ? undefined : { studentsId: [student.id] }
+      try {
+        await request(`/course/${this.activeCourseId}/${endpoint}`, { method, data: payload })
+        this.studentIds = exists
+          ? this.studentIds.filter((id) => String(id) !== String(student.id))
+          : [...this.studentIds, student.id]
+      } catch (error) {
+        console.warn('Unable to toggle student', { student, error })
       }
     },
     validateStudentSelection() {
-      this.students = [...this.studentDraft]
-      const studentIdSet = new Set()
-      const groupIdSet = new Set()
-      this.students.forEach((label) => {
-        const group = this.groups.find((g) => g.name === label)
-        if (group) {
-          groupIdSet.add(group.id)
-          return
-        }
-        const user = this.users.find((u) => u.roleKey === 'student' && u.name === label)
-        if (user) {
-          studentIdSet.add(user.id)
-        } else {
-          // fallback keep label as id if unknown
-          studentIdSet.add(label)
-        }
-      })
-      this.studentIds = [...studentIdSet]
-      this.groupIds = [...groupIdSet]
       this.closeStudentModal()
     },
-    removeStudent(group) {
-      this.students = this.students.filter(g => g !== group)
-      const groupEntry = this.groups.find((g) => g.name === group)
-      if (groupEntry) {
-        this.groupIds = this.groupIds.filter((id) => String(id) !== String(groupEntry.id))
+    async removeStudent(entry) {
+      if (entry.type === 'group') {
+        await this.toggleGroupSelection({ id: entry.id })
       } else {
-        this.studentIds = this.studentIds.filter((id) => {
-          const user = this.users.find((u) => String(u.id) === String(id))
-          return user ? user.name !== group : true
-        })
+        await this.toggleStudentDraft({ id: entry.id })
       }
     },
     async prefillFromRoute() {
@@ -630,21 +651,10 @@ export default {
         this.course.endTime = normalized.endTime
         this.course.rooms = normalized.rooms
         this.teacherIds = [...normalized.teachers]
-        this.studentIds = [...normalized.groups]
-        this.groupIds = [...normalized.groupIds]
+        this.studentIds = [...normalized.studentIds]
+        this.groupsIds = [...normalized.groupsIds]
+        this.courseStudentIdsAll = [...normalized.studentRosterIds]
 
-        this.teachers = await this.resolveTeacherNames(this.teacherIds)
-        this.students = await this.resolveStudentNames(this.studentIds)
-
-        this.teacherDraft = [...this.teachers]
-        this.studentDraft = [...this.students]
-        this.roomDraft = [...this.course.rooms]
-        this.originalAssignments = {
-          rooms: [...this.course.rooms],
-          teachers: [...this.teacherIds],
-          students: [...this.studentIds],
-          groups: [...this.groupIds]
-        }
         const originalDate = this.toEpochSafe(found.start || found.startDate || found.date)
         const originalEnd = this.toEpochSafe(found.end || found.endDate)
         this.originalCourse = {
@@ -657,55 +667,33 @@ export default {
         console.error('Unable to prefill course', error)
       }
     },
-    async resolveTeacherNames(ids) {
-      const uniqueIds = Array.isArray(ids)
-        ? ids.map((v) => String(v)).filter(Boolean).filter((v, i, arr) => arr.indexOf(v) === i)
-        : []
-
-      const missing = uniqueIds.filter((id) => !this.users.find((u) => String(u.id) === id))
-      for (const id of missing) {
-        await this.fetchUserById(id, 'teacher').catch(() => {})
-      }
-      return uniqueIds
-        .map((id) => {
-          const user = this.users.find((u) => String(u.id) === id)
-          return user?.name || id
-        })
-        .filter(Boolean)
-    },
-    async resolveStudentNames(ids) {
-      const uniqueIds = Array.isArray(ids)
-        ? ids.map((v) => String(v)).filter(Boolean).filter((v, i, arr) => arr.indexOf(v) === i)
-        : []
-
-      const missing = uniqueIds.filter((id) => !this.users.find((u) => String(u.id) === id))
-      for (const id of missing) {
-        await this.fetchUserById(id, 'student').catch(() => {})
-      }
-      return uniqueIds
-        .map((id) => {
-          const user = this.users.find((u) => String(u.id) === id)
-          return user?.name || id
-        })
-        .filter(Boolean)
-    },
     openRoomModal() {
-      this.roomDraft = [...this.course.rooms]
       this.roomSearch = ''
       this.showRoomModal = true
     },
     closeRoomModal() {
       this.showRoomModal = false
     },
-    toggleRoomDraft(roomId) {
-      if (this.roomDraft.includes(roomId)) {
-        this.roomDraft = this.roomDraft.filter(r => r !== roomId)
-      } else {
-        this.roomDraft = [...this.roomDraft, roomId]
+    async toggleRoomDraft(room) {
+      if (!this.activeCourseId) {
+        console.warn('Aucun identifiant de cours pour mettre à jour les salles')
+        return
+      }
+      const roomId = room.id
+      const exists = this.course.rooms.some((id) => String(id) === String(roomId))
+      const endpoint = exists ? `classrooms/${roomId}` : 'classrooms'
+      const method = exists ? 'DELETE' : 'POST'
+      const payload = exists ? undefined : { classroomId: roomId }
+      try {
+        await request(`/course/${this.activeCourseId}/${endpoint}`, { method, data: payload })
+        this.course.rooms = exists
+          ? this.course.rooms.filter((id) => String(id) !== String(roomId))
+          : [...this.course.rooms, roomId]
+      } catch (error) {
+        console.warn('Unable to toggle room', { room, error })
       }
     },
     validateRoomSelection() {
-      this.course.rooms = [...this.roomDraft]
       this.closeRoomModal()
     },
     parseRooms(value) {
@@ -769,8 +757,8 @@ export default {
         endTime: '',
         rooms: [],
         teachers: [],
-        groups: [],
-        groupIds: []
+        studentIds: [],
+        groupsIds: []
       }
 
       const toDateString = (value) => {
@@ -828,10 +816,16 @@ export default {
           .filter(Boolean)
       }
 
-      const studentIds = Array.isArray(course.students)
+      const hasGroups = Array.isArray(course.studentGroups) && course.studentGroups.length > 0
+      const studentIds = Array.isArray(course.soloStudents) && course.soloStudents.length
+        ? course.soloStudents.map((s) => s?.id ?? s?.studentId ?? s?.userId ?? s)
+        : (!hasGroups && Array.isArray(course.students))
+          ? course.students.map((s) => s?.id ?? s?.studentId ?? s?.userId ?? s)
+          : []
+      const studentRosterIds = Array.isArray(course.students)
         ? course.students.map((s) => s?.id ?? s?.studentId ?? s?.userId ?? s)
         : []
-      const groupIds = Array.isArray(course.studentGroups)
+      const groupsIds = Array.isArray(course.studentGroups)
         ? course.studentGroups.map((g) => g?.id ?? g)
         : []
 
@@ -843,12 +837,53 @@ export default {
         endTime: toTimeString(endSource),
         rooms,
         teachers: normalizeUsers(course.teachers || course.teacher),
-        groups: normalizeUsers(studentIds),
-        groupIds: normalizeUsers(groupIds)
+        studentIds: normalizeUsers(studentIds),
+        studentRosterIds: normalizeUsers(studentRosterIds),
+        groupsIds: normalizeUsers(groupsIds)
       }
     },
     normalizeList(list) {
       return Array.isArray(list) ? list.map((item) => String(item)).filter(Boolean) : []
+    },
+    findUserNameById(id, role) {
+      const user = this.users.find((u) => String(u.id) === String(id))
+      if (!user) return ''
+      return user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim()
+    },
+    findGroupNameById(id) {
+      const group = this.groups.find((g) => String(g.id) === String(id))
+      return group?.name || ''
+    },
+    getGroupMemberIds(groupId) {
+      const group = this.groups.find((g) => String(g.id) === String(groupId))
+      if (!group) return []
+      const candidates = group.students || group.members || group.users || group.studentGroupUsers || group.studentIds || []
+      const arr = Array.isArray(candidates) ? candidates : [candidates]
+      return arr
+        .map((stu) => stu?.id ?? stu?.studentId ?? stu?.userId ?? stu)
+        .filter(Boolean)
+        .map((id) => String(id))
+        .filter((val, idx, self) => self.indexOf(val) === idx)
+    },
+    async resolveGroupMembers(groupId) {
+      let members = this.getGroupMemberIds(groupId)
+      if (members.length === 0) {
+        try {
+          await this.fetchGroup(groupId)
+          members = this.getGroupMemberIds(groupId)
+        } catch (error) {
+          console.warn('Unable to fetch group details for member lookup', { groupId, error })
+        }
+      }
+      return members
+    },
+    async refreshCourseStudentRosterFromGroups(groupIds) {
+      const uniqueIds = new Set()
+      for (const gid of groupIds) {
+        const members = await this.resolveGroupMembers(gid)
+        members.forEach((mid) => uniqueIds.add(String(mid)))
+      }
+      this.courseStudentIdsAll = Array.from(uniqueIds)
     },
     async saveEdits(courseId, payload) {
       const updates = {}
@@ -877,72 +912,6 @@ export default {
           ...this.originalCourse,
           ...updates
         }
-      }
-
-      const assignments = {
-        rooms: payload.classroomsId || payload.rooms || [],
-        teachers: payload.teachersId || payload.teachers || [],
-        students: payload.studentsId || payload.students || [],
-        groups: payload.studentGroupsId || payload.groups || []
-      }
-
-      await this.syncAssignments(courseId, assignments)
-    },
-    async syncAssignments(courseId, payload) {
-      if (!courseId) return
-      const currentRooms = this.normalizeList(payload.rooms)
-      const currentTeachers = this.normalizeList(payload.teachers)
-      const currentStudents = this.normalizeList(payload.students)
-      const currentGroups = this.normalizeList(payload.groups)
-
-      const initialRooms = this.normalizeList(this.originalAssignments.rooms)
-      const initialTeachers = this.normalizeList(this.originalAssignments.teachers)
-      const initialStudents = this.normalizeList(this.originalAssignments.students)
-      const initialGroups = this.normalizeList(this.originalAssignments.groups)
-
-      const diff = (next, prev) => {
-        const nextSet = new Set(next)
-        const prevSet = new Set(prev)
-        const added = [...nextSet].filter((val) => !prevSet.has(val))
-        const removed = [...prevSet].filter((val) => !nextSet.has(val))
-        return { added, removed }
-      }
-
-      const roomDiff = diff(currentRooms, initialRooms)
-      const teacherDiff = diff(currentTeachers, initialTeachers)
-      const studentDiff = diff(currentStudents, initialStudents)
-      const groupDiff = diff(currentGroups, initialGroups)
-
-      const tasks = [
-        ...roomDiff.added.map((roomId) => this.syncSingleAssignment(courseId, 'classrooms', 'classroomId', roomId, 'POST')),
-        ...roomDiff.removed.map((roomId) => this.syncSingleAssignment(courseId, `classrooms/${roomId}`, null, null, 'DELETE')),
-        ...teacherDiff.added.map((teacherId) => this.syncSingleAssignment(courseId, 'teacher', 'teacherId', teacherId, 'POST')),
-        ...teacherDiff.removed.map((teacherId) => this.syncSingleAssignment(courseId, `teacher/${teacherId}`, null, null, 'DELETE')),
-        ...groupDiff.added.map((groupId) => this.syncSingleAssignment(courseId, 'studentGroups', 'groupId', groupId, 'POST')),
-        ...groupDiff.removed.map((groupId) => this.syncSingleAssignment(courseId, `studentGroup/${groupId}`, null, null, 'DELETE')),
-        ...studentDiff.added.map((studentId) => this.syncSingleAssignment(courseId, 'students', 'studentId', studentId, 'POST')),
-        ...studentDiff.removed.map((studentId) => this.syncSingleAssignment(courseId, `student/${studentId}`, null, null, 'DELETE'))
-      ]
-
-      if (tasks.length === 0) return
-      try {
-        await Promise.all(tasks)
-        this.originalAssignments = {
-          rooms: [...currentRooms],
-          teachers: [...currentTeachers],
-          students: [...currentStudents],
-          groups: [...currentGroups]
-        }
-      } catch (error) {
-        console.warn('Some assignment updates failed', error)
-      }
-    },
-    async syncSingleAssignment(courseId, endpoint, idKey, idValue, method) {
-      try {
-        const payload = idKey ? { [idKey]: idValue } : undefined
-        await request(`/course/${courseId}/${endpoint}`, { method, data: payload })
-      } catch (error) {
-        console.warn('Unable to sync assignment', { courseId, endpoint, idValue, method, error })
       }
     },
     loadSettings() {

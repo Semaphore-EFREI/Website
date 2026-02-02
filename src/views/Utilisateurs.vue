@@ -69,42 +69,6 @@
     </div>
   </main>
 
-  <div v-if="selectedUser" class="user-modal-overlay" @click.self="closeUser">
-    <div class="user-modal">
-      <header class="user-modal__header">
-        <div class="user-modal__header-content">
-          <div class="modal-back">
-            <button class="modal-btn ghost" @click="closeUser">
-              <img src="../assets/images/arrow-left.svg" alt="arrow" class="btn-icon" />
-            </button>
-          </div>
-          <div class="modal-actions">
-            <button class="modal-btn secondary" @click="editUser(selectedUser)"><img src="../assets/images/modify-black.svg" alt="modify" class="btn-icon" /></button>
-            <button class="modal-btn danger" @click="deleteUser(selectedUser)"><img src="../assets/images/delete.svg" alt="delete" class="btn-icon" /></button>
-          </div>
-        </div>
-      </header>
-      <div class="user-modal__body">
-        <div class="user-modal__avatar">
-          <img :src="selectedUser.profilePicture || defaultProfile" alt="Photo de profil" />
-        </div>
-        <div class="user-modal__infos">
-          <h3 class="user-modal__name">{{ selectedUser.name }}</h3>
-          <div class="user-modal__email">{{ selectedUser.email || 'Non renseigné' }}</div>
-        </div>
-        <div class="user-modal__role" :class="roleClass(selectedUser.role)">
-          <img :src="roleIcon(selectedUser.role)" :alt="selectedUser.role" class="role-icon" />
-          <span>{{ selectedUser.role }}</span>
-        </div>
-        <div class="user-modal__groups">
-          <div class="group-chips" v-if="selectedUser.groups && selectedUser.groups.length">
-            <span v-for="(group, index) in selectedUser.groups" :key="`${selectedUser.id || selectedUser.key}-group-${index}`" class="chip">{{ group }}</span>
-          </div>
-          <div v-else class="group-empty">Aucun groupe</div>
-        </div>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script>
@@ -117,7 +81,6 @@ export default {
   data() {
     return {
       searchQuery: '',
-      selectedUser: null,
       defaultProfile
     }
   },
@@ -133,18 +96,10 @@ export default {
     this.fetchUsers().catch(() => {})
   },
   methods: {
-    ...mapActions(useUsersStore, { fetchUsers: 'fetchUsers', removeUser: 'deleteUser', fetchUserProfile: 'fetchUserProfile' }),
+    ...mapActions(useUsersStore, { fetchUsers: 'fetchUsers' }),
     async openUser(user) {
-      try {
-        const enrichedUser = await this.fetchUserProfile(user.id, user.role)
-        this.selectedUser = enrichedUser
-      } catch (error) {
-        console.error('Unable to load user profile:', error)
-        this.selectedUser = user
-      }
-    },
-    closeUser() {
-      this.selectedUser = null
+      if (!user) return
+      this.$router.push({ name: 'UtilisateurDetail', params: { id: user.id || user.key } })
     },
     openRole(role) {
       const map = {
@@ -168,17 +123,9 @@ export default {
       this.$router.push({ name: 'UtilisateurEdit' })
     },
     deleteUser(user) {
+      // Deprecated: deletion now handled in detail page
       if (!user) return
-      this.deleteUserAction(user)
-    },
-    async deleteUserAction(user) {
-      try {
-        await this.removeUser(user.id)
-        await this.fetchUsers()
-        this.selectedUser = null
-      } catch (error) {
-        console.error('Unable to delete user', error)
-      }
+      this.$router.push({ name: 'UtilisateurDetail', params: { id: user.id || user.key } })
     },
     roleIcon(role) {
       const map = {

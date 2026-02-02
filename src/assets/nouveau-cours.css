@@ -53,6 +53,12 @@
     align-self: stretch;
 }
 
+.field-group-name {
+    display: flex;
+    justify-content: center;
+    align-self: stretch;
+}
+
 .name-input {
     display: flex;
     padding-bottom: 1.5rem;
@@ -67,6 +73,7 @@
     border: none;
     background: transparent;
     text-align: center;
+    width: min(100%, 48rem);
 }
 
 .name-input::placeholder {
@@ -523,7 +530,16 @@ select.text-input {
     font-style: normal;
     font-weight: 500;
     line-height: normal;
+
+    /* disabled pill styling for group-only students */
 }
+
+.select-pill.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 
 .select-pill.active {
     background: var(--Bleu, #007999);

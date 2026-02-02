@@ -53,6 +53,7 @@
 }
 
 .edit-save-btn {
+    cursor: pointer;
     display: flex;
     min-height: 2.75rem;
     padding: 0.625rem 1.25rem;
@@ -174,6 +175,7 @@
 }
 
 .role-btn {
+    cursor: pointer;
     --role-color: var(--Bleu, #007999);
     --role-shadow: rgba(0, 119, 150, 0.35);
     --role-focus: rgba(0, 119, 150, 0.25);

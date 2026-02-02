@@ -65,7 +65,7 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await request('/auth/login', { method: 'POST', data: { email, password } });
+        const response = await request('/auth/login', { method: 'POST', data: { email, password }, skipAuth: true });
         const token = response.accessToken ?? response.token;
         if (!token) throw new Error('Missing access token');
         this.token = token;
@@ -120,9 +120,10 @@ export const useAuthStore = defineStore('auth', {
 
       this.refreshPromise = (async () => {
         try {
-          const response = await request('/auth/refresh', { 
-            method: 'POST', 
-            data: { refreshToken: currentRefreshToken } 
+          const response = await request('/auth/refresh', {
+            method: 'POST',
+            data: { refreshToken: currentRefreshToken },
+            skipAuth: true
           });
           
           const newToken = response.token ?? response.accessToken;

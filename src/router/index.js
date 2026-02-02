@@ -6,6 +6,7 @@ import CalendarDetail from '../views/CalendrierDetail.vue'
 import NouveauCours from '../views/NouveauCours.vue'
 import Users from '../views/Utilisateurs.vue'
 import UtilisateurEdit from '../views/UtilisateurEdit.vue'
+import UtilisateurDetail from '../views/UtilisateurDetail.vue'
 import RoleUsers from '../views/RoleUsers.vue'
 import GroupesClasses from '../views/GroupesClasses.vue'
 import GroupesClassesDetail from '../views/GroupesClassesDetail.vue'
@@ -18,6 +19,7 @@ const routes = [
   { path: '/calendrier/nouveau', name: 'NouveauCours', component: NouveauCours },
   { path: '/calendrier/:id', name: 'CalendrierDetail', component: CalendarDetail, props: true },
   { path: '/utilisateurs', name: 'Utilisateurs', component: Users },
+  { path: '/utilisateurs/:id', name: 'UtilisateurDetail', component: UtilisateurDetail, props: true },
   { path: '/utilisateurs/modifier', name: 'UtilisateurEdit', component: UtilisateurEdit },
   { path: '/etudiants', name: 'Etudiants', component: RoleUsers, props: { role: 'Étudiant', title: 'Étudiants' } },
   { path: '/enseignants', name: 'Enseignants', component: RoleUsers, props: { role: 'Enseignant', title: 'Enseignants' } },
