@@ -70,12 +70,12 @@
       </div>
 
       <div class="absence-period">
-        <div class="absence-title">Étudiant absent de</div>
         <div class="absence-inputs">
+          <div class="absence-separator">Définir une absence excusée de l'étudiant du</div>
           <input type="date" v-model="excusedStart" aria-label="Date de début d'absence" />
           <span class="absence-separator">à</span>
           <input type="date" v-model="excusedEnd" aria-label="Date de fin d'absence" />
-          <button class="ghost-btn primary-btn" type="button" @click="submitExcusedPeriod" :disabled="submittingExcused || !excusedStart || !excusedEnd">
+          <button class="ghost-btn excused-btn" type="button" @click="submitExcusedPeriod" :disabled="submittingExcused || !excusedStart || !excusedEnd">
             Valider
           </button>
         </div>
@@ -497,16 +497,57 @@ export default {
       this.$router.push(`/calendrier/${courseId}`)
     },
     async submitExcusedPeriod() {
-      if (!this.excusedStart || !this.excusedEnd || this.submittingExcused) return
+      if (!this.excusedStart || !this.excusedEnd || this.submittingExcused || !this.user?.id) return
       this.submittingExcused = true
       try {
-        // TODO: connect to backend endpoint when available
-        console.info('Excused period submitted', this.excusedStart, this.excusedEnd, 'for user', this.user?.id)
+        const startTs = this.toEpochBoundary(this.excusedStart, 'start')
+        const endTs = this.toEpochBoundary(this.excusedEnd, 'end')
+        if (startTs === null || endTs === null) throw new Error('Dates invalides')
+
+        const from = Math.min(startTs, endTs)
+        const to = Math.max(startTs, endTs)
+
+        const coursesResp = await request('/courses', {
+          method: 'GET',
+          params: { userId: this.user.id, limit: 50, from, to }
+        })
+        const coursesList = Array.isArray(coursesResp?.courses) ? coursesResp.courses : Array.isArray(coursesResp) ? coursesResp : []
+        const courseIds = Array.from(new Set(coursesList.map((c) => c?.id || c).filter(Boolean)))
+
+        if (courseIds.length) {
+          const now = Math.floor(Date.now() / 1000)
+          const tasks = courseIds.map((courseId) =>
+            request('/signature', {
+              method: 'POST',
+              data: {
+                course: courseId,
+                date: now,
+                method: 'admin',
+                status: 'excused',
+                student: this.user.id
+              }
+            })
+          )
+          const results = await Promise.allSettled(tasks)
+          const failures = results.filter((res) => res.status === 'rejected')
+          if (failures.length) {
+            console.warn('Certaines signatures excusées ont échoué', failures)
+          }
+        }
+
+        await this.fetchUserCourses()
       } catch (err) {
         console.error('Unable to submit excused period', err)
       } finally {
         this.submittingExcused = false
       }
+    },
+    toEpochBoundary(dateStr, boundary = 'start') {
+      if (!dateStr) return null
+      const d = new Date(`${dateStr}T00:00:00`)
+      if (Number.isNaN(d.getTime())) return null
+      if (boundary === 'end') d.setHours(23, 59, 59, 999)
+      return Math.floor(d.getTime() / 1000)
     },
     roleIcon(role) {
       const map = {

@@ -18,7 +18,7 @@ export const useCalendarStore = defineStore('calendar', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await request('/courses', { method: 'GET', params });
+        const response = await request('/courses', { method: 'GET', params: { limit: 50, ...params } });
 
         const parsed = (() => {
           if (Array.isArray(response)) return response;

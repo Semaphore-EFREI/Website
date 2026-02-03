@@ -164,13 +164,6 @@
     box-shadow: 0 0.0625rem 0.35rem rgba(0,0,0,0.06);
 }
 
-.absence-title {
-    font-family: Montserrat;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--Texte-Primaire, #2A2A2A);
-}
-
 .absence-inputs {
     display: flex;
     align-items: center;
@@ -184,12 +177,28 @@
     padding: 0.5rem 0.75rem;
     font-family: Montserrat;
     font-size: 0.9rem;
+    font-weight: 600;
     color: var(--Texte-Primaire, #2A2A2A);
+    margin-left: 1rem;
+    margin-right: 1rem;
 }
 
 .absence-separator {
-    font-weight: 700;
-    color: var(--Texte-Secondaire, #866738);
+    color: #000;
+    color: color(display-p3 0 0 0);
+    font-family: Montserrat;
+    font-size: 0.9375rem;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+}
+
+.excused-btn {
+    margin-left: auto;
+    background-color: var(--Bleu, #007999);
+    background-color: var(--Bleu, color(display-p3 0.1799 0.4609 0.576));
+    color: var(--Blanc, #FFF);
+    color: var(--Blanc, color(display-p3 1 1 1));
 }
 
 .week-grid {
@@ -207,20 +216,6 @@
     border-radius: 1rem;
     min-height: 12rem;
     position: relative;
-}
-
-.day-column::after {
-    content: '';
-    position: absolute;
-    top: 0.5rem;
-    right: -0.375rem;
-    width: 0.0625rem;
-    height: calc(100% - 1rem);
-    background: rgba(0,0,0,0.06);
-}
-
-.day-column:last-child::after {
-    display: none;
 }
 
 .day-column-header {

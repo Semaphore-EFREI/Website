@@ -493,6 +493,7 @@ export default {
             this.originCourseId = created.id
             this.course.id = created.id
             this.originalCourse = { id: created.id, name: payload.name, date: startEpoch, endDate: endEpoch }
+            await this.applyPendingRelations(created.id)
           }
           const targetDate = (this.course?.date || '').trim()
           this.$router.push({ name: 'Calendrier', query: targetDate ? { date: targetDate } : {} })
@@ -542,11 +543,13 @@ export default {
       this.showTeacherModal = false
     },
     async toggleTeacherDraft(teacher) {
+      const exists = this.teacherIds.some((id) => String(id) === String(teacher.id))
       if (!this.activeCourseId) {
-        console.warn('Aucun identifiant de cours pour mettre à jour les enseignants')
+        this.teacherIds = exists
+          ? this.teacherIds.filter((id) => String(id) !== String(teacher.id))
+          : [...this.teacherIds, teacher.id]
         return
       }
-      const exists = this.teacherIds.some((id) => String(id) === String(teacher.id))
       const endpoint = exists ? `teacher/${teacher.id}` : 'teacher'
       const method = exists ? 'DELETE' : 'POST'
       const payload = exists ? undefined : { teacherId: teacher.id }
@@ -574,10 +577,6 @@ export default {
       this.showStudentModal = false
     },
     async toggleGroupSelection(group) {
-      if (!this.activeCourseId) {
-        console.warn('Aucun identifiant de cours pour mettre à jour les groupes')
-        return
-      }
       const exists = this.groupsIds.some((id) => String(id) === String(group.id))
       const endpoint = exists ? `studentGroup/${group.id}` : 'studentGroups'
       const method = exists ? 'DELETE' : 'POST'
@@ -586,17 +585,23 @@ export default {
         const members = await this.resolveGroupMembers(group.id)
         if (!exists && members.length) {
           const toRemove = members.filter((mid) => this.studentIds.some((sid) => String(sid) === String(mid)))
-          for (const studentId of toRemove) {
-            try {
-              await request(`/course/${this.activeCourseId}/student/${studentId}`, { method: 'DELETE' })
-              this.studentIds = this.studentIds.filter((id) => String(id) !== String(studentId))
-            } catch (error) {
-              console.warn('Unable to remove solo student before adding group', { group, studentId, error })
+          if (this.activeCourseId) {
+            for (const studentId of toRemove) {
+              try {
+                await request(`/course/${this.activeCourseId}/student/${studentId}`, { method: 'DELETE' })
+                this.studentIds = this.studentIds.filter((id) => String(id) !== String(studentId))
+              } catch (error) {
+                console.warn('Unable to remove solo student before adding group', { group, studentId, error })
+              }
             }
+          } else {
+            this.studentIds = this.studentIds.filter((id) => !toRemove.includes(String(id)))
           }
         }
 
-        await request(`/course/${this.activeCourseId}/${endpoint}`, { method, data: payload })
+        if (this.activeCourseId) {
+          await request(`/course/${this.activeCourseId}/${endpoint}`, { method, data: payload })
+        }
         const nextGroups = exists
           ? this.groupsIds.filter((id) => String(id) !== String(group.id))
           : [...this.groupsIds, group.id]
@@ -607,14 +612,16 @@ export default {
       }
     },
     async toggleStudentDraft(student) {
-      if (!this.activeCourseId) {
-        console.warn('Aucun identifiant de cours pour mettre à jour les étudiants')
-        return
-      }
       if (this.isGroupOnlyStudent(student.id)) {
         return
       }
       const exists = this.studentIds.some((id) => String(id) === String(student.id))
+      if (!this.activeCourseId) {
+        this.studentIds = exists
+          ? this.studentIds.filter((id) => String(id) !== String(student.id))
+          : [...this.studentIds, student.id]
+        return
+      }
       const endpoint = exists ? `student/${student.id}` : 'students'
       const method = exists ? 'DELETE' : 'POST'
       const payload = exists ? undefined : { studentsId: [student.id] }
@@ -675,17 +682,15 @@ export default {
       this.showRoomModal = false
     },
     async toggleRoomDraft(room) {
-      if (!this.activeCourseId) {
-        console.warn('Aucun identifiant de cours pour mettre à jour les salles')
-        return
-      }
       const roomId = room.id
       const exists = this.course.rooms.some((id) => String(id) === String(roomId))
       const endpoint = exists ? `classrooms/${roomId}` : 'classrooms'
       const method = exists ? 'DELETE' : 'POST'
       const payload = exists ? undefined : { classroomId: roomId }
       try {
-        await request(`/course/${this.activeCourseId}/${endpoint}`, { method, data: payload })
+        if (this.activeCourseId) {
+          await request(`/course/${this.activeCourseId}/${endpoint}`, { method, data: payload })
+        }
         this.course.rooms = exists
           ? this.course.rooms.filter((id) => String(id) !== String(roomId))
           : [...this.course.rooms, roomId]
@@ -844,6 +849,28 @@ export default {
     },
     normalizeList(list) {
       return Array.isArray(list) ? list.map((item) => String(item)).filter(Boolean) : []
+    },
+    async applyPendingRelations(courseId) {
+      if (!courseId) return
+      const tasks = []
+      for (const teacherId of this.teacherIds) {
+        tasks.push(request(`/course/${courseId}/teacher`, { method: 'POST', data: { teacherId } }))
+      }
+      for (const groupId of this.groupsIds) {
+        tasks.push(request(`/course/${courseId}/studentGroups`, { method: 'POST', data: { groupsIds: [groupId] } }))
+      }
+      for (const studentId of this.studentIds) {
+        tasks.push(request(`/course/${courseId}/students`, { method: 'POST', data: { studentsId: [studentId] } }))
+      }
+      for (const roomId of this.course.rooms) {
+        tasks.push(request(`/course/${courseId}/classrooms`, { method: 'POST', data: { classroomId: roomId } }))
+      }
+
+      const results = await Promise.allSettled(tasks)
+      const failures = results.filter((res) => res.status === 'rejected')
+      if (failures.length) {
+        console.warn('Some course relations failed to apply after creation', failures)
+      }
     },
     findUserNameById(id, role) {
       const user = this.users.find((u) => String(u.id) === String(id))
