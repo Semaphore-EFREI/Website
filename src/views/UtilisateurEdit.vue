@@ -12,7 +12,6 @@
         form="edit-user-form"
         class="edit-save-btn"
         :disabled="!isFormValid"
-        @click="saveUser"
       >
         Enregistrer
       </button>
