@@ -636,6 +636,13 @@ body.sidebar-expanded .header-content {
     align-self: stretch;
 }
 
+.users-content .school-name {
+    font-size: 3rem;
+    margin-bottom: 3rem;
+    color: #2F094D;
+    color: color(display-p3 0.1678 0.046 0.2895);
+}
+
 .users-content h1{
     color: #000;
     color: color(display-p3 0 0 0);
@@ -656,3 +663,4 @@ body.sidebar-expanded .header-content {
     z-index: 2;
     visibility: hidden;
 }
+

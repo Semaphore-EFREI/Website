@@ -72,9 +72,9 @@ export default {
       if (item.routeName === 'Ecole' && this.$route.name === 'EcoleSection') return true
       return this.$route.name === item.routeName
     },
-    handleNav(item) {
+    async handleNav(item) {
       if (item.logout) {
-        this.logout()
+        await this.logout()
         this.$router.push({ name: 'Connexion' }).catch(() => {})
         return
       }

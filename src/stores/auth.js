@@ -164,13 +164,23 @@ export const useAuthStore = defineStore('auth', {
       return this.refreshPromise;
     },
 
-    logout() {
-      this.token = null;
-      this.refreshToken = null;
-      this.user = null;
-      this.error = null;
-      clearAuthToken();
-      clearSession();
+    async logout() {
+      try {
+        // Appel API logout si on a un token
+        if (this.token) {
+          await request('/auth/logout', { method: 'POST' }).catch(() => {
+            // Ignore les erreurs de logout API (on déconnecte localement quand même)
+          });
+        }
+      } finally {
+        // Nettoyage local de la session
+        this.token = null;
+        this.refreshToken = null;
+        this.user = null;
+        this.error = null;
+        clearAuthToken();
+        clearSession();
+      }
     }
   }
 });

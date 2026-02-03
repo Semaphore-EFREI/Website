@@ -12,7 +12,7 @@
     </div>
 
     <div class="users-content school-content">
-      <h1>EFREI Paris</h1>
+      <h1 class="school-name">{{ schoolName }}</h1>
       <section class="role-cta">
         <button
           v-for="section in sections"
@@ -33,6 +33,8 @@
 </template>
 
 <script>
+import { useSchoolsStore } from '../stores/schools'
+
 export default {
   name: 'Ecole',
   data() {
@@ -41,7 +43,21 @@ export default {
         { label: 'Salles', section: 'salles', icon: 'src/assets/images/rooms.svg' },
         { label: 'Balises', section: 'balises', icon: 'src/assets/images/balises.svg' },
         { label: 'Paramètres', section: 'parametres', icon: 'src/assets/images/settings.svg' }
-      ]
+      ],
+      schoolsStore: useSchoolsStore()
+    }
+  },
+  computed: {
+    schoolName() {
+      return this.schoolsStore.selectedSchool?.name || 'EFREI Paris'
+    }
+  },
+  async mounted() {
+    if (!this.schoolsStore.schools.length) {
+      await this.schoolsStore.fetchSchools()
+    }
+    if (this.schoolsStore.selectedSchoolId) {
+      await this.schoolsStore.fetchSchool(this.schoolsStore.selectedSchoolId)
     }
   },
   methods: {

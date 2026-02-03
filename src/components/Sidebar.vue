@@ -203,8 +203,8 @@ export default {
       }
       this.$router.push(route).catch(() => {})
     },
-    logout() {
-      this.logoutAction()
+    async logout() {
+      await this.logoutAction()
       this.$router.push({ name: 'Connexion' })
     }
   }
