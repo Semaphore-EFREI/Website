@@ -129,12 +129,14 @@
                 </div>
                 <div v-else-if="student.meta && student.meta.class === 'excused'">
                   <img :src="excusedSignatureIcon" alt="Excusé" class="signature-image" />
-                  <button class="btn-cancel-excuse" type="button" @click="cancelSignature(student)">Annuler</button>
                 </div>
                 <div v-else-if="student.signatureUrl">
                 <img :src="student.signatureUrl" :alt="`Signature de ${student.name}`" class="signature-image" />
                 </div>
                 <div v-else class="signature-none">Aucune signature</div>
+            </div>
+            <div v-if="student.meta && student.meta.class === 'excused'">
+              <button class="btn-cancel-excuse" type="button" @click="cancelSignature(student)">Annuler</button>
             </div>
             <div class="actions" v-if="!isPlanned && !isExcused(student)">
               <button
