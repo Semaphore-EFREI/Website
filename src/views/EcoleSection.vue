@@ -203,7 +203,7 @@
             </button>
           </div>
         </div>
-        <p class="beacon-name">{{ selectedItem.displayName }}</p>
+        <p class="beacon-name">Balise : {{ selectedItem.displayName }}</p>
         <div class="modal-search">
           <div class="modal-search-input-wrapper">
             <input

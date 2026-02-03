@@ -368,8 +368,27 @@ h2 {
     font-family: Montserrat;
     font-size: 0.6875rem;
     font-style: normal;
+}
+
+.btn-cancel-excuse {
+    padding: 0.35rem 0.75rem;
+    border-radius: 3.125rem;
+    background: var(--Fond-Tertiaire, #FFF);
+    background: var(--Fond-Tertiaire, color(display-p3 1 1 1));
+    color: var(--Violet, #8F49B6);
+    color: var(--Violet, color(display-p3 0.4941 0.3137 0.6706));
     font-weight: 500;
-    line-height: normal;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;  
+}
+
+.btn-cancel-excuse:hover {
+    box-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.12);
+    transform: translateY(-0.0625rem);
 }
 
 .signature-image {

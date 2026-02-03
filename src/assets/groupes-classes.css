@@ -26,6 +26,7 @@
 	flex-direction: column;
 	align-items: center;
 	justify-content: space-evenly;
+	height: fit-content;
 	flex: 1 0 0;
 	border-radius: 1.5rem;
 	background: var(--Fond-Tertiaire, #FFF);
@@ -123,7 +124,6 @@
 .group-edit-modal .user-modal {
 	min-width: 21rem;
 	width: min(24rem, 90vw);
-	padding: 0 0 2rem 0;
 }
 
 .group-edit-modal .user-modal__header {
@@ -142,6 +142,7 @@
 	max-width: 20rem;
 	margin: 0 auto;
 	align-items: center;
+	margin-top: 1rem;
 }
 
 .group-edit-modal .edit-input {

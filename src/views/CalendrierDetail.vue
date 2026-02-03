@@ -81,6 +81,9 @@
                 </div>
                 <div v-else class="signature-none">Aucune signature</div>
               </div>
+                <div v-if="teacher && teacher.meta && teacher.meta.class === 'excused'">
+                  <button class="btn-cancel-excuse" type="button" @click="cancelSignature(teacher)">Annuler</button>
+                </div>
                 <div class="actions" v-if="!isPlanned && !isExcused(teacher)">
                   <button
                     class="btn-present"
@@ -126,6 +129,7 @@
                 </div>
                 <div v-else-if="student.meta && student.meta.class === 'excused'">
                   <img :src="excusedSignatureIcon" alt="Excusé" class="signature-image" />
+                  <button class="btn-cancel-excuse" type="button" @click="cancelSignature(student)">Annuler</button>
                 </div>
                 <div v-else-if="student.signatureUrl">
                 <img :src="student.signatureUrl" :alt="`Signature de ${student.name}`" class="signature-image" />
@@ -245,7 +249,8 @@ export default {
     ...mapActions(useCalendarStore, { fetchCourseAction: 'fetchCourse' }),
     ...mapActions(useSignaturesStore, {
       addSignature: 'addSignature',
-      updateSignature: 'updateSignature'
+      updateSignature: 'updateSignature',
+      removeSignature: 'removeSignature'
     }),
     ...mapActions(useUsersStore, ['fetchUserById']),
     async loadData() {
@@ -691,7 +696,22 @@ export default {
       const status = person?.meta?.class || person?.signatureStatus
       return status === 'excused'
     },
+    async cancelSignature(person) {
+      const sigId = person?.signatureId
+      if (!sigId) return
+      try {
+        await this.removeSignature(sigId)
+        await this.refreshSilently()
+      } catch (error) {
+        console.error('Unable to cancel signature', error)
+      }
+    },
     goBack() {
+      const fromUserId = this.$route.query?.fromUserId
+      if (fromUserId) {
+        this.$router.push({ name: 'UtilisateurDetail', params: { id: fromUserId } })
+        return
+      }
       this.$router.push({
         name: 'Calendrier',
         query: { date: this.course?.day }

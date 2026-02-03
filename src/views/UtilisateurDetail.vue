@@ -61,7 +61,7 @@
             Admin
           </button>
         </div>
-        <div class="detail-groups">
+          <div class="detail-groups" v-if="showGroups">
           <div class="group-chips" v-if="user.groups && user.groups.length">
             <span v-for="(group, index) in user.groups" :key="`${user.id || 'user'}-group-${index}`" class="chip">{{ group }}</span>
           </div>
@@ -71,7 +71,7 @@
 
       <div class="absence-period">
         <div class="absence-inputs">
-          <div class="absence-separator">Définir une absence excusée de l'étudiant du</div>
+            <div class="absence-separator">Définir une absence excusée {{ absenceSubjectLabel }} du</div>
           <input type="date" v-model="excusedStart" aria-label="Date de début d'absence" />
           <span class="absence-separator">à</span>
           <input type="date" v-model="excusedEnd" aria-label="Date de fin d'absence" />
@@ -155,6 +155,22 @@ export default {
   },
   computed: {
     ...mapState(useUsersStore, { users: 'users' }),
+    isStudent() {
+      return this.isRole('Étudiant')
+    },
+    isTeacher() {
+      return this.isRole('Enseignant')
+    },
+    isAdmin() {
+      return this.isRole('Admin')
+    },
+    absenceSubjectLabel() {
+      if (this.isTeacher) return 'du professeur'
+      return 'de l\'étudiant'
+    },
+    showGroups() {
+      return this.isStudent
+    },
     weekStartDate() {
       const d = new Date(this.selectedDate)
       const day = d.getDay() || 7 // Sunday -> 7
@@ -233,6 +249,15 @@ export default {
       }
     },
     goBack() {
+      const fromRole = this.$route.query?.fromRole
+      if (fromRole) {
+        this.$router.push({ name: fromRole })
+        return
+      }
+      if (window.history && window.history.length > 1) {
+        this.$router.back()
+        return
+      }
       this.$router.push({ name: 'Utilisateurs' })
     },
     formatDayHeader(day) {
@@ -294,7 +319,16 @@ export default {
         }
         const response = await request('/courses', { method: 'GET', params })
         const list = Array.isArray(response?.courses) ? response.courses : Array.isArray(response) ? response : []
-        this.userCourses = list.map((c) => this.normalizeCourse(c))
+        const deduped = []
+        const seen = new Set()
+        list.forEach((c) => {
+          const cid = c?.id ?? c?.courseId ?? c
+          const key = cid ? String(cid) : null
+          if (key && seen.has(key)) return
+          if (key) seen.add(key)
+          deduped.push(c)
+        })
+        this.userCourses = deduped.map((c) => this.normalizeCourse(c))
         await this.enrichCoursesWithSignatures()
       } catch (err) {
         console.error('Unable to load user courses', err)
@@ -494,7 +528,7 @@ export default {
     },
     goToCourse(courseId) {
       if (!courseId) return
-      this.$router.push(`/calendrier/${courseId}`)
+      this.$router.push({ name: 'CalendrierDetail', params: { id: courseId }, query: { fromUserId: this.user?.id } })
     },
     async submitExcusedPeriod() {
       if (!this.excusedStart || !this.excusedEnd || this.submittingExcused || !this.user?.id) return
@@ -512,22 +546,56 @@ export default {
           params: { userId: this.user.id, limit: 50, from, to }
         })
         const coursesList = Array.isArray(coursesResp?.courses) ? coursesResp.courses : Array.isArray(coursesResp) ? coursesResp : []
-        const courseIds = Array.from(new Set(coursesList.map((c) => c?.id || c).filter(Boolean)))
+
+        const courseIds = Array.from(
+          new Set(
+            coursesList
+              .map((c) => ({
+                id: c?.id || c,
+                start: this.toEpochSeconds(c?.start || c?.startDate || c?.date),
+                end: this.toEpochSeconds(c?.end || c?.endDate)
+              }))
+              .filter((entry) => entry.id)
+              .filter((entry) => this.isCourseInRange(entry.start, entry.end, from, to))
+              .map((entry) => entry.id)
+          )
+        )
 
         if (courseIds.length) {
           const now = Math.floor(Date.now() / 1000)
-          const tasks = courseIds.map((courseId) =>
-            request('/signature', {
-              method: 'POST',
-              data: {
-                course: courseId,
-                date: now,
-                method: 'admin',
-                status: 'excused',
-                student: this.user.id
+          const tasks = courseIds.map(async (courseId) => {
+            try {
+              const detail = await request(`/course/${courseId}`, { method: 'GET' })
+              const sigs = Array.isArray(detail?.signature)
+                ? detail.signature
+                : Array.isArray(detail?.signatures)
+                  ? detail.signatures
+                  : []
+
+              const existing = this.findExistingSignatureForUser(sigs)
+              if (existing?.id) {
+                return request(`/signature/${existing.id}`, {
+                  method: 'PATCH',
+                  data: { status: 'excused' }
+                })
               }
-            })
-          )
+
+              return request('/signature', {
+                method: 'POST',
+                data: {
+                  course: courseId,
+                  date: now,
+                  method: 'admin',
+                  status: 'excused',
+                  ...(this.isTeacher ? { teacher: this.user.id } : { student: this.user.id })
+                }
+              })
+            } catch (error) {
+              console.warn('Unable to upsert excused signature', { courseId, error })
+              throw error
+            }
+          })
+
           const results = await Promise.allSettled(tasks)
           const failures = results.filter((res) => res.status === 'rejected')
           if (failures.length) {
@@ -548,6 +616,43 @@ export default {
       if (Number.isNaN(d.getTime())) return null
       if (boundary === 'end') d.setHours(23, 59, 59, 999)
       return Math.floor(d.getTime() / 1000)
+    },
+    toEpochSeconds(value) {
+      if (value === null || value === undefined) return null
+      const num = Number(value)
+      if (!Number.isNaN(num)) return num >= 1e12 ? Math.floor(num / 1000) : num
+      const parsed = new Date(value)
+      if (Number.isNaN(parsed.getTime())) return null
+      return Math.floor(parsed.getTime() / 1000)
+    },
+    findExistingSignatureForUser(signatures) {
+      if (!Array.isArray(signatures) || !this.user?.id) return null
+      const uid = String(this.user.id)
+      if (this.isTeacher) {
+        return signatures.find((sig) => {
+          const isTeacherSig = (sig.type && sig.type === 'teacher') || sig.teacher || sig.teacherId
+          if (!isTeacherSig) return false
+          const teacherField = sig.teacher || sig.teacherId || sig.userId
+          if (Array.isArray(teacherField)) return teacherField.map((t) => String(t || '')).includes(uid)
+          return String(teacherField || '') === uid
+        }) || null
+      }
+
+      // student path
+      return signatures.find((sig) => {
+        const isStudentSig = (sig.type && sig.type === 'student') || sig.student || sig.studentId
+        if (!isStudentSig) return false
+        const studentField = sig.student || sig.studentId || sig.userId
+        return String(studentField || '') === uid
+      }) || null
+    },
+    isCourseInRange(start, end, from, to) {
+      const s = start ?? end
+      const e = end ?? start
+      if (s === null || s === undefined) return false
+      const begin = s
+      const finish = e ?? s
+      return begin <= to && finish >= from
     },
     roleIcon(role) {
       const map = {
