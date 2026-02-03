@@ -35,4 +35,23 @@ const router = createRouter({
   routes
 })
 
+// Guard de navigation - Rediriger vers la connexion si pas authentifié
+router.beforeEach((to, from, next) => {
+  const { useAuthStore } = require('../stores/auth');
+  const auth = useAuthStore();
+  
+  // Les routes publiques (connexion)
+  const publicRoutes = ['Connexion'];
+  
+  if (publicRoutes.includes(to.name)) {
+    // Laisser accès à la page de connexion
+    next();
+  } else if (!auth.isAuthenticated) {
+    // Rediriger vers connexion si pas authentifié
+    next({ name: 'Connexion' });
+  } else {
+    next();
+  }
+});
+
 export default router

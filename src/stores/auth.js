@@ -72,6 +72,15 @@ export const useAuthStore = defineStore('auth', {
         this.refreshToken = response.refreshToken ?? null;
         setAuthToken(this.token);
         await this.fetchCurrentUser();
+        
+        // Vérifier que l'utilisateur est admin
+        const userRole = this.user?.role || this.user?.userType;
+        const isAdminUser = userRole === 'admin' || userRole === 'Admin';
+        if (!isAdminUser) {
+          this.logout();
+          throw new Error('Access denied: Only admin users can log in');
+        }
+        
         persistSession({ token: this.token, refreshToken: this.refreshToken, user: this.user });
         return this.user;
       } catch (err) {

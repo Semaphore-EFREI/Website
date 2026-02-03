@@ -9,8 +9,10 @@
 </template>
 
 <script>
+import { mapState } from 'pinia'
 import Sidebar from './components/Sidebar.vue'
 import BottomNav from './components/BottomNav.vue'
+import { useAuthStore } from './stores/auth'
 
 export default {
   components: { Sidebar, BottomNav },
@@ -20,6 +22,7 @@ export default {
     }
   },
   computed: {
+    ...mapState(useAuthStore, { isAuthenticated: 'token' }),
     showSidebar() {
       return this.$route.name !== 'Connexion'
     },
@@ -27,6 +30,14 @@ export default {
       return {
         'with-sidebar': this.showSidebar,
         'sidebar-collapsed': this.showSidebar && this.sidebarCollapsed
+      }
+    }
+  },
+  watch: {
+    isAuthenticated(newVal) {
+      // Si l'utilisateur se déconnecte (token devient null), rediriger vers connexion
+      if (!newVal && this.$route.name !== 'Connexion') {
+        this.$router.push({ name: 'Connexion' });
       }
     }
   }
