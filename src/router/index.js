@@ -16,20 +16,20 @@ import { useAuthStore } from '../stores/auth'
 
 const routes = [
   { path: '/', redirect: { name: 'Connexion' } },
-  { path: '/connexion', name: 'Connexion', component: Login },
-  { path: '/calendrier', name: 'Calendrier', component: Calendar },
-  { path: '/calendrier/nouveau', name: 'NouveauCours', component: NouveauCours },
-  { path: '/calendrier/:id', name: 'CalendrierDetail', component: CalendarDetail, props: true },
-  { path: '/utilisateurs', name: 'Utilisateurs', component: Users },
-  { path: '/utilisateurs/:id', name: 'UtilisateurDetail', component: UtilisateurDetail, props: true },
-  { path: '/utilisateurs/modifier', name: 'UtilisateurEdit', component: UtilisateurEdit },
-  { path: '/etudiants', name: 'Etudiants', component: RoleUsers, props: { role: 'Étudiant', title: 'Étudiants' } },
-  { path: '/enseignants', name: 'Enseignants', component: RoleUsers, props: { role: 'Enseignant', title: 'Enseignants' } },
-  { path: '/admins', name: 'Admins', component: RoleUsers, props: { role: 'Admin', title: 'Admins' } },
-  { path: '/groupes-classes', name: 'GroupesClasses', component: GroupesClasses },
-  { path: '/groupes-classes/:groupName', name: 'GroupesClassesDetail', component: GroupesClassesDetail, props: true },
-  { path: '/ecole', name: 'Ecole', component: Ecole },
-  { path: '/ecole/:section', name: 'EcoleSection', component: EcoleSection, props: true },
+  { path: '/connexion', name: 'Connexion', component: Login, meta: { requiresAuth: false } },
+  { path: '/calendrier', name: 'Calendrier', component: Calendar, meta: { requiresAuth: true } },
+  { path: '/calendrier/nouveau', name: 'NouveauCours', component: NouveauCours, meta: { requiresAuth: true } },
+  { path: '/calendrier/:id', name: 'CalendrierDetail', component: CalendarDetail, props: true, meta: { requiresAuth: true } },
+  { path: '/utilisateurs', name: 'Utilisateurs', component: Users, meta: { requiresAuth: true } },
+  { path: '/utilisateurs/:id', name: 'UtilisateurDetail', component: UtilisateurDetail, props: true, meta: { requiresAuth: true } },
+  { path: '/utilisateurs/modifier', name: 'UtilisateurEdit', component: UtilisateurEdit, meta: { requiresAuth: true } },
+  { path: '/etudiants', name: 'Etudiants', component: RoleUsers, props: { role: 'Étudiant', title: 'Étudiants' }, meta: { requiresAuth: true } },
+  { path: '/enseignants', name: 'Enseignants', component: RoleUsers, props: { role: 'Enseignant', title: 'Enseignants' }, meta: { requiresAuth: true } },
+  { path: '/admins', name: 'Admins', component: RoleUsers, props: { role: 'Admin', title: 'Admins' }, meta: { requiresAuth: true } },
+  { path: '/groupes-classes', name: 'GroupesClasses', component: GroupesClasses, meta: { requiresAuth: true } },
+  { path: '/groupes-classes/:groupName', name: 'GroupesClassesDetail', component: GroupesClassesDetail, props: true, meta: { requiresAuth: true } },
+  { path: '/ecole', name: 'Ecole', component: Ecole, meta: { requiresAuth: true } },
+  { path: '/ecole/:section', name: 'EcoleSection', component: EcoleSection, props: true, meta: { requiresAuth: true } },
   { path: '/:pathMatch(.*)*', redirect: { name: 'Connexion' } }
 ]
 
@@ -39,19 +39,35 @@ const router = createRouter({
 })
 
 // Guard de navigation - Rediriger vers la connexion si pas authentifié
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
-  // Les routes publiques (connexion)
-  const publicRoutes = ['Connexion']
+  const requiresAuth = to.meta?.requiresAuth !== false && to.name !== 'Connexion'
 
-  if (publicRoutes.includes(to.name)) {
-    next()
-  } else if (!auth.isAuthenticated) {
-    next({ name: 'Connexion' })
-  } else {
-    next()
+  // Routes publiques (connexion)
+  if (!requiresAuth) return true
+
+  // Si aucun token, redirect immédiat
+  if (!auth.hasToken) {
+    return { name: 'Connexion' }
   }
+
+  // Si on a un token mais pas de user (ou session pas hydratée), on tente de le charger; en cas d'échec on déconnecte
+  if ((!auth.user || !auth.hydrated) && !auth.loading) {
+    try {
+      await auth.fetchCurrentUser()
+    } catch (_err) {
+      await auth.logout()
+      return { name: 'Connexion' }
+    }
+  }
+
+  // Si après hydratation on n'est toujours pas authentifié, on redirige
+  if (!auth.isAuthenticated) {
+    return { name: 'Connexion' }
+  }
+
+  return true
 })
 
 export default router
