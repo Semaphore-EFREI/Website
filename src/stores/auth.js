@@ -7,9 +7,16 @@ const STORAGE_KEYS = {
   user: 'auth_user'
 };
 
+function normalizeToken(raw) {
+  if (!raw) return null;
+  const value = String(raw).trim();
+  if (!value || value.toLowerCase() === 'null' || value.toLowerCase() === 'undefined') return null;
+  return value;
+}
+
 function loadPersistedState() {
-  const token = localStorage.getItem(STORAGE_KEYS.token);
-  const refreshToken = localStorage.getItem(STORAGE_KEYS.refresh);
+  const token = normalizeToken(localStorage.getItem(STORAGE_KEYS.token));
+  const refreshToken = normalizeToken(localStorage.getItem(STORAGE_KEYS.refresh));
   const userRaw = localStorage.getItem(STORAGE_KEYS.user);
   const user = userRaw ? JSON.parse(userRaw) : null;
   if (token) setAuthToken(token);
@@ -28,19 +35,26 @@ function clearSession() {
   localStorage.removeItem(STORAGE_KEYS.user);
 }
 
+const persisted = loadPersistedState();
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    ...loadPersistedState(),
-    token: loadPersistedState().token,
-    refreshToken: loadPersistedState().refreshToken,
-    user: loadPersistedState().user,
+    token: persisted.token,
+    refreshToken: persisted.refreshToken,
+    user: persisted.user,
+    hydrated: false,
     loading: false,
     error: null,
     isRefreshing: false,
     refreshPromise: null
   }),
   getters: {
-    isAuthenticated: (state) => Boolean(state.token),
+    hasToken: (state) => Boolean(normalizeToken(state.token)),
+    isAuthenticated: (state) => {
+      const tokenOk = Boolean(normalizeToken(state.token))
+      const hasUserId = Boolean(state.user?.id || state.user?._id)
+      return tokenOk && hasUserId
+    },
     isStudent: (state) => state.user?.role === 'student' || state.user?.userType === 'student',
     isTeacher: (state) => state.user?.role === 'teacher' || state.user?.userType === 'teacher',
     isAdmin: (state) => state.user?.role === 'admin' || state.user?.userType === 'admin',
@@ -49,15 +63,19 @@ export const useAuthStore = defineStore('auth', {
   },
   actions: {
     async hydrate() {
-      if (this.token) {
-        setAuthToken(this.token);
-        if (!this.user) {
-          try {
-            await this.fetchCurrentUser();
-          } catch (_e) {
-            // swallow; fetchCurrentUser will set error
-          }
-        }
+      if (!this.token) {
+        this.hydrated = true;
+        return;
+      }
+
+      setAuthToken(this.token);
+
+      try {
+        await this.fetchCurrentUser();
+      } catch (_e) {
+        // swallow; fetchCurrentUser will set error
+      } finally {
+        this.hydrated = true;
       }
     },
 
@@ -106,6 +124,7 @@ export const useAuthStore = defineStore('auth', {
         throw err;
       } finally {
         this.loading = false;
+        this.hydrated = true;
       }
     },
 

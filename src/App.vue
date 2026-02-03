@@ -22,15 +22,20 @@ export default {
     }
   },
   computed: {
-    ...mapState(useAuthStore, { isAuthenticated: 'token' }),
+    ...mapState(useAuthStore, ['isAuthenticated']),
     showSidebar() {
-      return this.$route.name !== 'Connexion'
+      return this.isAuthenticated && this.$route.name !== 'Connexion'
     },
     mainClasses() {
       return {
         'with-sidebar': this.showSidebar,
         'sidebar-collapsed': this.showSidebar && this.sidebarCollapsed
       }
+    }
+  },
+  created() {
+    if (!this.isAuthenticated && this.$route.name !== 'Connexion') {
+      this.$router.replace({ name: 'Connexion' }).catch(() => {})
     }
   },
   watch: {

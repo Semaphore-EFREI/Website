@@ -204,8 +204,11 @@ export default {
       this.$router.push(route).catch(() => {})
     },
     async logout() {
-      await this.logoutAction()
-      this.$router.push({ name: 'Connexion' })
+      try {
+        await this.logoutAction()
+      } finally {
+        this.$router.push({ name: 'Connexion' }).catch(() => {})
+      }
     }
   }
 }

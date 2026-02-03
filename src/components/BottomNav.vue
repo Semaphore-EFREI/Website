@@ -74,8 +74,11 @@ export default {
     },
     async handleNav(item) {
       if (item.logout) {
-        await this.logout()
-        this.$router.push({ name: 'Connexion' }).catch(() => {})
+        try {
+          await this.logout()
+        } finally {
+          this.$router.push({ name: 'Connexion' }).catch(() => {})
+        }
         return
       }
 

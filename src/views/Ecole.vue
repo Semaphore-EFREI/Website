@@ -61,17 +61,22 @@
 
 <script>
 import { useSchoolsStore } from '../stores/schools'
+import { useAuthStore } from '../stores/auth'
+import roomsIcon from '../assets/images/rooms.svg'
+import balisesIcon from '../assets/images/balises.svg'
+import settingsIcon from '../assets/images/settings.svg'
 
 export default {
   name: 'Ecole',
   data() {
     return {
       sections: [
-        { label: 'Salles', section: 'salles', icon: 'src/assets/images/rooms.svg' },
-        { label: 'Balises', section: 'balises', icon: 'src/assets/images/balises.svg' },
-        { label: 'Paramètres', section: 'parametres', icon: 'src/assets/images/settings.svg' }
+        { label: 'Salles', section: 'salles', icon: roomsIcon },
+        { label: 'Balises', section: 'balises', icon: balisesIcon },
+        { label: 'Paramètres', section: 'parametres', icon: settingsIcon }
       ],
-      schoolsStore: useSchoolsStore()
+      schoolsStore: useSchoolsStore(),
+      authStore: useAuthStore()
     }
   },
   computed: {
@@ -80,11 +85,14 @@ export default {
     }
   },
   async mounted() {
-    if (!this.schoolsStore.schools.length) {
-      await this.schoolsStore.fetchSchools()
-    }
-    if (this.schoolsStore.selectedSchoolId) {
-      await this.schoolsStore.fetchSchool(this.schoolsStore.selectedSchoolId)
+    const schoolId = this.authStore.user?.schoolId || this.authStore.user?.schoolID || this.authStore.user?.school?.id
+    if (schoolId) {
+      this.schoolsStore.selectSchool(schoolId)
+      try {
+        await this.schoolsStore.fetchSchool(schoolId)
+      } catch (_err) {
+        // Swallow error; UI will keep fallback name
+      }
     }
   },
   methods: {
