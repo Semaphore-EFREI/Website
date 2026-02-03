@@ -1,7 +1,34 @@
 <template>
   <div class="connexion-page">
     <div class="connexion-background">
-      <img src="../assets/images/connexion_background.svg" alt="background" />
+      <picture>
+        <source
+          type="image/avif"
+          srcset="../assets/images/connexion_background-w640.avif 640w,
+                  ../assets/images/connexion_background-w960.avif 960w,
+                  ../assets/images/connexion_background-w1280.avif 1280w,
+                  ../assets/images/connexion_background-w1920.avif 1920w,
+                  ../assets/images/connexion_background-w2560.avif 2560w"
+          sizes="100vw"
+        />
+        <source
+          type="image/webp"
+          srcset="../assets/images/connexion_background-w640.webp 640w,
+                  ../assets/images/connexion_background-w960.webp 960w,
+                  ../assets/images/connexion_background-w1280.webp 1280w,
+                  ../assets/images/connexion_background-w1920.webp 1920w,
+                  ../assets/images/connexion_background-w2560.webp 2560w"
+          sizes="100vw"
+        />
+        <img
+          src="../assets/images/connexion_background-w1280.webp"
+          alt="background"
+          class="connexion-bg"
+          decoding="async"
+          fetchpriority="high"
+        />
+      </picture>
+
     </div>
 
     <div class="connexion-card">

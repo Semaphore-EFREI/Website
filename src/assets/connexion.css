@@ -31,6 +31,7 @@ html, body {
   height: 100%;
   object-fit: cover;
   z-index: 0;
+  /* no color boost for avif/webp */
 }
 
 .connexion-card {

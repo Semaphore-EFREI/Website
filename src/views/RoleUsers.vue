@@ -30,7 +30,16 @@
       </section>
       <div class="user-cards">
         <article v-for="user in filteredUsers" :key="user.id || user.key" class="user-card" @click="openUser(user)">
-          <img :src="user.profilePicture || defaultProfile" alt="Photo de profil" class="user-avatar" />
+          <img
+            :src="user.profilePicture || defaultProfile"
+            alt="Photo de profil"
+            class="user-avatar"
+            width="64"
+            height="64"
+            loading="lazy"
+            decoding="async"
+            fetchpriority="low"
+          />
           <div class="name">{{ user.name }}</div>
           <div class="role" :class="roleClass(user.role)">
             <img :src="roleIcon(user.role)" :alt="user.role" class="role-icon" />
@@ -81,7 +90,9 @@ export default {
     }
   },
   created() {
-    this.fetchUsers().catch(() => {})
+    if (!this.users.length) {
+      this.fetchUsers().catch(() => {})
+    }
   },
   methods: {
     ...mapActions(useUsersStore, ['fetchUsers']),

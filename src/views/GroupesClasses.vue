@@ -1,7 +1,34 @@
 <template>
   <main class="users-page groups-page">
     <div class="users-header">
-      <img src="../assets/images/group-background.svg" alt="background" class="header-bg" />
+      <picture>
+        <source
+          type="image/avif"
+          srcset="../assets/images/group-background-w640.avif 640w,
+                  ../assets/images/group-background-w960.avif 960w,
+                  ../assets/images/group-background-w1280.avif 1280w,
+                  ../assets/images/group-background-w1920.avif 1920w,
+                  ../assets/images/group-background-w2560.avif 2560w"
+          sizes="100vw"
+        />
+        <source
+          type="image/webp"
+          srcset="../assets/images/group-background-w640.webp 640w,
+                  ../assets/images/group-background-w960.webp 960w,
+                  ../assets/images/group-background-w1280.webp 1280w,
+                  ../assets/images/group-background-w1920.webp 1920w,
+                  ../assets/images/group-background-w2560.webp 2560w"
+          sizes="100vw"
+        />
+        <img
+          src="../assets/images/group-background-w1280.webp"
+          alt="background"
+          class="header-bg"
+          decoding="async"
+          fetchpriority="high"
+        />
+      </picture>
+
       <div class="header-buttons">
         <button class="btn-new-course" type="button" @click="createCourse">
           <img src="../assets/images/plus-sign.svg" alt="plus" class="plus-icon" />Nouveau Groupe
@@ -149,14 +176,23 @@ export default {
   methods: {
     ...mapActions(useGroupsStore, ['fetchGroups', 'fetchGroup', 'createGroup', 'updateGroup', 'deleteGroup']),
     async loadGroupsWithStudents() {
+      if (!this.schoolId) return
       try {
-        await this.fetchGroups({ schoolId: this.schoolId, include: 'students' })
+        if (!this.groups || !this.groups.length) {
+          await this.fetchGroups({ schoolId: this.schoolId, include: 'students' })
+        }
       } catch (_e) {
         // Already handled in store
       }
 
-      const ids = (this.groups || []).map((g) => g.id).filter(Boolean)
-      await Promise.all(ids.map((id) => this.fetchGroup(id, { include: 'students' }).catch(() => null)))
+      const needsDetails = (this.groups || [])
+        .filter((group) => group?.id && !this.hasCountInfo(group))
+        .map((group) => group.id)
+
+      if (!needsDetails.length) return
+      await Promise.allSettled(
+        needsDetails.map((id) => this.fetchGroup(id, { include: 'students' }).catch(() => null))
+      )
     },
     createCourse() {
       this.editingGroupId = null
@@ -214,10 +250,24 @@ export default {
     },
     groupCount(group) {
       if (!group) return 0
+      const fromCount = Number.isFinite(group.studentCount)
+        ? group.studentCount
+        : Number.isFinite(group.studentsCount)
+          ? group.studentsCount
+          : null
+      if (fromCount !== null) return fromCount
       const fromIds = Array.isArray(group.studentIds) ? group.studentIds.filter(Boolean).length : 0
+      const fromAltIds = Array.isArray(group.studentsIds) ? group.studentsIds.filter(Boolean).length : 0
+      const fromSnakeIds = Array.isArray(group.student_ids) ? group.student_ids.filter(Boolean).length : 0
       const fromObjects = Array.isArray(group.students) ? group.students.filter(Boolean).length : 0
-      const fromCount = Number.isFinite(group.studentCount) ? group.studentCount : Number.isFinite(group.studentsCount) ? group.studentsCount : null
-      return fromIds || fromObjects || fromCount || 0
+      return fromIds || fromAltIds || fromSnakeIds || fromObjects || 0
+    },
+    hasCountInfo(group) {
+      if (!group) return false
+      if (Number.isFinite(group.studentCount) || Number.isFinite(group.studentsCount)) return true
+      if (Array.isArray(group.students) || Array.isArray(group.studentIds)) return true
+      if (Array.isArray(group.studentsIds) || Array.isArray(group.student_ids)) return true
+      return false
     },
     openGroup(name, id) {
       if (!name) return

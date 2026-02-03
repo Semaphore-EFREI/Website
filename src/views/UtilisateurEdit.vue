@@ -19,7 +19,14 @@
     <form id="edit-user-form" class="edit-user-form" @submit.prevent="saveUser">
       <div class="edit-user-info">
         <div class="edit-user-avatar-block">
-            <img :src="user.profilePicture || defaultProfile" alt="Photo de profil" class="edit-user-avatar" />
+            <img
+              :src="user.profilePicture || defaultProfile"
+              alt="Photo de profil"
+              class="edit-user-avatar"
+              width="96"
+              height="96"
+              decoding="async"
+            />
         </div>
         <div class="edit-user-names">
           <input v-model="user.firstName" placeholder="Prénom" class="edit-input first-name" id="firstName" required />

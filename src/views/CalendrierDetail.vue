@@ -71,13 +71,37 @@
               </div>
               <div class="signature-line">
                 <div v-if="teacher && teacher.meta && teacher.meta.class === 'absent'">
-                  <img src="../assets/images/absent.svg" alt="Absent" class="signature-image" />
+                  <img
+                    src="../assets/images/absent.svg"
+                    alt="Absent"
+                    class="signature-image"
+                    width="64"
+                    height="64"
+                    loading="lazy"
+                    decoding="async"
+                  />
                 </div>
                 <div v-else-if="teacher && teacher.meta && teacher.meta.class === 'excused'">
-                  <img :src="excusedSignatureIcon" alt="Excusé" class="signature-image" />
+                  <img
+                    :src="excusedSignatureIcon"
+                    alt="Excusé"
+                    class="signature-image"
+                    width="64"
+                    height="64"
+                    loading="lazy"
+                    decoding="async"
+                  />
                 </div>
                 <div v-else-if="teacher && teacher.signatureUrl">
-                  <img :src="teacher.signatureUrl" :alt="`Signature de ${teacher.name}`" class="signature-image" />
+                  <img
+                    :src="teacher.signatureUrl"
+                    :alt="`Signature de ${teacher.name}`"
+                    class="signature-image"
+                    width="64"
+                    height="64"
+                    loading="lazy"
+                    decoding="async"
+                  />
                 </div>
                 <div v-else class="signature-none">Aucune signature</div>
               </div>
@@ -125,13 +149,37 @@
             <div class="signature-line">
                 <div
                 v-if="student.meta && student.meta.class === 'absent'">
-                    <img src="../assets/images/absent.svg" alt="Absent" class="signature-image" />
+                    <img
+                      src="../assets/images/absent.svg"
+                      alt="Absent"
+                      class="signature-image"
+                      width="64"
+                      height="64"
+                      loading="lazy"
+                      decoding="async"
+                    />
                 </div>
                 <div v-else-if="student.meta && student.meta.class === 'excused'">
-                  <img :src="excusedSignatureIcon" alt="Excusé" class="signature-image" />
+                  <img
+                    :src="excusedSignatureIcon"
+                    alt="Excusé"
+                    class="signature-image"
+                    width="64"
+                    height="64"
+                    loading="lazy"
+                    decoding="async"
+                  />
                 </div>
                 <div v-else-if="student.signatureUrl">
-                <img :src="student.signatureUrl" :alt="`Signature de ${student.name}`" class="signature-image" />
+                <img
+                  :src="student.signatureUrl"
+                  :alt="`Signature de ${student.name}`"
+                  class="signature-image"
+                  width="64"
+                  height="64"
+                  loading="lazy"
+                  decoding="async"
+                />
                 </div>
                 <div v-else class="signature-none">Aucune signature</div>
             </div>
@@ -254,7 +302,7 @@ export default {
       updateSignature: 'updateSignature',
       removeSignature: 'removeSignature'
     }),
-    ...mapActions(useUsersStore, ['fetchUserById']),
+    ...mapActions(useUsersStore, ['fetchUsersBatch']),
     async loadData() {
       this.loading = true
       try {
@@ -399,16 +447,23 @@ export default {
       return Array.from(map.values())
     },
     async populateStudentNames(entries) {
-      const idsToFetch = entries
-        .map((e) => e.studentId ?? e.id)
-        .filter((id, idx, arr) => id && arr.indexOf(id) === idx)
-        .filter((id) => {
-          const user = this.users.find((u) => String(u.id) === String(id))
-          return !user
-        })
+      const entriesById = new Map()
+      entries.forEach((entry) => {
+        const id = entry.studentId ?? entry.id
+        if (!id) return
+        entriesById.set(String(id), entry)
+      })
 
-      for (const id of idsToFetch) {
-        await this.fetchUserById(id, 'student').catch(() => {})
+      const idsToFetch = Array.from(entriesById.keys())
+        .filter((id) => {
+          const entry = entriesById.get(id)
+          const hasName = Boolean(entry?.name || entry?.firstName || entry?.firstname || entry?.lastName || entry?.lastname)
+          return !hasName
+        })
+        .filter((id) => !this.users.find((u) => String(u.id) === String(id)))
+
+      if (idsToFetch.length) {
+        await this.fetchUsersBatch(idsToFetch).catch(() => {})
       }
 
       entries.forEach((entry) => {
@@ -422,16 +477,23 @@ export default {
       })
     },
     async populateTeacherNames(entries) {
-      const idsToFetch = entries
-        .map((e) => e.teacherId ?? e.id)
-        .filter((id, idx, arr) => id && arr.indexOf(id) === idx)
-        .filter((id) => {
-          const user = this.users.find((u) => String(u.id) === String(id))
-          return !user
-        })
+      const entriesById = new Map()
+      entries.forEach((entry) => {
+        const id = entry.teacherId ?? entry.id
+        if (!id) return
+        entriesById.set(String(id), entry)
+      })
 
-      for (const id of idsToFetch) {
-        await this.fetchUserById(id, 'teacher').catch(() => {})
+      const idsToFetch = Array.from(entriesById.keys())
+        .filter((id) => {
+          const entry = entriesById.get(id)
+          const hasName = Boolean(entry?.name || entry?.firstName || entry?.firstname || entry?.lastName || entry?.lastname)
+          return !hasName
+        })
+        .filter((id) => !this.users.find((u) => String(u.id) === String(id)))
+
+      if (idsToFetch.length) {
+        await this.fetchUsersBatch(idsToFetch).catch(() => {})
       }
 
       entries.forEach((entry) => {

@@ -12,6 +12,7 @@ import GroupesClasses from '../views/GroupesClasses.vue'
 import GroupesClassesDetail from '../views/GroupesClassesDetail.vue'
 import Ecole from '../views/Ecole.vue'
 import EcoleSection from '../views/EcoleSection.vue'
+import { useAuthStore } from '../stores'
 
 const routes = [
   { path: '/', name: 'Connexion', component: Login },
@@ -37,7 +38,6 @@ const router = createRouter({
 
 // Guard de navigation - Rediriger vers la connexion si pas authentifié
 router.beforeEach((to, from, next) => {
-  const { useAuthStore } = require('../stores/auth');
   const auth = useAuthStore();
   
   // Les routes publiques (connexion)

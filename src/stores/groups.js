@@ -29,7 +29,13 @@ export const useGroupsStore = defineStore('groups', {
       this.error = null;
       try {
         const response = await request(`/studentGroups/${schoolId}`, { method: 'GET', params });
-        const items = Array.isArray(response.items) ? response.items : Array.isArray(response) ? response : [];
+        const items = (() => {
+          if (Array.isArray(response)) return response;
+          if (Array.isArray(response.items)) return response.items;
+          if (Array.isArray(response.groups)) return response.groups;
+          if (Array.isArray(response.studentGroups)) return response.studentGroups;
+          return [];
+        })();
         this.groups = items;
         return this.groups;
       } catch (err) {

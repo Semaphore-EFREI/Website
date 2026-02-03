@@ -8,7 +8,20 @@ const defaultHeaders = {
 };
 
 function buildUrl(path, params) {
-  const query = params ? new URLSearchParams(params).toString() : '';
+  if (!params) return `${API_BASE_URL}${path}`;
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    if (Array.isArray(value)) {
+      value.forEach((entry) => {
+        if (entry === undefined || entry === null) return;
+        searchParams.append(key, String(entry));
+      });
+      return;
+    }
+    searchParams.append(key, String(value));
+  });
+  const query = searchParams.toString();
   return `${API_BASE_URL}${path}${query ? `?${query}` : ''}`;
 }
 

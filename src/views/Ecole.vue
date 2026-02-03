@@ -1,7 +1,34 @@
 <template>
   <main class="users-page">
     <div class="users-header">
-      <img src="../assets/images/school-background.svg" alt="background" class="header-bg" />
+      <picture>
+        <source
+          type="image/avif"
+          srcset="../assets/images/school-background-w640.avif 640w,
+                  ../assets/images/school-background-w960.avif 960w,
+                  ../assets/images/school-background-w1280.avif 1280w,
+                  ../assets/images/school-background-w1920.avif 1920w,
+                  ../assets/images/school-background-w2560.avif 2560w"
+          sizes="100vw"
+        />
+        <source
+          type="image/webp"
+          srcset="../assets/images/school-background-w640.webp 640w,
+                  ../assets/images/school-background-w960.webp 960w,
+                  ../assets/images/school-background-w1280.webp 1280w,
+                  ../assets/images/school-background-w1920.webp 1920w,
+                  ../assets/images/school-background-w2560.webp 2560w"
+          sizes="100vw"
+        />
+        <img
+          src="../assets/images/school-background-w1280.webp"
+          alt="background"
+          class="header-bg"
+          decoding="async"
+          fetchpriority="high"
+        />
+      </picture>
+
       <div class="header-buttons-empty">
         <!-- No buttons needed here -->
       </div>

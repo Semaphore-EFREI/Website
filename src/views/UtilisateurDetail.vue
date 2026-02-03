@@ -21,7 +21,14 @@
     <section v-if="user" class="edit-user-form view-mode">
       <div class="edit-user-info">
         <div class="edit-user-avatar-block">
-          <img :src="user.profilePicture || defaultProfile" alt="Photo de profil" class="edit-user-avatar" />
+          <img
+            :src="user.profilePicture || defaultProfile"
+            alt="Photo de profil"
+            class="edit-user-avatar"
+            width="96"
+            height="96"
+            decoding="async"
+          />
         </div>
         <div class="edit-user-principal">
             <div class="edit-user-names">
@@ -308,8 +315,9 @@ export default {
     async fetchUserCourses() {
       if (!this.user?.id) return
       this.coursesLoading = true
-      const from = Math.floor(this.weekStartDate.getTime() / 1000)
-      const to = Math.floor(this.weekEndDate.getTime() / 1000)
+      const lastDay = this.weekDays[this.weekDays.length - 1] || this.weekStartDate
+      const from = this.toDateParam(this.weekStartDate)
+      const to = this.toDateParam(lastDay)
       try {
         const params = {
           userId: this.user.id,
@@ -329,7 +337,6 @@ export default {
           deduped.push(c)
         })
         this.userCourses = deduped.map((c) => this.normalizeCourse(c))
-        await this.enrichCoursesWithSignatures()
       } catch (err) {
         console.error('Unable to load user courses', err)
       } finally {
@@ -464,6 +471,13 @@ export default {
         else if (now >= startDate.getTime()) status = hasTeacherSig ? 'started' : 'started-absent'
       }
 
+      const signatures = Array.isArray(course.signature)
+        ? course.signature
+        : Array.isArray(course.signatures)
+          ? course.signatures
+          : []
+      const match = signatures.find((sig) => this.matchSignature(sig))
+
       return {
         id: course.id,
         subject: course.subject || course.title || course.name || 'Cours',
@@ -474,35 +488,7 @@ export default {
         teacher: teacherNames,
         group: groupName || '',
         status,
-        presenceStatus: ''
-      }
-    },
-    async enrichCoursesWithSignatures() {
-      if (!this.userCourses.length || !this.user?.id) return
-      try {
-        const detailRequests = this.userCourses.map(async (course) => {
-          if (!course.id) return null
-          try {
-            const detail = await request(`/course/${course.id}`, { method: 'GET' })
-            const signatures = Array.isArray(detail?.signature) ? detail.signature : Array.isArray(detail?.signatures) ? detail.signatures : []
-            const match = signatures.find((sig) => this.matchSignature(sig))
-            return { id: course.id, presenceStatus: match?.status || '' }
-          } catch (err) {
-            console.error('Unable to load course detail', course.id, err)
-            return null
-          }
-        })
-        const results = await Promise.all(detailRequests)
-        const presenceMap = {}
-        results.forEach((res) => {
-          if (res && res.presenceStatus) presenceMap[res.id] = res.presenceStatus
-        })
-        this.userCourses = this.userCourses.map((course) => ({
-          ...course,
-          presenceStatus: presenceMap[course.id] || ''
-        }))
-      } catch (err) {
-        console.error('Unable to enrich courses with signatures', err)
+        presenceStatus: match?.status || ''
       }
     },
     matchSignature(sig) {
@@ -538,38 +524,44 @@ export default {
         const endTs = this.toEpochBoundary(this.excusedEnd, 'end')
         if (startTs === null || endTs === null) throw new Error('Dates invalides')
 
-        const from = Math.min(startTs, endTs)
-        const to = Math.max(startTs, endTs)
+        const fromTs = Math.min(startTs, endTs)
+        const toTs = Math.max(startTs, endTs)
+        const from = this.toDateParam(new Date(fromTs * 1000))
+        const to = this.toDateParam(new Date(toTs * 1000))
 
         const coursesResp = await request('/courses', {
           method: 'GET',
-          params: { userId: this.user.id, limit: 50, from, to }
+          params: { userId: this.user.id, limit: 50, from, to, include: ['signatures'] }
         })
         const coursesList = Array.isArray(coursesResp?.courses) ? coursesResp.courses : Array.isArray(coursesResp) ? coursesResp : []
 
-        const courseIds = Array.from(
-          new Set(
-            coursesList
-              .map((c) => ({
-                id: c?.id || c,
-                start: this.toEpochSeconds(c?.start || c?.startDate || c?.date),
-                end: this.toEpochSeconds(c?.end || c?.endDate)
-              }))
-              .filter((entry) => entry.id)
-              .filter((entry) => this.isCourseInRange(entry.start, entry.end, from, to))
-              .map((entry) => entry.id)
-          )
+        const entries = coursesList
+          .map((c) => {
+            const course = typeof c === 'object' && c !== null ? c : { id: c }
+            const id = course?.id ?? course?.courseId ?? c
+            return {
+              id,
+              course,
+              start: this.toEpochSeconds(course?.start || course?.startDate || course?.date),
+              end: this.toEpochSeconds(course?.end || course?.endDate)
+            }
+          })
+          .filter((entry) => entry.id)
+          .filter((entry) => this.isCourseInRange(entry.start, entry.end, fromTs, toTs))
+
+        const uniqueEntries = Array.from(
+          new Map(entries.map((entry) => [String(entry.id), entry])).values()
         )
 
-        if (courseIds.length) {
+        if (uniqueEntries.length) {
           const now = Math.floor(Date.now() / 1000)
-          const tasks = courseIds.map(async (courseId) => {
+          const tasks = uniqueEntries.map(async (entry) => {
+            const courseId = entry.id
             try {
-              const detail = await request(`/course/${courseId}`, { method: 'GET' })
-              const sigs = Array.isArray(detail?.signature)
-                ? detail.signature
-                : Array.isArray(detail?.signatures)
-                  ? detail.signatures
+              const sigs = Array.isArray(entry?.course?.signature)
+                ? entry.course.signature
+                : Array.isArray(entry?.course?.signatures)
+                  ? entry.course.signatures
                   : []
 
               const existing = this.findExistingSignatureForUser(sigs)
@@ -624,6 +616,23 @@ export default {
       const parsed = new Date(value)
       if (Number.isNaN(parsed.getTime())) return null
       return Math.floor(parsed.getTime() / 1000)
+    },
+    toDateParam(value) {
+      if (!value) return ''
+      if (value instanceof Date) {
+        if (Number.isNaN(value.getTime())) return ''
+        const year = value.getFullYear()
+        const month = `${value.getMonth() + 1}`.padStart(2, '0')
+        const day = `${value.getDate()}`.padStart(2, '0')
+        return `${year}-${month}-${day}`
+      }
+      if (typeof value === 'string') {
+        const trimmed = value.trim()
+        if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed
+        const parsed = new Date(trimmed)
+        return this.toDateParam(parsed)
+      }
+      return ''
     },
     findExistingSignatureForUser(signatures) {
       if (!Array.isArray(signatures) || !this.user?.id) return null

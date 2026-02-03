@@ -1,6 +1,15 @@
 import { defineStore } from 'pinia';
 import { request } from './apiClient';
 
+const DEFAULT_COURSE_INCLUDE = [
+  'classrooms',
+  'signatures',
+  'teachers',
+  'students',
+  'soloStudents',
+  'studentGroups'
+];
+
 export const useCalendarStore = defineStore('calendar', {
   state: () => ({
     courses: [],
@@ -18,7 +27,11 @@ export const useCalendarStore = defineStore('calendar', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await request('/courses', { method: 'GET', params: { limit: 50, ...params } });
+        const query = { limit: 50, ...params };
+        if (!query.include) {
+          query.include = DEFAULT_COURSE_INCLUDE;
+        }
+        const response = await request('/courses', { method: 'GET', params: query });
 
         const parsed = (() => {
           if (Array.isArray(response)) return response;
@@ -26,11 +39,13 @@ export const useCalendarStore = defineStore('calendar', {
             try {
               const maybeJson = JSON.parse(response);
               if (Array.isArray(maybeJson)) return maybeJson;
+              if (maybeJson?.courses && Array.isArray(maybeJson.courses)) return maybeJson.courses;
               if (maybeJson?.items && Array.isArray(maybeJson.items)) return maybeJson.items;
             } catch (_e) {
               return [];
             }
           }
+          if (response?.courses && Array.isArray(response.courses)) return response.courses;
           if (response?.items && Array.isArray(response.items)) return response.items;
           return [];
         })();
@@ -45,12 +60,14 @@ export const useCalendarStore = defineStore('calendar', {
       }
     },
 
-    async fetchCourse(id) {
+    async fetchCourse(id, params = {}) {
       this.loading = true;
       this.error = null;
       try {
+        const query = { include: DEFAULT_COURSE_INCLUDE, ...params };
         const response = await request(`/course/${id}`, {
-          method: 'GET'
+          method: 'GET',
+          params: query
         });
         const course = (() => {
           if (response?.course) return response.course;

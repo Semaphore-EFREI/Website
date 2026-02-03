@@ -3,6 +3,7 @@
   src: url('./fonts/Montserrat-VariableFont_wght.ttf') format('truetype');
   font-weight: 100 900;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -10,6 +11,7 @@
   src: url('./fonts/Montserrat-Italic-VariableFont_wght.ttf') format('truetype');
   font-weight: 100 900;
   font-style: italic;
+  font-display: swap;
 }
 
 html, body {
@@ -56,5 +58,3 @@ button {
 :root {
     font-size: clamp(8px, 1.2vw, 14px);
 }
-
-

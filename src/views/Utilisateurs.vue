@@ -1,7 +1,34 @@
 <template>
   <main class="users-page">
     <div class="users-header">
-      <img src="../assets/images/user-background.svg" alt="background" class="header-bg" />
+      <picture>
+        <source
+          type="image/avif"
+          srcset="../assets/images/user-background-w640.avif 640w,
+                  ../assets/images/user-background-w960.avif 960w,
+                  ../assets/images/user-background-w1280.avif 1280w,
+                  ../assets/images/user-background-w1920.avif 1920w,
+                  ../assets/images/user-background-w2560.avif 2560w"
+          sizes="100vw"
+        />
+        <source
+          type="image/webp"
+          srcset="../assets/images/user-background-w640.webp 640w,
+                  ../assets/images/user-background-w960.webp 960w,
+                  ../assets/images/user-background-w1280.webp 1280w,
+                  ../assets/images/user-background-w1920.webp 1920w,
+                  ../assets/images/user-background-w2560.webp 2560w"
+          sizes="100vw"
+        />
+        <img
+          src="../assets/images/user-background-w1280.webp"
+          alt="background"
+          class="header-bg"
+          decoding="async"
+          fetchpriority="high"
+        />
+      </picture>
+
       <div class="header-buttons">
         <button class="btn-new-course" type="button" @click="createUser">
           <img src="../assets/images/plus-sign.svg" alt="plus" class="plus-icon" />Nouvel utilisateur
@@ -57,7 +84,16 @@
         <label class="section-title">Tous les utilisateurs</label>
         <div class="user-cards">
           <div class="user-card" v-for="user in filteredUsers" :key="user.id || user.key" @click="openUser(user)">
-              <img :src="user.profilePicture || defaultProfile" alt="Photo de profil" class="user-avatar" />
+              <img
+                :src="user.profilePicture || defaultProfile"
+                alt="Photo de profil"
+                class="user-avatar"
+                width="64"
+                height="64"
+                loading="lazy"
+                decoding="async"
+                fetchpriority="low"
+              />
             <div class="name">{{ user.name }}</div>
             <div class="role" :class="roleClass(user.role)">
               <img :src="roleIcon(user.role)" :alt="user.role" class="role-icon" />
@@ -93,7 +129,9 @@ export default {
     }
   },
   created() {
-    this.fetchUsers().catch(() => {})
+    if (!this.users.length) {
+      this.fetchUsers().catch(() => {})
+    }
   },
   methods: {
     ...mapActions(useUsersStore, { fetchUsers: 'fetchUsers' }),

@@ -1,7 +1,34 @@
 <template>
   <div class="calendrier-page">
     <div class="calendrier-header">
-      <img src="../assets/images/calendrier_background.svg" alt="background" class="header-bg" />
+      <picture>
+        <source
+          type="image/avif"
+          srcset="../assets/images/calendrier_background-w640.avif 640w,
+                  ../assets/images/calendrier_background-w960.avif 960w,
+                  ../assets/images/calendrier_background-w1280.avif 1280w,
+                  ../assets/images/calendrier_background-w1920.avif 1920w,
+                  ../assets/images/calendrier_background-w2560.avif 2560w"
+          sizes="100vw"
+        />
+        <source
+          type="image/webp"
+          srcset="../assets/images/calendrier_background-w640.webp 640w,
+                  ../assets/images/calendrier_background-w960.webp 960w,
+                  ../assets/images/calendrier_background-w1280.webp 1280w,
+                  ../assets/images/calendrier_background-w1920.webp 1920w,
+                  ../assets/images/calendrier_background-w2560.webp 2560w"
+          sizes="100vw"
+        />
+        <img
+          src="../assets/images/calendrier_background-w1280.webp"
+          alt="background"
+          class="header-bg"
+          decoding="async"
+          fetchpriority="high"
+        />
+      </picture>
+
       <div class="header-buttons">
         <button class="btn-new-course" @click="goToNewCourse">
           <img src="../assets/images/plus-sign.svg" alt="plus" class="plus-icon" />Nouveau cours
@@ -167,20 +194,22 @@ export default {
       }
     }
     
-    this.fetchCourses()
-      .then(async () => {
-        await this.loadTeacherUsers();
-      })
-      .catch(() => {});
+    this.refreshCoursesForSelectedDate().catch(() => {});
   },
   methods: {
     ...mapActions(useCalendarStore, ['fetchCourses']),
-    ...mapActions(useUsersStore, ['fetchUserById']),
+    ...mapActions(useUsersStore, ['fetchUsersBatch']),
     previousDay() {
-      this.selectedDate = new Date(this.selectedDate.setDate(this.selectedDate.getDate() - 1));
+      const next = new Date(this.selectedDate);
+      next.setDate(next.getDate() - 1);
+      this.selectedDate = next;
+      this.refreshCoursesForSelectedDate();
     },
     nextDay() {
-      this.selectedDate = new Date(this.selectedDate.setDate(this.selectedDate.getDate() + 1));
+      const next = new Date(this.selectedDate);
+      next.setDate(next.getDate() + 1);
+      this.selectedDate = next;
+      this.refreshCoursesForSelectedDate();
     },
     openCalendar() {
       const input = this.$refs.dateInput;
@@ -195,6 +224,7 @@ export default {
       const value = event.target.value;
       if (!value) return;
       this.selectedDate = new Date(`${value}T00:00:00`);
+      this.refreshCoursesForSelectedDate();
     },
     getBlocksForHour(hour) {
       return this.filteredClasses.filter(c => c.startTime === hour);
@@ -216,18 +246,17 @@ export default {
                 : [];
         raw.forEach((t) => {
           if (typeof t === 'object' && t !== null) {
-            if (t.id) ids.add(String(t.id));
+            const hasName = Boolean(t.name || t.firstName || t.firstname || t.lastName || t.lastname);
+            if (!hasName && t.id) ids.add(String(t.id));
           } else if (t) {
             ids.add(String(t));
           }
         });
       });
 
-      for (const id of ids) {
-        const exists = this.users.find((u) => String(u.id) === String(id));
-        if (exists) continue;
-        await this.fetchUserById(id, 'teacher').catch(() => {});
-      }
+      const missing = Array.from(ids).filter((id) => !this.users.find((u) => String(u.id) === String(id)));
+      if (!missing.length) return;
+      await this.fetchUsersBatch(missing).catch(() => {});
     },
     goToNewCourse() {
       this.$router.push({ name: 'NouveauCours' });
@@ -252,6 +281,26 @@ export default {
       const month = `${date.getMonth() + 1}`.padStart(2, '0');
       const year = date.getFullYear();
       return `${day}/${month}/${year}`;
+    },
+    toDateParam(date) {
+      const year = date.getFullYear();
+      const month = `${date.getMonth() + 1}`.padStart(2, '0');
+      const day = `${date.getDate()}`.padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    },
+    async refreshCoursesForSelectedDate() {
+      const target = this.selectedDate instanceof Date ? this.selectedDate : new Date();
+      const day = this.toDateParam(target);
+      try {
+        await this.fetchCourses({
+          from: day,
+          to: day,
+          include: ['classrooms', 'signatures', 'teachers', 'studentGroups']
+        });
+        await this.loadTeacherUsers();
+      } catch (_err) {
+        // Errors are handled in store; keep UI responsive
+      }
     },
     normalizeCourse(course) {
       if (!course) {

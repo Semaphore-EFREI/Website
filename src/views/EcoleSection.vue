@@ -291,8 +291,16 @@ export default {
     }
   },
   created() {
-    this.fetchRooms({ schoolId: this.schoolId }).catch(() => {})
-    this.fetchBeacons({ schoolId: this.schoolId }).catch(() => {})
+    if (this.section === 'salles' || this.section === 'balises') {
+      if (!this.salles.length) {
+        this.fetchRooms({ schoolId: this.schoolId }).catch(() => {})
+      }
+    }
+    if (this.section === 'balises') {
+      if (!this.balisesStore.length) {
+        this.fetchBeacons({ schoolId: this.schoolId }).catch(() => {})
+      }
+    }
     this.loadSettings()
   },
   watch: {

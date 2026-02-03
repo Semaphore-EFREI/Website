@@ -18,7 +18,16 @@
     <section class="role-users-grid">
       <div class="user-cards">
         <article v-for="user in students" :key="user.id || user.key" class="user-card" @click="openUser(user)">
-          <img :src="user.profilePicture || defaultProfile" alt="Photo de profil" class="user-avatar" />
+          <img
+            :src="user.profilePicture || defaultProfile"
+            alt="Photo de profil"
+            class="user-avatar"
+            width="64"
+            height="64"
+            loading="lazy"
+            decoding="async"
+            fetchpriority="low"
+          />
           <div class="name">{{ user.name }}</div>
           <div class="role" :class="roleClass(user.role)">
             <img :src="roleIcon(user.role)" :alt="user.role" class="role-icon" />
@@ -50,7 +59,14 @@
       </header>
       <div class="user-modal__body">
         <div class="user-modal__avatar">
-          <img :src="selectedUser.profilePicture || defaultProfile" alt="Photo de profil" />
+          <img
+            :src="selectedUser.profilePicture || defaultProfile"
+            alt="Photo de profil"
+            width="96"
+            height="96"
+            loading="lazy"
+            decoding="async"
+          />
         </div>
         <div class="user-modal__infos">
           <h3 class="user-modal__name">{{ selectedUser.name }}</h3>

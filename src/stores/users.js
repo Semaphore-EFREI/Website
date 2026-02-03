@@ -161,6 +161,35 @@ export const useUsersStore = defineStore('users', {
       }
     },
 
+    async fetchUsersBatch(ids = []) {
+      const uniqueIds = Array.from(new Set((ids || []).map((id) => String(id || '').trim()).filter(Boolean)));
+      if (!uniqueIds.length) return [];
+
+      const missingIds = uniqueIds.filter((id) => !this.users.find((u) => String(u.id) === id));
+      if (!missingIds.length) {
+        return this.users.filter((u) => uniqueIds.includes(String(u.id)));
+      }
+
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await request('/users/batch', { method: 'GET', params: { id: missingIds } });
+        const list = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.users)
+            ? response.users
+            : [];
+        const normalized = list.map((u) => normalizeUser(u, u?.userType || u?.role));
+        normalized.forEach((u) => this.upsertUser(u));
+        return normalized;
+      } catch (err) {
+        this.error = err.message || 'Unable to fetch users batch';
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
+
     async fetchUserById(id, role) {
       this.loading = true;
       this.error = null;
