@@ -12,9 +12,11 @@ import GroupesClasses from '../views/GroupesClasses.vue'
 import GroupesClassesDetail from '../views/GroupesClassesDetail.vue'
 import Ecole from '../views/Ecole.vue'
 import EcoleSection from '../views/EcoleSection.vue'
+import { useAuthStore } from '../stores/auth'
 
 const routes = [
-  { path: '/', name: 'Connexion', component: Login },
+  { path: '/', redirect: { name: 'Connexion' } },
+  { path: '/connexion', name: 'Connexion', component: Login },
   { path: '/calendrier', name: 'Calendrier', component: Calendar },
   { path: '/calendrier/nouveau', name: 'NouveauCours', component: NouveauCours },
   { path: '/calendrier/:id', name: 'CalendrierDetail', component: CalendarDetail, props: true },
@@ -27,7 +29,8 @@ const routes = [
   { path: '/groupes-classes', name: 'GroupesClasses', component: GroupesClasses },
   { path: '/groupes-classes/:groupName', name: 'GroupesClassesDetail', component: GroupesClassesDetail, props: true },
   { path: '/ecole', name: 'Ecole', component: Ecole },
-  { path: '/ecole/:section', name: 'EcoleSection', component: EcoleSection, props: true }
+  { path: '/ecole/:section', name: 'EcoleSection', component: EcoleSection, props: true },
+  { path: '/:pathMatch(.*)*', redirect: { name: 'Connexion' } }
 ]
 
 const router = createRouter({
@@ -37,21 +40,18 @@ const router = createRouter({
 
 // Guard de navigation - Rediriger vers la connexion si pas authentifié
 router.beforeEach((to, from, next) => {
-  const { useAuthStore } = require('../stores/auth');
-  const auth = useAuthStore();
-  
+  const auth = useAuthStore()
+
   // Les routes publiques (connexion)
-  const publicRoutes = ['Connexion'];
-  
+  const publicRoutes = ['Connexion']
+
   if (publicRoutes.includes(to.name)) {
-    // Laisser accès à la page de connexion
-    next();
+    next()
   } else if (!auth.isAuthenticated) {
-    // Rediriger vers connexion si pas authentifié
-    next({ name: 'Connexion' });
+    next({ name: 'Connexion' })
   } else {
-    next();
+    next()
   }
-});
+})
 
 export default router
