@@ -35,15 +35,18 @@
 <script>
 import { useSchoolsStore } from '../stores/schools'
 import { useAuthStore } from '../stores/auth'
+import roomsIcon from '../assets/images/rooms.svg'
+import balisesIcon from '../assets/images/balises.svg'
+import settingsIcon from '../assets/images/settings.svg'
 
 export default {
   name: 'Ecole',
   data() {
     return {
       sections: [
-        { label: 'Salles', section: 'salles', icon: 'src/assets/images/rooms.svg' },
-        { label: 'Balises', section: 'balises', icon: 'src/assets/images/balises.svg' },
-        { label: 'Paramètres', section: 'parametres', icon: 'src/assets/images/settings.svg' }
+        { label: 'Salles', section: 'salles', icon: roomsIcon },
+        { label: 'Balises', section: 'balises', icon: balisesIcon },
+        { label: 'Paramètres', section: 'parametres', icon: settingsIcon }
       ],
       schoolsStore: useSchoolsStore(),
       authStore: useAuthStore()
