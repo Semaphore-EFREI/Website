@@ -369,7 +369,7 @@ export default {
     },
     groupOptions() {
       return this.groups
-        .filter((g) => !(g.singleStudentGroup === true || (typeof g.name === 'string' && g.name.toLowerCase().startsWith('single-'))))
+        .filter((g) => !(g?.singleStudentGroup === true))
         .map(g => ({ id: g.id ?? g, name: g.name }))
         .filter((entry) => entry.name)
         .sort((a, b) => a.name.localeCompare(b.name))
@@ -831,7 +831,15 @@ export default {
         ? course.students.map((s) => s?.id ?? s?.studentId ?? s?.userId ?? s)
         : []
       const groupsIds = Array.isArray(course.studentGroups)
-        ? course.studentGroups.map((g) => g?.id ?? g)
+        ? course.studentGroups
+            .filter((g) => {
+              if (typeof g === 'object' && g !== null) {
+                return g.singleStudentGroup !== true
+              }
+              const match = this.groups.find((group) => String(group.id) === String(g))
+              return match?.singleStudentGroup !== true
+            })
+            .map((g) => g?.id ?? g)
         : []
 
       return {
