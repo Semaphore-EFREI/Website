@@ -67,6 +67,11 @@ router.beforeEach(async (to) => {
     return { name: 'Connexion' }
   }
 
+  if (!auth.canAccessAdmin) {
+    await auth.logout()
+    return { name: 'Connexion' }
+  }
+
   return true
 })
 

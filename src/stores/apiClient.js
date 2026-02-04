@@ -51,18 +51,22 @@ function summarizeBody(body) {
   }
 }
 
-async function request(path, { method = 'GET', data, params, skipAuth = false } = {}) {
+async function request(
+  path,
+  { method = 'GET', data, params, skipAuth = false, retryOnAuthFailure = true } = {}
+) {
   const url = buildUrl(path, params);
   const startedAt = Date.now();
   const redactedData = redactPayload(data);
-  const headers = buildHeaders(!skipAuth);
   let response;
   let parsedBody = null;
   let bodyLog = null;
   let attemptedRefresh = false;
+  const isRefreshEndpoint = path?.includes('/auth/refresh');
 
   try {
     const execute = async () => {
+      const headers = buildHeaders(!skipAuth);
       response = await fetch(url, {
         method,
         headers,
@@ -73,8 +77,14 @@ async function request(path, { method = 'GET', data, params, skipAuth = false } 
 
       if (!response.ok) {
         bodyLog = await response.text();
-        // Try refresh once on 401/403
-        if (!attemptedRefresh && (response.status === 401 || response.status === 403)) {
+        // Try refresh once on 401 only (token expired)
+        if (
+          !attemptedRefresh &&
+          response.status === 401 &&
+          retryOnAuthFailure &&
+          !skipAuth &&
+          !isRefreshEndpoint
+        ) {
           attemptedRefresh = true;
           const refreshed = await tryRefreshToken();
           if (refreshed) {

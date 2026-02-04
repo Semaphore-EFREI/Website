@@ -59,6 +59,10 @@ export const useAuthStore = defineStore('auth', {
     isTeacher: (state) => state.user?.role === 'teacher' || state.user?.userType === 'teacher',
     isAdmin: (state) => state.user?.role === 'admin' || state.user?.userType === 'admin',
     isDev: (state) => state.user?.role === 'dev' || state.user?.userType === 'dev',
+    canAccessAdmin: (state) => {
+      const role = String(state.user?.role || state.user?.userType || '').toLowerCase()
+      return role === 'admin' || role === 'dev'
+    },
     authHeader: (state) => (state.token ? { Authorization: `Bearer ${state.token}` } : {})
   },
   actions: {
@@ -83,7 +87,12 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await request('/auth/login', { method: 'POST', data: { email, password }, skipAuth: true });
+        const response = await request('/auth/login', {
+          method: 'POST',
+          data: { email, password },
+          skipAuth: true,
+          retryOnAuthFailure: false
+        });
         const token = response.accessToken ?? response.token;
         if (!token) throw new Error('Missing access token');
         this.token = token;
@@ -92,11 +101,11 @@ export const useAuthStore = defineStore('auth', {
         await this.fetchCurrentUser();
         
         // Vérifier que l'utilisateur est admin
-        const userRole = this.user?.role || this.user?.userType;
-        const isAdminUser = userRole === 'admin' || userRole === 'Admin';
-        if (!isAdminUser) {
+        const userRole = String(this.user?.role || this.user?.userType || '').toLowerCase();
+        const isAllowed = userRole === 'admin' || userRole === 'dev';
+        if (!isAllowed) {
           this.logout();
-          throw new Error('Access denied: Only admin users can log in');
+          throw new Error('Access denied: Admin access required');
         }
         
         persistSession({ token: this.token, refreshToken: this.refreshToken, user: this.user });
@@ -151,7 +160,8 @@ export const useAuthStore = defineStore('auth', {
           const response = await request('/auth/refresh', {
             method: 'POST',
             data: { refreshToken: currentRefreshToken },
-            skipAuth: true
+            skipAuth: true,
+            retryOnAuthFailure: false
           });
           
           const newToken = response.token ?? response.accessToken;

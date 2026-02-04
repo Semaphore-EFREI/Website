@@ -291,19 +291,17 @@ export default {
     }
   },
   created() {
-    if (this.section === 'salles' || this.section === 'balises') {
-      if (!this.salles.length) {
-        this.fetchRooms({ schoolId: this.schoolId }).catch(() => {})
-      }
-    }
-    if (this.section === 'balises') {
-      if (!this.balisesStore.length) {
-        this.fetchBeacons({ schoolId: this.schoolId }).catch(() => {})
-      }
-    }
-    this.loadSettings()
+    this.refreshSectionData()
   },
   watch: {
+    section() {
+      this.refreshSectionData()
+    },
+    schoolId(newVal, oldVal) {
+      if (newVal && newVal !== oldVal) {
+        this.refreshSectionData()
+      }
+    },
     settings: {
       deep: true,
       handler() {
@@ -342,8 +340,8 @@ export default {
         return (this.balisesStore || []).map((balise, index) => ({
           key: balise.id || `balise-${index}`,
           id: balise.id,
-          name: balise.label || balise.name || `${balise.serialNumber ?? ''}` || balise.id || `Balise ${index + 1}`,
-          displayName: balise.label || balise.name || `${balise.serialNumber ?? ''}` || balise.id || `Balise ${index + 1}`,
+          name: this.formatBeaconLabel(balise.serialNumber ?? balise.serial_number ?? balise.label ?? balise.name ?? balise.id) || `Balise ${index + 1}`,
+          displayName: this.formatBeaconLabel(balise.serialNumber ?? balise.serial_number ?? balise.label ?? balise.name ?? balise.id) || `Balise ${index + 1}`,
           type: this.roomNameForBeacon(balise) || (balise.classroom ? this.displayRoomFallback(balise.classroom) : 'Aucune salle'),
           profilePicture: null,
           assignedRoomId: this.findRoomIdForBeacon(balise) || balise.classroom || null
@@ -363,8 +361,8 @@ export default {
       const room = (this.salles || []).find((r) => String(r.id) === String(this.selectedItem.id)) || this.selectedItem
       return this.roomBeacons(room)
         .map((b, idx) => {
-          const val = b.serialNumber ?? b.serial_number ?? b.label ?? b.name ?? `Balise ${idx + 1}`
-          return val
+          const raw = b.serialNumber ?? b.serial_number ?? b.label ?? b.name ?? `Balise ${idx + 1}`
+          return this.formatBeaconLabel(raw) || raw
         })
         .filter((v) => v !== undefined && v !== null && String(v).trim() !== '')
         .map((v) => String(v))
@@ -377,6 +375,29 @@ export default {
     ...mapActions(useRoomsStore, ['fetchRooms', 'fetchRoom', 'createRoom', 'updateRoom', 'deleteRoom']),
     ...mapActions(useBeaconsStore, ['fetchBeacons', 'fetchBeacon', 'assignBeaconToClass', 'removeBeaconFromClass']),
     ...mapActions(useSchoolsStore, ['updateSchoolPreferences', 'fetchSchool']),
+    formatBeaconLabel(value) {
+      if (value === null || value === undefined) return ''
+      const raw = String(value).trim()
+      if (!raw) return ''
+      if (/^\d+$/.test(raw)) return raw.padStart(6, '0')
+      return raw
+    },
+    async refreshSectionData() {
+      if (this.section === 'parametres') {
+        await this.loadSettings()
+        return
+      }
+
+      const schoolId = this.schoolId
+      if (!schoolId) return
+
+      if (this.section === 'salles' || this.section === 'balises') {
+        await this.fetchRooms({ schoolId }).catch(() => {})
+      }
+      if (this.section === 'balises') {
+        await this.fetchBeacons({ schoolId }).catch(() => {})
+      }
+    },
     goBack() {
       this.$router.push({ name: 'Ecole' }).catch(() => {})
     },

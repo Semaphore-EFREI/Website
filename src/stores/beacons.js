@@ -1,6 +1,14 @@
 import { defineStore } from 'pinia';
 import { request } from './apiClient';
 
+const formatBeaconLabel = (value) => {
+  if (value === null || value === undefined) return '';
+  const raw = String(value).trim();
+  if (!raw) return '';
+  if (/^\d+$/.test(raw)) return raw.padStart(6, '0');
+  return raw;
+};
+
 export const useBeaconsStore = defineStore('beacons', {
   state: () => ({
     beacons: [],
@@ -33,10 +41,11 @@ export const useBeaconsStore = defineStore('beacons', {
           return [];
         })();
 
-        this.beacons = parsed.map((b, index) => ({
-          ...b,
-          label: b.label || b.name || `${b.serialNumber ?? ''}` || `Balise ${index + 1}`
-        }));
+        this.beacons = parsed.map((b, index) => {
+          const labelSource = b.serialNumber ?? b.serial_number ?? b.label ?? b.name ?? '';
+          const label = formatBeaconLabel(labelSource) || `Balise ${index + 1}`;
+          return { ...b, label };
+        });
         return this.beacons;
       } catch (err) {
         this.error = err.message || 'Unable to fetch beacons';
@@ -53,9 +62,10 @@ export const useBeaconsStore = defineStore('beacons', {
         const response = await request(`/beacon/${id}`, { method: 'GET' });
         const beacon = response.beacon ?? response ?? null;
         if (!beacon) throw new Error('Beacon not found');
-        const normalized = { ...beacon, label: beacon.label || beacon.name || `${beacon.serialNumber ?? ''}` };
+        const labelSource = beacon.serialNumber ?? beacon.serial_number ?? beacon.label ?? beacon.name ?? '';
+        const normalized = { ...beacon, label: formatBeaconLabel(labelSource) };
         const index = this.beacons.findIndex((t) => String(t.id) === String(normalized.id));
-        if (index >= 0) this.beacons.splice(index, 1, beacon);
+        if (index >= 0) this.beacons.splice(index, 1, normalized);
         else this.beacons.push(normalized);
         return normalized;
       } catch (err) {

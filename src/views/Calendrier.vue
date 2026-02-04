@@ -119,7 +119,7 @@
 
 <script>
 import { mapActions, mapState } from 'pinia';
-import { useCalendarStore, useUsersStore } from '../stores';
+import { useCalendarStore } from '../stores';
 
 export default {
   data() {
@@ -148,7 +148,6 @@ export default {
       return this.normalizedCourses.filter(c => c.day === key);
     },
     ...mapState(useCalendarStore, ['courses']),
-    ...mapState(useUsersStore, ['users']),
     normalizedCourses() {
       return this.courses.map(course => this.normalizeCourse(course));
     },
@@ -198,7 +197,6 @@ export default {
   },
   methods: {
     ...mapActions(useCalendarStore, ['fetchCourses']),
-    ...mapActions(useUsersStore, ['fetchUsersBatch']),
     previousDay() {
       const next = new Date(this.selectedDate);
       next.setDate(next.getDate() - 1);
@@ -231,32 +229,6 @@ export default {
     },
     openCourse(id) {
       this.$router.push({ name: 'CalendrierDetail', params: { id } });
-    },
-    async loadTeacherUsers() {
-      const ids = new Set();
-      this.courses.forEach((course) => {
-        const raw = Array.isArray(course.teachers)
-          ? course.teachers
-          : Array.isArray(course.teacher)
-            ? course.teacher
-            : course.teacher
-              ? [course.teacher]
-              : course.teacherId
-                ? [course.teacherId]
-                : [];
-        raw.forEach((t) => {
-          if (typeof t === 'object' && t !== null) {
-            const hasName = Boolean(t.name || t.firstName || t.firstname || t.lastName || t.lastname);
-            if (!hasName && t.id) ids.add(String(t.id));
-          } else if (t) {
-            ids.add(String(t));
-          }
-        });
-      });
-
-      const missing = Array.from(ids).filter((id) => !this.users.find((u) => String(u.id) === String(id)));
-      if (!missing.length) return;
-      await this.fetchUsersBatch(missing).catch(() => {});
     },
     goToNewCourse() {
       this.$router.push({ name: 'NouveauCours' });
@@ -297,7 +269,6 @@ export default {
           to: day,
           include: ['classrooms', 'signatures', 'teachers', 'studentGroups']
         });
-        await this.loadTeacherUsers();
       } catch (_err) {
         // Errors are handled in store; keep UI responsive
       }
@@ -344,11 +315,15 @@ export default {
         ? course.teachers
         : Array.isArray(course.teacher)
           ? course.teacher
-          : course.teacher
-            ? [course.teacher]
-            : course.teacherId
-              ? [course.teacherId]
-              : [];
+          : Array.isArray(course.teachersId)
+            ? course.teachersId
+            : Array.isArray(course.teacherIds)
+              ? course.teacherIds
+              : course.teacher
+                ? [course.teacher]
+                : course.teacherId
+                  ? [course.teacherId]
+                  : [];
 
       const teacherNames = teacherRaw
         .map((t) => {
@@ -356,12 +331,11 @@ export default {
             const fullName = [t.firstName || t.firstname, t.lastName || t.lastname].filter(Boolean).join(' ').trim();
             const candidate = t.name || fullName;
             const userId = t.id || t.userId || t.teacherId;
-            const user = userId ? this.users.find((u) => String(u.id) === String(userId)) : null;
-            return user?.name || candidate || userId || '';
+            return candidate || userId || '';
           }
-          const user = this.users.find((u) => String(u.id) === String(t));
-          return user?.name || t;
+          return t;
         })
+        .map((name) => String(name || '').trim())
         .filter(Boolean);
 
       const roomName = course.room

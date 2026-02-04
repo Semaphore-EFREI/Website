@@ -221,7 +221,7 @@ import checkIcon from '../assets/images/check.svg'
 import absentIcon from '../assets/images/croix-black.svg'
 import excusedIcon from '../assets/images/excused-icon.svg'
 import excusedSignatureIcon from '../assets/images/excused.svg'
-import { useAuthStore, useCalendarStore, useSignaturesStore, useUsersStore } from '../stores'
+import { useAuthStore, useCalendarStore, useSignaturesStore } from '../stores'
 
 export default {
   name: 'CalendrierDetail',
@@ -246,7 +246,6 @@ export default {
   },
   computed: {
     ...mapState(useAuthStore, ['user']),
-    ...mapState(useUsersStore, ['users']),
     isPlanned() {
       return this.course && this.course.status === 'planned'
     },
@@ -280,10 +279,18 @@ export default {
     },
     teacherDisplayNames() {
       if (Array.isArray(this.teachers) && this.teachers.length) {
-        return this.teachers.map((t) => t.name || this.resolveUserName(t.id) || t.id).filter(Boolean)
+        return this.teachers.map((t) => t.name || t.id).filter(Boolean)
       }
       if (Array.isArray(this.course?.teacher)) {
-        return this.course.teacher.map((t) => (typeof t === 'object' ? t.name || t.id : t)).filter(Boolean)
+        return this.course.teacher
+          .map((t) => {
+            if (typeof t === 'object' && t !== null) {
+              const fullName = [t.firstName || t.firstname, t.lastName || t.lastname].filter(Boolean).join(' ').trim()
+              return t.name || fullName || t.id
+            }
+            return t
+          })
+          .filter(Boolean)
       }
       if (this.course?.teacher) return [this.course.teacher].filter(Boolean)
       return []
@@ -302,7 +309,6 @@ export default {
       updateSignature: 'updateSignature',
       removeSignature: 'removeSignature'
     }),
-    ...mapActions(useUsersStore, ['fetchUsersBatch']),
     async loadData() {
       this.loading = true
       try {
@@ -329,9 +335,15 @@ export default {
         ? sourceCourse.teachers
         : Array.isArray(sourceCourse?.teacher)
           ? sourceCourse.teacher
-          : sourceCourse?.teacher
-            ? [sourceCourse.teacher]
-            : []
+          : Array.isArray(sourceCourse?.teachersId)
+            ? sourceCourse.teachersId
+            : Array.isArray(sourceCourse?.teacherIds)
+              ? sourceCourse.teacherIds
+              : sourceCourse?.teacher
+                ? [sourceCourse.teacher]
+                : sourceCourse?.teacherId
+                  ? [sourceCourse.teacherId]
+                  : []
       const baseTeachers = teacherList.map((val) => {
         if (typeof val === 'object' && val !== null) return val
         return { teacherId: val }
@@ -343,14 +355,30 @@ export default {
           .map((id) => String(id))
       )
 
-      const baseStudents = [
-        ...(Array.isArray(sourceCourse?.students)
-          ? sourceCourse.students.map((s) => ({ studentId: s.id ?? s.studentId ?? s.userId ?? s, id: s.id ?? s.studentId ?? s.userId ?? s, ...s }))
-          : []),
-        ...(Array.isArray(sourceCourse?.soloStudents)
-          ? sourceCourse.soloStudents.map((s) => ({ studentId: s.id ?? s.studentId ?? s.userId ?? s, id: s.id ?? s.studentId ?? s.userId ?? s, ...s }))
-          : [])
-      ]
+      const baseStudents = (() => {
+        if (Array.isArray(sourceCourse?.students) && sourceCourse.students.length) {
+          return sourceCourse.students.map((s) => ({
+            studentId: s.id ?? s.studentId ?? s.userId ?? s,
+            id: s.id ?? s.studentId ?? s.userId ?? s,
+            ...s
+          }))
+        }
+
+        const groupStudents = Array.isArray(sourceCourse?.studentGroups)
+          ? sourceCourse.studentGroups.flatMap((group) => {
+              if (group && Array.isArray(group.students)) return group.students
+              return []
+            })
+          : []
+
+        const soloStudents = Array.isArray(sourceCourse?.soloStudents) ? sourceCourse.soloStudents : []
+
+        return [...groupStudents, ...soloStudents].map((s) => ({
+          studentId: s.id ?? s.studentId ?? s.userId ?? s,
+          id: s.id ?? s.studentId ?? s.userId ?? s,
+          ...s
+        }))
+      })()
       const studentIdSet = new Set(
         baseStudents
           .map((s) => s.studentId ?? s.id)
@@ -408,11 +436,6 @@ export default {
         }))
       ]
 
-      await Promise.all([
-        this.populateStudentNames(studentMerged),
-        this.populateTeacherNames(teacherMerged)
-      ])
-
       this.teachers = this.mergePersons(teacherMerged, 'teacher')
       this.students = this.mergePersons(studentMerged, 'student')
       this.applySignatureStatuses()
@@ -432,7 +455,7 @@ export default {
         const existing = map.get(id) || {}
         const firstName = entry.firstName || entry.firstname
         const lastName = entry.lastName || entry.lastname
-        const displayName = entry.name || [firstName, lastName].filter(Boolean).join(' ').trim() || this.resolveUserName(id)
+        const displayName = entry.name || [firstName, lastName].filter(Boolean).join(' ').trim()
         const meta = this.signatureMeta(status)
         const normalizedStatus = meta?.class || status
         map.set(id, {
@@ -445,71 +468,6 @@ export default {
         })
       })
       return Array.from(map.values())
-    },
-    async populateStudentNames(entries) {
-      const entriesById = new Map()
-      entries.forEach((entry) => {
-        const id = entry.studentId ?? entry.id
-        if (!id) return
-        entriesById.set(String(id), entry)
-      })
-
-      const idsToFetch = Array.from(entriesById.keys())
-        .filter((id) => {
-          const entry = entriesById.get(id)
-          const hasName = Boolean(entry?.name || entry?.firstName || entry?.firstname || entry?.lastName || entry?.lastname)
-          return !hasName
-        })
-        .filter((id) => !this.users.find((u) => String(u.id) === String(id)))
-
-      if (idsToFetch.length) {
-        await this.fetchUsersBatch(idsToFetch).catch(() => {})
-      }
-
-      entries.forEach((entry) => {
-        const id = entry.studentId ?? entry.id
-        const user = this.users.find((u) => String(u.id) === String(id))
-        if (user) {
-          entry.firstName = entry.firstName || user.firstName
-          entry.lastName = entry.lastName || user.lastName
-          entry.name = entry.name || user.name
-        }
-      })
-    },
-    async populateTeacherNames(entries) {
-      const entriesById = new Map()
-      entries.forEach((entry) => {
-        const id = entry.teacherId ?? entry.id
-        if (!id) return
-        entriesById.set(String(id), entry)
-      })
-
-      const idsToFetch = Array.from(entriesById.keys())
-        .filter((id) => {
-          const entry = entriesById.get(id)
-          const hasName = Boolean(entry?.name || entry?.firstName || entry?.firstname || entry?.lastName || entry?.lastname)
-          return !hasName
-        })
-        .filter((id) => !this.users.find((u) => String(u.id) === String(id)))
-
-      if (idsToFetch.length) {
-        await this.fetchUsersBatch(idsToFetch).catch(() => {})
-      }
-
-      entries.forEach((entry) => {
-        const id = entry.teacherId ?? entry.id
-        const user = this.users.find((u) => String(u.id) === String(id))
-        if (user) {
-          entry.firstName = entry.firstName || user.firstName
-          entry.lastName = entry.lastName || user.lastName
-          entry.name = entry.name || user.name
-        }
-      })
-    },
-    resolveUserName(id) {
-      const user = this.users.find(u => String(u.id) === String(id))
-      if (!user) return ''
-      return user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim()
     },
     normalizeCourse(course) {
       if (!course) return null
@@ -575,7 +533,20 @@ export default {
       })()
 
       const teacherNames = (() => {
-        const list = course.teacher || course.teachers || []
+        const list = Array.isArray(course?.teachers)
+          ? course.teachers
+          : Array.isArray(course?.teacher)
+            ? course.teacher
+            : Array.isArray(course?.teachersId)
+              ? course.teachersId
+              : Array.isArray(course?.teacherIds)
+                ? course.teacherIds
+                : course?.teacher
+                  ? [course.teacher]
+                  : course?.teacherId
+                    ? [course.teacherId]
+                    : []
+
         const arr = Array.isArray(list) ? list : [list]
         return arr
           .map((t) => {
@@ -584,6 +555,7 @@ export default {
             }
             return t
           })
+          .map((name) => String(name || '').trim())
           .filter(Boolean)
       })()
 
