@@ -399,21 +399,24 @@ export default {
         .filter((sig) => {
           const teacherId = sig.teacherId ?? sig.teacher?.id ?? sig.userId
           const studentId = sig.studentId ?? (typeof sig.student === 'string' ? sig.student : sig.student?.id) ?? sig.userId
-          if (sig.type === 'teacher' || sig.role === 'teacher') return teacherId && teacherIdSet.has(String(teacherId))
-          if (sig.type === 'student' || sig.role === 'student' || (!sig.type && studentId)) {
-            return studentId && studentIdSet.has(String(studentId))
-          }
+          const role = this.getSignatureRole(sig, studentId, teacherId)
+          if (role === 'teacher') return teacherId && teacherIdSet.has(String(teacherId))
+          if (role === 'student') return studentId && studentIdSet.has(String(studentId))
           return false
         })
 
       this.signaturesLocal = filteredSignatures
 
-      const teacherSignatures = this.signaturesLocal.filter(
-        (sig) => (sig.type === 'teacher' || sig.role === 'teacher') && (sig.teacher || sig.teacherId)
-      )
-      const studentSignatures = this.signaturesLocal.filter(
-        (sig) => (sig.type === 'student' || sig.role === 'student' || (!sig.type && (sig.student || sig.studentId)))
-      )
+      const teacherSignatures = this.signaturesLocal.filter((sig) => {
+        const teacherId = sig.teacherId ?? sig.teacher?.id ?? sig.userId
+        const studentId = sig.studentId ?? (typeof sig.student === 'string' ? sig.student : sig.student?.id) ?? sig.userId
+        return this.getSignatureRole(sig, studentId, teacherId) === 'teacher' && teacherId
+      })
+      const studentSignatures = this.signaturesLocal.filter((sig) => {
+        const teacherId = sig.teacherId ?? sig.teacher?.id ?? sig.userId
+        const studentId = sig.studentId ?? (typeof sig.student === 'string' ? sig.student : sig.student?.id) ?? sig.userId
+        return this.getSignatureRole(sig, studentId, teacherId) === 'student' && studentId
+      })
 
       const teacherMerged = [
         ...baseTeachers,
@@ -422,7 +425,7 @@ export default {
           firstName: sig.teacher?.firstName ?? sig.teacher?.firstname,
           lastName: sig.teacher?.lastName ?? sig.teacher?.lastname,
           name: sig.teacher?.name,
-          signatureUrl: sig.image || sig.signatureUrl,
+          signatureUrl: this.signatureImageSrc(sig.image || sig.signatureUrl),
           status: sig.status,
           signatureId: sig.id
         }))
@@ -436,7 +439,7 @@ export default {
           firstName: sig.student?.firstName ?? sig.student?.firstname,
           lastName: sig.student?.lastName ?? sig.student?.lastname,
           name: sig.student?.name,
-          signatureUrl: sig.image || sig.signatureUrl,
+          signatureUrl: this.signatureImageSrc(sig.image || sig.signatureUrl),
           status: sig.status,
           signatureId: sig.id
         }))
@@ -642,20 +645,40 @@ export default {
       if (idx >= 0) this.signaturesLocal.splice(idx, 1, normalized)
       else this.signaturesLocal.push(normalized)
     },
+    signatureImageSrc(value) {
+      if (!value) return null
+      if (typeof value !== 'string') return value
+      const trimmed = value.trim()
+      if (!trimmed) return null
+      if (trimmed.startsWith('data:')) return trimmed
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
+      return `data:image/png;base64,${trimmed}`
+    },
+    getSignatureRole(sig, studentId, teacherId) {
+      const role = sig?.role || sig?.type
+      if (role === 'student' || role === 'teacher') return role
+      if (studentId && !teacherId) return 'student'
+      if (teacherId && !studentId) return 'teacher'
+      if (studentId) return 'student'
+      if (teacherId) return 'teacher'
+      return null
+    },
     normalizeSignature(sig) {
       if (!sig) return null
       const studentId = sig.studentId ?? (typeof sig.student === 'string' ? sig.student : sig.student?.id)
       const teacherId = sig.teacherId ?? (typeof sig.teacher === 'string' ? sig.teacher : sig.teacher?.id)
       const status = sig.status === 'invalid' ? 'none' : (sig.status || 'none')
-      return { ...sig, studentId, teacherId, status }
+      const role = this.getSignatureRole(sig, studentId, teacherId)
+      const image = this.signatureImageSrc(sig.image || sig.signatureUrl)
+      return { ...sig, studentId, teacherId, role, status, image, signatureUrl: image || sig.signatureUrl }
     },
     applySignatureStatuses() {
       const sigMap = new Map()
       this.signaturesLocal.forEach((sig) => {
         const studentId = sig.studentId ?? (typeof sig.student === 'string' ? sig.student : sig.student?.id)
         const teacherId = sig.teacherId ?? (typeof sig.teacher === 'string' ? sig.teacher : sig.teacher?.id)
-        const sigType = sig.type || sig.role
-        if (studentId && sigType !== 'teacher') sigMap.set(`student-${studentId}`, sig)
+        const sigType = this.getSignatureRole(sig, studentId, teacherId)
+        if (studentId && sigType === 'student') sigMap.set(`student-${studentId}`, sig)
         if (teacherId && sigType === 'teacher') sigMap.set(`teacher-${teacherId}`, sig)
       })
 
