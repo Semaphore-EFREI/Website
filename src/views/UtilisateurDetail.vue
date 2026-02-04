@@ -456,8 +456,8 @@ export default {
         return singlesLabel
       })()
 
-      let status = course.status || 'planned'
-      if (!course.status && startDate && endDate) {
+      let status = 'planned'
+      if (startDate && endDate) {
         const now = Date.now()
         const hasTeacherSig = Array.isArray(course.signature)
           ? course.signature.some(

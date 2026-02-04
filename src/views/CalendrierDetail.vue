@@ -305,6 +305,7 @@ export default {
   methods: {
     ...mapActions(useCalendarStore, { fetchCourseAction: 'fetchCourse' }),
     ...mapActions(useSignaturesStore, {
+      fetchSignatures: 'fetchSignatures',
       addSignature: 'addSignature',
       updateSignature: 'updateSignature',
       removeSignature: 'removeSignature'
@@ -312,23 +313,28 @@ export default {
     async loadData() {
       this.loading = true
       try {
-        const course = await this.fetchCourseAction(this.id)
+        const course = await this.fetchCourseAction(this.id, {
+          include: ['classrooms', 'teachers', 'students', 'soloStudents', 'studentGroups']
+        })
+        const signatures = await this.fetchSignatures(this.id).catch(() => null)
         this.courseRaw = course
-        this.course = this.normalizeCourse(course)
-        await this.loadRoster()
+        this.course = this.normalizeCourse(course, signatures)
+        await this.loadRoster(signatures)
       } catch (error) {
         console.error('Unable to load course', error)
       } finally {
         this.loading = false
       }
     },
-    async loadRoster() {
+    async loadRoster(signatureOverride = null) {
       const sourceCourse = this.courseRaw || this.course || {}
-      const baseSignatures = Array.isArray(sourceCourse?.signature)
-        ? sourceCourse.signature
-        : Array.isArray(sourceCourse?.signatures)
-          ? sourceCourse.signatures
-          : []
+      const baseSignatures = Array.isArray(signatureOverride)
+        ? signatureOverride
+        : Array.isArray(sourceCourse?.signature)
+          ? sourceCourse.signature
+          : Array.isArray(sourceCourse?.signatures)
+            ? sourceCourse.signatures
+            : []
       const normalizeSig = (sig) => this.normalizeSignature(sig)
 
       const teacherList = Array.isArray(sourceCourse?.teachers)
@@ -469,7 +475,7 @@ export default {
       })
       return Array.from(map.values())
     },
-    normalizeCourse(course) {
+    normalizeCourse(course, signaturesOverride = null) {
       if (!course) return null
 
       const toDate = (value) => {
@@ -507,16 +513,24 @@ export default {
       const startMs = toDate(course.start || course.startDate || course.date)?.getTime() ?? null
       const endMs = toDate(course.end || course.endDate)?.getTime() ?? null
 
-      const hasTeacherSig = Array.isArray(course.signature)
-        ? course.signature.some(
+      const signatureList = Array.isArray(signaturesOverride)
+        ? signaturesOverride
+        : Array.isArray(course.signature)
+          ? course.signature
+          : Array.isArray(course.signatures)
+            ? course.signatures
+            : []
+
+      const hasTeacherSig = Array.isArray(signatureList)
+        ? signatureList.some(
             (sig) =>
               sig &&
               (sig.type === 'teacher' || sig.role === 'teacher' || (!sig.student && (sig.teacher || sig.teacherId))) &&
-        (sig.status === 'signed' || sig.status === 'present' || sig.status === 'late')
+              (sig.status === 'signed' || sig.status === 'present' || sig.status === 'late')
           )
         : false
 
-      let status = course.status || 'planned'
+      let status = 'planned'
       if (startMs && now >= startMs && (!endMs || now < endMs)) {
         status = hasTeacherSig ? 'started' : 'started-absent'
       } else if (endMs && now >= endMs) {
@@ -597,7 +611,7 @@ export default {
         group: groupLabel,
         status,
         students: course.students || course.soloStudents || [],
-        signature: course.signature || course.signatures || []
+        signature: signatureList
       }
     },
     signatureMeta(status) {
