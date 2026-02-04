@@ -459,13 +459,21 @@ export default {
       let status = 'planned'
       if (startDate && endDate) {
         const now = Date.now()
+        const isTeacherSignature = (sig) => {
+          if (!sig) return false
+          const role = sig.type || sig.role
+          if (role === 'teacher') return true
+          if (role === 'student') return false
+          if (sig.student || sig.studentId) return false
+          return Boolean(sig.teacher || sig.teacherId)
+        }
+        const teacherPresent = (sig) => {
+          if (!isTeacherSignature(sig)) return false
+          const status = String(sig.status || '').toLowerCase()
+          return status === 'signed' || status === 'present' || status === 'late'
+        }
         const hasTeacherSig = Array.isArray(course.signature)
-          ? course.signature.some(
-              (sig) =>
-                sig &&
-                (sig.teacher || sig.teacherId || sig.type === 'teacher') &&
-                (sig.status === 'signed' || sig.status === 'present' || sig.status === 'late')
-            )
+          ? course.signature.some((sig) => teacherPresent(sig))
           : false
         if (now > endDate.getTime()) status = hasTeacherSig ? 'finished' : 'finished-absent'
         else if (now >= startDate.getTime()) status = hasTeacherSig ? 'started' : 'started-absent'

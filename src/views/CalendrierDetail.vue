@@ -525,12 +525,14 @@ export default {
             : []
 
       const hasTeacherSig = Array.isArray(signatureList)
-        ? signatureList.some(
-            (sig) =>
-              sig &&
-              (sig.type === 'teacher' || sig.role === 'teacher' || (!sig.student && (sig.teacher || sig.teacherId))) &&
-              (sig.status === 'signed' || sig.status === 'present' || sig.status === 'late')
-          )
+        ? signatureList.some((sig) => {
+            const studentId = sig?.studentId ?? (typeof sig?.student === 'string' ? sig.student : sig?.student?.id)
+            const teacherId = sig?.teacherId ?? (typeof sig?.teacher === 'string' ? sig.teacher : sig?.teacher?.id)
+            const role = this.getSignatureRole(sig, studentId, teacherId)
+            if (role !== 'teacher') return false
+            const status = String(sig?.status || '').toLowerCase()
+            return status === 'signed' || status === 'present' || status === 'late'
+          })
         : false
 
       let status = 'planned'
